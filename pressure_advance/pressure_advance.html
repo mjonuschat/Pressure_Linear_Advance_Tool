@@ -87,6 +87,12 @@ PRINT_END
             <td>Layer Height (mm)</td>
           </tr>
           <tr>
+            <td><label for="EXTRUDER_NAME">Extruder Name</label></th>
+            <td><input name="EXTRUDER_NAME" id="EXTRUDER_NAME" value="extruder" /></td>
+            <td>Extruder Name</td>
+          </tr>
+          <tr>
+          <tr>
             <td><label for="FAN_SPEED">Fan Speed</label></td>
             <td><input name="FAN_SPEED" id="FAN_SPEED" step="1" value="0" onblur="validateInput()" /></td>
             <td>Fan Speed (%)</td>
@@ -128,15 +134,15 @@ PRINT_END
           <tr>
             <td><label for="SLOW_SPEED">Slow Printing Speed</label></td>
             <td><input name="SLOW_SPEED" id="SLOW_SPEED" step="any" value="5" onblur="validateInput()" /></td>
-            <td>Use your square_corner_velocity value from your printer.cfg</td>
+            <td>Use your square_corner_velocity value from your printer.cfg (to simulate a 90 degree corner)</td>
           </tr>
           <tr>
             <td><label for="FAST_SPEED">Fast Printing Speed</label></td>
             <td><input name="FAST_SPEED" id="FAST_SPEED" step="any" value="120" onblur="validateInput()" /></td>
-            <td>Use your fastest perimeter speed. This should differ noticeably from slow speed or results may be hard to read</td>
+            <td>Use your fastest perimeter speed (internal/external). This should differ noticeably from Slow Speed or results may be hard to read</td>
           </tr>
           <tr>
-            <td><label for="MOVE_SPEED">Movement Speed</label></td>
+            <td><label for="MOVE_SPEED">Travel Speed</label></td>
             <td><input name="MOVE_SPEED" id="MOVE_SPEED" step="any" value="300" onblur="validateInput()" /></td>
             <td>Travel speed</td>
           </tr>
@@ -153,7 +159,7 @@ PRINT_END
           <tr>
             <td><label for="PRINT_ACCL">Acceleration</label></td>
             <td><input name="PRINT_ACCL" id="PRINT_ACCL" step="any" value="2000" onblur="validateInput()" /></td>
-            <td>Set printing acceleration (mm/s^2)</td>
+            <td>Set printing acceleration (mm/s<sup>2</sup>)</td>
           </tr>
           <tr>
             <td colspan="3" class="tdSection"><h4>Pattern:</h4></td>
@@ -193,7 +199,7 @@ PRINT_END
           </tr>
           <tr>
             <td><label for="SPACE_LINE">Test Line Spacing</label></td>
-            <td><input name="SPACE_LINE" id="SPACE_LINE" step="0.1" value="4" onblur="validateInput()" /></td>
+            <td><input name="SPACE_LINE" id="SPACE_LINE" step="0.1" value="5" onblur="validateInput()" /></td>
             <td>Distance between the test lines. This will impact print size</td>
           </tr>
           <tr>
