@@ -18,7 +18,7 @@
       <div class="calibpat" id="calibpat">
         <h1>Pressure Advance Calibration Pattern</h1>
         <h2>WARNING: THIS IS EXPERIMENTAL AND NOT FULLY TESTED</h2>
-        <h2>Input validation and machine dimension check are currently disabled</h2>
+        <h2>Dimension check and some input validations are currently disabled</h2>
         <div class="row alert alert-info custom-alert">
           <div class="col-lg-1 col-md-2 visible-lg-block visible-md-block custom-alert-icon"> <i
               class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
@@ -247,6 +247,7 @@ PRINT_END
               <td>Perimeter Line width as a ratio of nozzle diameter.</td>
             </tr>
             <tr>
+              <!--TODO: Smooth time toggle-->
               <td><label for="PA_START">PA Start Value</label></td>
               <td><input name="PA_START" id="PA_START" step="any" value="0" onblur="validateInput()" /></td>
               <td id="start_factor">Starting value for pressure advance</td>

@@ -113,7 +113,7 @@ function genGcode() {
       PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2),
       PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2),
 
-      printDirRad = PRINT_DIR * Math.PI / 180, // TODO?
+      printDirRad = PRINT_DIR * Math.PI / 180,
       FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(printDirRad)) + Math.abs(PRINT_SIZE_Y * Math.sin(printDirRad)),
       FIT_HEIGHT = Math.abs(PRINT_SIZE_X * Math.sin(printDirRad)) + Math.abs(PRINT_SIZE_Y * Math.cos(printDirRad)),
 
