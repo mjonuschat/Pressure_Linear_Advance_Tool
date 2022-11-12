@@ -51,7 +51,7 @@ function genGcode() {
       NULL_CENTER = $('#CENTER_NULL').prop('checked'),
       HEIGHT_FIRSTLAYER = parseFloat($('#LAYER_HEIGHT_FIRSTLAYER').val()),
       HEIGHT_LAYER = parseFloat($('#LAYER_HEIGHT').val()),
-      HEIGHT_PRINT = parseFloat(2),
+      HEIGHT_PRINT = parseFloat($('#PRINT_HEIGHT').val()),
       EXTRUDER_NAME = $('#EXTRUDER_NAME').val(),
       FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
       FAN_SPEED = parseFloat($('#FAN_SPEED').val()),
@@ -163,6 +163,7 @@ function genGcode() {
                   '; Retraction Distance = ' + RETRACT_DIST + ' mm\n' +
                   '; First Layer Height = ' + HEIGHT_FIRSTLAYER + ' mm\n' +
                   '; Layer Height = ' + HEIGHT_LAYER + ' mm\n' +
+                  '; Print Height = ' + HEIGHT_PRINT + ' mm\n' +
                   '; Extruder Name = ' + EXTRUDER_NAME + ' \n' +
                   '; First Layer Fan Speed = ' + FAN_SPEED_FIRSTLAYER + ' %\n' +
                   '; Fan Speed = ' + FAN_SPEED + ' %\n' +
@@ -667,6 +668,7 @@ function setLocalStorage() {
       NULL_CENTER = $('#CENTER_NULL').prop('checked'),
       HEIGHT_FIRSTLAYER = parseFloat($('#LAYER_HEIGHT_FIRSTLAYER').val()),
       HEIGHT_LAYER = parseFloat($('#LAYER_HEIGHT').val()),
+      HEIGHT_PRINT = parseFloat($('#PRINT_HEIGHT').val()),
       EXTRUDER_NAME = $('#EXTRUDER_NAME').val(),
       FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
       FAN_SPEED = parseFloat($('#FAN_SPEED').val()),
@@ -709,6 +711,7 @@ function setLocalStorage() {
     'NULL_CENTER': NULL_CENTER,
     'HEIGHT_FIRSTLAYER': HEIGHT_FIRSTLAYER,
     'HEIGHT_LAYER': HEIGHT_LAYER,
+    'HEIGHT_PRINT': HEIGHT_PRINT,
     'EXTRUDER_NAME': EXTRUDER_NAME,
     'FAN_SPEED_FIRSTLAYER' : FAN_SPEED_FIRSTLAYER,
     'FAN_SPEED' : FAN_SPEED,
@@ -1039,6 +1042,7 @@ $(window).load(() => {
     $('#CENTER_NULL').prop('checked', settings['NULL_CENTER']);
     $('#LAYER_HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
     $('#LAYER_HEIGHT').val(settings['HEIGHT_LAYER']);
+    $('#PRINT_HEIGHT').val(settings['HEIGHT_PRINT']);
     $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
     $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
     $('#FAN_SPEED').val(settings['FAN_SPEED']);
