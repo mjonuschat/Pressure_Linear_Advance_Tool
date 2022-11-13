@@ -74,7 +74,7 @@ function genGcode() {
   if (BED_SHAPE === 'Round') {
     BED_Y = BED_X;
   }
-  
+
   if (USE_MMS) {
     SPEED_FIRSTLAYER *= 60;
     SPEED_FILL *= 60;
@@ -151,38 +151,57 @@ function genGcode() {
   var pa_script =  '; ### Klipper Pressure Advance Calibration Pattern ###\n' +
                   '; -------------------------------------------\n' +
                   ';\n' +
-                  '; Printer: ' + PRINTER + '\n' +
-                  '; Filament: ' + FILAMENT + '\n' +
                   '; Created: ' + new Date() + '\n' +
+                  ( PRINTER ? '; Printer Name: ' + PRINTER + '\n' : '') + 
+                  ( FILAMENT ? '; Filament Name: ' + FILAMENT + '\n' : '') + 
                   ';\n' +
-                  '; Settings Printer:\n' +
-                  '; Filament Diameter = ' + FILAMENT_DIAMETER + ' mm\n' +
+                  '; Printer:\n' +
                   '; Nozzle Diameter = ' + NOZZLE_DIAMETER + ' mm\n' +
+                  '; Filament Diameter = ' + FILAMENT_DIAMETER + ' mm\n' +
+                  '; Extrusion Multiplier = ' + EXT_MULT + '\n' +
+                  '; Extruder Name = ' + EXTRUDER_NAME + ' \n' +
                   '; Start G-code = ' + START_GCODE.replace(/^/gm, '; ')+ '\n' +
                   '; End G-code = ' + END_GCODE.replace(/^/gm, '; ')+ '\n' +
-                  '; Retraction Distance = ' + RETRACT_DIST + ' mm\n' +
-                  '; First Layer Height = ' + HEIGHT_FIRSTLAYER + ' mm\n' +
-                  '; Layer Height = ' + HEIGHT_LAYER + ' mm\n' +
-                  '; Print Height = ' + HEIGHT_PRINT + ' mm\n' +
-                  '; Extruder Name = ' + EXTRUDER_NAME + ' \n' +
-                  '; First Layer Fan Speed = ' + FAN_SPEED_FIRSTLAYER + ' %\n' +
-                  '; Fan Speed = ' + FAN_SPEED + ' %\n' +
-                  //';\n' +
-                  //'; Settings Print Bed:\n' +
+                  ';\n' +
+                  '; Bed:\n' +
                   '; Bed Shape = ' + BED_SHAPE + '\n' +
                   (BED_SHAPE === 'Round' ? '; Bed Diameter = ' + BED_X + ' mm\n' : '; Bed Size X = ' + BED_X + ' mm\n') +
                   (BED_SHAPE === 'Round' ? '' : '; Bed Size Y = ' + BED_Y + ' mm\n') +
                   '; Origin Bed Center = ' + (NULL_CENTER ? 'true' : 'false') + '\n' +
+                  ';\n' +
+                  '; Retraction:\n' +
+                  '; Use FWRETRACT = ' + (USE_FWR ? 'true' : 'false') + '\n' +
+                  '; Retraction Distance = ' + RETRACT_DIST + ' mm\n' +
+                  '; Retract Speed = ' + (USE_MMS ? SPEED_RETRACT / 60 + "mm/s" : SPEED_RETRACT + ' mm/min') + '\n' +
+                  '; Unretract Speed = ' + (USE_MMS ? SPEED_UNRETRACT / 60 + "mm/s" : SPEED_UNRETRACT + ' mm/min') + '\n' +
+                  ';\n' +
+                  '; First Layer:\n' +
+                  '; First Layer Height = ' + HEIGHT_FIRSTLAYER + ' mm\n' +
+                  '; First Layer Printing Speed = ' + (USE_MMS ? SPEED_FIRSTLAYER / 60 + "mm/s" : SPEED_FIRSTLAYER + ' mm/min') + '\n' +
+                  '; First Layer Fan Speed = ' + FAN_SPEED_FIRSTLAYER + ' %\n' +
+                  ';\n' +
+                  '; Print Settings:\n' +
+                  '; Layer Height = ' + HEIGHT_LAYER + ' mm\n' +
+
+
+                  '; Total Print Height = ' + HEIGHT_PRINT + ' mm\n' +
+                  
+                  
+                  '; Fan Speed = ' + FAN_SPEED + ' %\n' +
                   //';\n' +
-                  //'; Settings Speed:\n' +
-                  '; First Layer Printing Speed = ' + SPEED_FIRSTLAYER + ' mm/min\n' +
-                  '; Perimeter Printing Speed = ' + SPEED_PERIMETER + ' mm/min\n' +
-                  '; Movement Speed = ' + SPEED_MOVE + ' mm/min\n' +
-                  '; Retract Speed = ' + SPEED_RETRACT + ' mm/min\n' +
-                  '; Unretract Speed = ' + SPEED_UNRETRACT + ' mm/min\n' +
+                  //'; Settings Print Bed:\n' +
+
+                  ';\n' +
+                  '; Speeds:\n' +
+                  '; Use mm/s = ' + USE_MMS + '\n' +
+                  
+                  '; Perimeter Printing Speed = ' + (USE_MMS ? SPEED_PERIMETER / 60 + "mm/s" : SPEED_PERIMETER + ' mm/min') + '\n' +
+                  '; Movement Speed = ' + (USE_MMS ? SPEED_MOVE / 60 + "mm/s" : SPEED_MOVE + ' mm/min') + '\n' +
+                  
+                  
                   '; Printing Acceleration = ' + ACCELERATION + ' mm/s^2\n' +
-                  //';\n' +
-                  //'; Settings Pattern:\n' +
+                  ';\n' +
+                  '; Pattern Settings:\n' +
                   '; Starting Value Factor = ' + PA_START + '\n' +
                   '; Ending Value Factor = ' + PA_END + '\n' +
                   '; Factor Stepping = ' + PA_STEP + '\n' +
@@ -190,16 +209,19 @@ function genGcode() {
                   '; Pattern Angle = ' + PATTERN_ANGLE + 'degrees \n' +
                   '; Perimeters = ' + PERIMETERS + ' mm\n' +
                   '; Side Length = ' + PATTERN_SIDE_LENGTH + ' mm\n' +
-                  '; Number Lines = ' + (USE_LINENO ? 'true' : 'false') + '\n' +
+                  //'; Number Lines = ' + (USE_LINENO ? 'true' : 'false') + '\n' +
                   '; Number of Patterns to Print = ' + NUM_PATTERNS + '\n' +
+                  ';\n' +
+                  '; Dimensions:\n' +
+
                   '; Print Size X = ' + FIT_WIDTH + ' mm\n' +
                   '; Print Size Y = ' + FIT_HEIGHT + ' mm\n' +
                   '; Print Rotation = ' + PRINT_DIR + ' degree\n' +
                   //';\n' +
                   //'; Settings Advance:\n' +
                   '; Line Width Ratio = ' + LINE_RATIO + '\n' +
-                  '; Use FWRETRACT = ' + (USE_FWR ? 'true' : 'false') + '\n' +
-                  '; Extrusion Multiplier = ' + EXT_MULT + '\n' +
+                  
+                  
                   //'; Prime Nozzle = ' + (USE_PRIME ? 'true' : 'false') + '\n' +
                   //'; Prime Extrusion Multiplier = ' + EXT_MULT_PRIME + '\n' +
                   //'; Prime Speed = ' + SPEED_PRIME + '\n' +
@@ -726,7 +748,7 @@ function setLocalStorage() {
   };
 
   const lsSettings = JSON.stringify(settings);
-  window.localStorage.setItem('LIN_SETTINGS', lsSettings);
+  window.localStorage.setItem('PA_SETTINGS', lsSettings);
 }
 
 // toggle between mm/s and mm/min speed settings
@@ -1008,7 +1030,7 @@ $(window).load(() => {
   });
 
   // Get localStorage data
-  var lsSettings = window.localStorage.getItem('LIN_SETTINGS');
+  var lsSettings = window.localStorage.getItem('PA_SETTINGS');
 
   if (lsSettings) {
     var settings = jQuery.parseJSON(lsSettings);
