@@ -18,7 +18,7 @@
       <div class="calibpat" id="calibpat">
         <h1>Pressure Advance Calibration Pattern</h1>
         <h2>WARNING: THIS IS STILL IN TESTING</h2>
-        <h2>Dimension check and some input validations are currently disabled</h2>
+        <h2>Dimension checks are currently disabled</h2>
         <div class="row alert alert-info custom-alert">
           <div class="col-lg-1 col-md-2 visible-lg-block visible-md-block custom-alert-icon"> <i
               class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
@@ -26,14 +26,17 @@
             <p><em>Caution!</em><br />
               If Start G-code is incorrect, it could damage your printer. Anything which could damage your printer could
               cause other damage. Be <em>absolutely sure</em> your Start G-code is correct before printing the generated
-              G-code.</p>
+              G-code</p>
           </div>
         </div>
         <p>Use this form to generate G-code that you can use to calibrate your pressure advance. Default values apply to
-          standard ABS with a 0.4mm nozzle.</p>
+          standard ABS with a 0.4mm nozzle</p>
         <p>Press the <strong>Generate G-code</strong> button followed by <strong>Download as file</strong> to save the
-          result.</p>
+          result</p>
         <table id="padv">
+          <!--
+          <col style="width: 25%;" />
+          -->
           <tbody>
             <tr>
               <td colspan="3" class="tdHead">
@@ -43,62 +46,31 @@
                 <h3>G-code</h3>
               </td>
             </tr>
-            <td colspan="3" class="tdSection">
-              <h4>General</h4>
-            </td>
-            <td rowspan="47" class="txtareatd"><textarea name="textarea" id="gcodetextarea"></textarea></td>
+            <tr>
+              <td colspan="3" class="tdSection">
+                <h4>General</h4>
+              </td>
+              <td rowspan="47" class="txtareatd"><textarea name="textarea" id="gcodetextarea"></textarea></td>
             </tr>
             <tr>
               <td><label for="MM_S">Use mm/s</label></td>
-              <td><input name="MM_S" type="checkbox" id="MM_S" checked="checked" /></td>
+              <td><input size="32" name="MM_S" type="checkbox" id="MM_S" checked="checked" /></td>
               <td>Use mm/s instead of mm/min</td>
             </tr>
             <tr>
               <td colspan="3" class="tdSection">
-                <h4>Notes <i>(Optional)</i></h4>
+                <h4>Notes (Optional)</h4>
               </td>
             </tr>
             <tr>
               <td><label for="PRINTER">Printer Name</label></td>
-              <td><input name="PRINTER" id="PRINTER" value="" /></td>
+              <td><input size="32" name="PRINTER" id="PRINTER" value="" /></td>
               <td>Optional. Puts printer name in a comment in the g-code</td>
             </tr>
             <tr>
               <td><label for="FILAMENT">Filament Name</label></td>
-              <td><input name="FILAMENT" id="FILAMENT" value="" /></td>
+              <td><input size="32" name="FILAMENT" id="FILAMENT" value="" /></td>
               <td>Optional. Puts filament name in a comment in the g-code</td>
-            </tr>
-            <tr>
-              <td colspan="3" class="tdSection">
-                <h4>Filament / Flow</h4>
-              </td>
-            </tr>
-            <tr>
-              <td><label for="NOZ_DIA">Nozzle Diameter</label></td>
-              <td><input name="NOZ_DIA" id="NOZ_DIA" step="any" value="0.4" onblur="validateInput()" /></td>
-              <td>Diameter of the nozzle (mm)</td>
-            </tr>
-            <tr>
-              <td><label for="FIL_DIA">Filament Diameter</label></td>
-              <td><input name="FIL_DIA" id="FIL_DIA" step="any" value="1.75" onblur="validateInput()" /></td>
-              <td>Diameter of the used filament (mm)</td>
-            </tr>
-            <tr>
-              <td><label for="EXTRUSION_MULT">Extrusion Multiplier</label></td>
-              <td><input name="EXTRUSION_MULT" id="EXTRUSION_MULT" step="any" value="0.94" onblur="validateInput()" />
-              </td>
-              <td>Usually around 0.94 for ABS</td>
-            </tr>
-            <tr>
-              <td><label for="LINE_RATIO">Line Width Ratio</label></td>
-              <td><input name="LINE_RATIO" id="LINE_RATIO" step="any" value="1.15" onblur="validateInput()" /></td>
-              <td>Line width as a ratio of nozzle diameter. Match your thickest perimeter from your slicer settings
-                (internal/external)</td>
-            </tr>
-            <tr>
-              <td><label for="EXTRUDER_NAME">Extruder Name</label></th>
-              <td><input name="EXTRUDER_NAME" id="EXTRUDER_NAME" value="extruder" /></td>
-              <td>Usually "extruder" if only one extruder. Allows choosing extruder if more than one</td>
             </tr>
             <tr>
               <td colspan="3" class="tdSection">
@@ -115,70 +87,125 @@
             </tr>
             <tr>
               <td><label for="BEDSIZE_X">Bed Size X</label></td>
-              <td><input name="BEDSIZE_X" id="BEDSIZE_X" step="any" value="200" onblur="validateInput()" /></td>
+              <td><input size="32" name="BEDSIZE_X" id="BEDSIZE_X" step="any" value="200" onblur="validateInput()" />
+              </td>
               <td id="shape">Size (mm) of the bed in X</td>
             </tr>
             <tr>
               <td><label for="BEDSIZE_Y">Bed Size Y</label></td>
-              <td><input name="BEDSIZE_Y" id="BEDSIZE_Y" step="any" value="200" onblur="validateInput()" /></td>
+              <td><input size="32" name="BEDSIZE_Y" id="BEDSIZE_Y" step="any" value="200" onblur="validateInput()" />
+              </td>
               <td>Size (mm) of the bed in Y</td>
             </tr>
             <tr>
               <td><label for="CENTER_NULL">Origin Bed Center</label></td>
-              <td><input name="CENTER_NULL" type="checkbox" id="CENTER_NULL" /></td>
+              <td><input size="32" name="CENTER_NULL" type="checkbox" id="CENTER_NULL" /></td>
               <td>Set the origin position (X0 Y0) to bed center instead of front-left corner</td>
             </tr>
             <tr>
+              <td><label for="EXTRUDER_NAME">Extruder Name</label></th>
+              <td><input size="32" name="EXTRUDER_NAME" id="EXTRUDER_NAME" value="extruder" /></td>
+              <td>Usually "extruder" if only one extruder. Allows choosing extruder if more than one</td>
+            </tr>
+            <tr>
               <td><label for="MOVE_SPEED">Travel Speed</label></td>
-              <td><input name="MOVE_SPEED" id="MOVE_SPEED" step="1" value="120" onblur="validateInput()" /></td>
+              <td><input size="32" name="MOVE_SPEED" id="MOVE_SPEED" step="1" value="120" onblur="validateInput()" />
+              </td>
               <td>Travel speed</td>
+            </tr>
+            <tr>
+              <td><label for="NOZ_DIA">Nozzle Diameter</label></td>
+              <td><input size="32" name="NOZ_DIA" id="NOZ_DIA" step="any" value="0.4" onblur="validateInput()" /></td>
+              <td>Diameter of the nozzle (mm)</td>
             </tr>
 
             <tr>
+              <td colspan="3" class="tdSection">
+                <h4>Start / End G-code</h4>
+              </td>
+            </tr>
+            <tr>
+              <td><label for="START_GCODE_TYPE">Start G-code Option</label></td>
+              <td colspan="1"><select style="width: 320px; height: 130px;" size="3" name="START_GCODE_TYPE"
+                  id="START_GCODE_TYPE" onchange="validateInput()">
+                  <option value="custom" selected="selected">Manual Start G-code</option>
+                  <option value="standalone">Standalone Start Macro</option>
+                  <option value="standalone_temp_passing">Standalone Start Macro + Temp Params</option>
+                </select></td>
+              <td id="START_GCODE_TYPE_Description">
+                <p>Use custom start g-code (below). The defaults have a lot of redundancies and are intended to be
+                  revised</p>
+                </p>You should generally be able to copy your usual start g-code from your slicer</p>
+              </td>
+            </tr>
+            <tr id="hotendTempRow">
+              <td><label for="HOTEND_TEMP">Hotend Temp</label></td>
+              <td><input size="32" name="HOTEND_TEMP" id="HOTEND_TEMP" step="1" value="200" onblur="validateInput()" />
+              </td>
+              <td>Hotend temperature in celcius</td>
+            </tr>
+            <tr id="bedTempRow">
+              <td><label for="BED_TEMP">Bed Temp</label></td>
+              <td><input size="32" name="BED_TEMP" id="BED_TEMP" step="1" value="60" onblur="validateInput()" /></td>
+              <td>Bed temperature in celcius</td>
+            </tr>
+            <tr>
               <td><label for="START_GCODE">Start G-code</label></td>
-              <td colspan=2><textarea name="START_GCODE" id="START_GCODE" rows="16" cols="100">
-M112                ; Refer to https://bit.ly/3q1dChR
+              <td colspan=2><textarea name="START_GCODE" id="START_GCODE" rows="14" cols="100">
 G28                 ; Home all axes
+;G32                ; Tramming macro (uncomment if used)
+;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
+;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
+G28 Z               ; Home Z
 G90                 ; Use absolute positioning
 G1 Z10 F100         ; Z raise
-M190 S60            ; !!! SET BED TEMPERATURE HERE !!! - Wait to heat bed
-M109 S200           ; !!! SET HOTEND TEMPERATURE HERE !!! - Wait to heat hotend
-G28 Z               ; Home z with hot nozzle (for accuracy w/ nozzle endstops)
-G32                 ; G32 macro if used. Home all axes, tram gantry
-;BED_MESH_CALIBRATE ; Create mesh
-PRINT_START         ; Start macro. Ensure name matches yours.
-
-;PRINT_START HOTEND=200 BED=60 
-; ^ If passing parameters to start macro. 
-;      Match param names to your own macro (e.g. some use EXTRUDER=X not HOTEND=X). 
-;      If passing temps, place here instead and remove temp commands above.
-</textarea>
-                <p>Some understanding of g-code is required.</p>
-                <p>Defaults have redundancies for safety in different setups.</p>
-                <p>Copy your normal start G-code from your slicer (and replace any dynamic variables with real values).
+;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
+M112                ; Reading comprehension check! (emergency stop)</textarea>
+                <p><strong>
+                    <font color="red">Thoroughly check this before printing. Incorrect start G-code can potentially
+                      cause crashes and
+                      damage.
+                  </strong></font>
                 </p>
-                <p><b>Incorrect start G-code can potentially cause crashes and damage.</b></p>
-
               </td>
             </tr>
             <tr>
               <td><label for="END_GCODE">End G-code</label></td>
               <td colspan=2><textarea name="END_GCODE" id="END_GCODE" rows="3" cols="100">
 PRINT_END
-</textarea>
+                        </textarea>
                 <p>Copy your normal end G-code from your slicer (and replace any dynamic variables with real values).
               </td>
             </tr>
-            <!--
             <tr>
               <td colspan="3" class="tdSection">
-                <h4>Bed</h4>
+                <h4>Filament / Flow</h4>
               </td>
             </tr>
-            -->
+
+            <tr>
+              <td><label for="FIL_DIA">Filament Diameter</label></td>
+              <td><input size="32" name="FIL_DIA" id="FIL_DIA" step="any" value="1.75" onblur="validateInput()" /></td>
+              <td>Diameter of the used filament (mm)</td>
+            </tr>
+            <tr>
+              <td><label for="EXTRUSION_MULT">Extrusion Multiplier</label></td>
+              <td><input size="32" name="EXTRUSION_MULT" id="EXTRUSION_MULT" step="any" value="0.94"
+                  onblur="validateInput()" />
+              </td>
+              <td>Usually around 0.94 for ABS</td>
+            </tr>
+            <tr>
+              <td><label for="LINE_RATIO">Line Width Ratio</label></td>
+              <td><input size="32" name="LINE_RATIO" id="LINE_RATIO" step="any" value="1.15" onblur="validateInput()" />
+              </td>
+              <td>Line width as a ratio of nozzle diameter. Match your thickest perimeter from your slicer settings
+                (internal/external)</td>
+            </tr>
+
             <tr>
               <td colspan="3" class="tdsection">
-                <h4>Retraction</h4>
+                <h4>Retraction / Z Hop</h4>
               </td>
             </tr>
             <tr>
@@ -188,28 +215,32 @@ PRINT_END
             </tr>
             <tr>
               <td><label for="RETRACTION">Retraction Distance</label></td>
-              <td><input name="RETRACTION" id="RETRACTION" step="any" value="0.5" onblur="validateInput()" /></td>
+              <td><input size="32" name="RETRACTION" id="RETRACTION" step="any" value="0.5" onblur="validateInput()" />
+              </td>
               <td>Retraction distance (mm)</td>
             </tr>
             <tr>
               <td><label for="RETRACT_SPEED">Retract Speed</label></td>
-              <td><input name="RETRACT_SPEED" id="RETRACT_SPEED" step="1" value="35" onblur="validateInput()" /></td>
+              <td><input size="32" name="RETRACT_SPEED" id="RETRACT_SPEED" step="1" value="35"
+                  onblur="validateInput()" /></td>
               <td>Retract Speed of the extruder</td>
             </tr>
             <tr>
               <td><label for="UNRETRACT_SPEED">Unretract Speed</label></td>
-              <td><input name="UNRETRACT_SPEED" id="UNRETRACT_SPEED" step="1" value="35" onblur="validateInput()" />
+              <td><input size="32" name="UNRETRACT_SPEED" id="UNRETRACT_SPEED" step="1" value="35"
+                  onblur="validateInput()" />
               </td>
               <td>Unretract Speed of the extruder</td>
             </tr>
             <tr>
-              <td><label for="ZHOP_ENABLE">Z Hop Enable</label></td>
-              <td><input type="checkbox" name="ZHOP_ENABLE" id="ZHOP_ENABLE" checked/></td>
+              <td><label for="ZHOP_ENABLE">Z Hop</label></td>
+              <td><input type="checkbox" name="ZHOP_ENABLE" id="ZHOP_ENABLE" checked /></td>
               <td>Enable Z hop on retracts</td>
             </tr>
             <tr>
               <td><label for="ZHOP_HEIGHT">Z Hop Height</label></td>
-              <td><input name="ZHOP_HEIGHT" id="ZHOP_HEIGHT" step="any" value="0.2" onblur="validateInput()" />
+              <td><input size="32" name="ZHOP_HEIGHT" id="ZHOP_HEIGHT" step="any" value="0.2"
+                  onblur="validateInput()" />
               </td>
               <td>Z hop height</td>
             </tr>
@@ -218,21 +249,23 @@ PRINT_END
                 <h4>First Layer Settings</h4>
               </td>
             </tr>
-            </tr>
             <tr>
-              <td><label for="LAYER_HEIGHT_FIRSTLAYER">Layer Height (First Layer)</label></td>
-              <td><input name="LAYER_HEIGHT_FIRSTLAYER" id="LAYER_HEIGHT_FIRSTLAYER" step="any" value="0.25" onblur="validateInput()" /></td>
+              <td><label for="LAYER_HEIGHT_FIRSTLAYER">FL Height</label></td>
+              <td><input size="32" name="LAYER_HEIGHT_FIRSTLAYER" id="LAYER_HEIGHT_FIRSTLAYER" step="any" value="0.25"
+                  onblur="validateInput()" /></td>
               <td>First Layer Height (mm)</td>
             </tr>
             <tr>
-              <td><label for="FIRSTLAYER_SPEED">Print Speed (First Layer)</label></td>
-              <td><input name="FIRSTLAYER_SPEED" id="FIRSTLAYER_SPEED" step="1" value="30" onblur="validateInput()" />
+              <td><label for="FIRSTLAYER_SPEED">FL Print Speed</label></td>
+              <td><input size="32" name="FIRSTLAYER_SPEED" id="FIRSTLAYER_SPEED" step="1" value="30"
+                  onblur="validateInput()" />
               </td>
               <td>Speed for first layer</td>
             </tr>
             <tr>
-              <td><label for="FAN_SPEED_FIRSTLAYER">Fan % (First Layer)</label></td>
-              <td><input name="FAN_SPEED_FIRSTLAYER" id="FAN_SPEED_FIRSTLAYER" step="1" value="0" onblur="validateInput()" /></td>
+              <td><label for="FAN_SPEED_FIRSTLAYER">FL Fan %</label></td>
+              <td><input size="32" name="FAN_SPEED_FIRSTLAYER" id="FAN_SPEED_FIRSTLAYER" step="1" value="0"
+                  onblur="validateInput()" /></td>
               <td>First Layer Fan Speed (%)</td>
             </tr>
             <tr>
@@ -242,61 +275,73 @@ PRINT_END
             </tr>
             <tr>
               <td><label for="LAYER_HEIGHT">Layer Height</label></td>
-              <td><input name="LAYER_HEIGHT" id="LAYER_HEIGHT" step="any" value="0.2" onblur="validateInput()" /></td>
+              <td><input size="32" name="LAYER_HEIGHT" id="LAYER_HEIGHT" step="any" value="0.2"
+                  onblur="validateInput()" /></td>
               <td>Layer Height (mm)</td>
             </tr>
 
 
             <tr>
               <td><label for="PERIMETER_SPEED">Print Speed</label></td>
-              <td><input name="PERIMETER_SPEED" id="PERIMETER_SPEED" step="1" value="120" onblur="validateInput()" />
+              <td><input size="32" name="PERIMETER_SPEED" id="PERIMETER_SPEED" step="1" value="120"
+                  onblur="validateInput()" />
               </td>
-              <td>Speed for printing the pattern. Use your fastest perimeter speed from your slicer settings (internal
-                or external)</td>
+              <td>
+                <p>Pattern print speed</p>
+                <p>Use your fastest perimeter speed from your slicer settings <strong>if they are &gt; 100mm/s</strong>
+                  (6000mm/min)</p>
+                <p>Otherwise, use 100-120mm/s</p>
+              </td>
             </tr>
             <tr>
-            <tr>
               <td><label for="PRINT_ACCL">Acceleration</label></td>
-              <td><input name="PRINT_ACCL" id="PRINT_ACCL" step="1" value="2000" onblur="validateInput()" /></td>
-              <td>Printing acceleration (mm/s<sup>2</sup>). Use your fastest perimeter acceleration from your slicer
-                settings (internal or external)</td>
+              <td><input size="32" name="PRINT_ACCL" id="PRINT_ACCL" step="1" value="2000" onblur="validateInput()" />
+              </td>
+              <td>
+                <p>Printing acceleration (mm/s<sup>2</sup>). Use your fastest perimeter acceleration from your slicer
+                  settings</p>
+              </td>
             </tr>
 
             <tr>
               <td><label for="FAN_SPEED">Fan %</label></td>
-              <td><input name="FAN_SPEED" id="FAN_SPEED" step="1" value="50" onblur="validateInput()" /></td>
+              <td><input size="32" name="FAN_SPEED" id="FAN_SPEED" step="1" value="50" onblur="validateInput()" /></td>
               <td>Fan Speed (%)</td>
             </tr>
 
             <tr>
               <td colspan="3" class="tdsection">
-                <h4>Pattern Settings</h4>
+                <h4>Pattern Settings</h4> <i>(Defaults are usually fine)</i>
               </td>
             </tr>
             <tr>
               <td><label for="PRINT_HEIGHT">Print Height</label></td>
-              <td><input name="PRINT_HEIGHT" id="PRINT_HEIGHT" step="any" value="1" onblur="validateInput()" /></td>
+              <td><input size="32" name="PRINT_HEIGHT" id="PRINT_HEIGHT" step="any" value="1"
+                  onblur="validateInput()" /></td>
               <td>How tall to print the pattern (mm)</td>
             </tr>
             <tr>
               <td><label for="PERIMETERS">Perimeter Count</label></td>
-              <td><input name="PERIMETERS" id="PERIMETERS" step="1" value="3" onblur="validateInput()" /></td>
+              <td><input size="32" name="PERIMETERS" id="PERIMETERS" step="1" value="3" onblur="validateInput()" /></td>
               <td>Perimeter count. This will slightly impact print size</td>
             </tr>
             <tr>
               <td><label for="PATTERN_SIDE_LENGTH">Side Length</label></td>
-              <td><input name="PATTERN_SIDE_LENGTH" id="PATTERN_SIDE_LENGTH" step="1" value="30" onblur="validateInput()" /></td>
+              <td><input size="32" name="PATTERN_SIDE_LENGTH" id="PATTERN_SIDE_LENGTH" step="1" value="30"
+                  onblur="validateInput()" /></td>
               <td>Length of the pattern sides (mm)</td>
             </tr>
             <tr>
               <td><label for="PATTERN_SPACING">Spacing</label></td>
-              <td><input name="PATTERN_SPACING" id="PATTERN_SPACING" step="any" value="5" onblur="validateInput()" />
+              <td><input size="32" name="PATTERN_SPACING" id="PATTERN_SPACING" step="any" value="5"
+                  onblur="validateInput()" />
               </td>
               <td>Horizontal distance between the corner patterns. This will impact print size</td>
             </tr>
             <tr>
               <td><label for="PATTERN_ANGLE">Corner Angle</label></td>
-              <td><input name="PATTERN_ANGLE" id="PATTERN_ANGLE" step="any" value="90" onblur="validateInput()" /></td>
+              <td><input size="32" name="PATTERN_ANGLE" id="PATTERN_ANGLE" step="any" value="90"
+                  onblur="validateInput()" /></td>
               <td>Angle of the test pattern corners.</td>
             </tr>
 
@@ -315,34 +360,32 @@ PRINT_END
               <td>Rotates the print in 45° steps</td>
             </tr>
             <tr>
-              <td colspan="3" class="tdsection">
-                <h4>Pattern PA Stepping</h4>
+              <td colspan="3" class="tdSection">
+                <h4>Pressure Advance Stepping</h4> <i>(Start with 0-0.1 for direct drive or 0-1 for bowden)</i>
               </td>
             </tr>
             <tr>
               <!--TODO: Smooth time toggle-->
               <td><label for="PA_START">PA Start Value</label></td>
-              <td><input name="PA_START" id="PA_START" step="any" value="0" onblur="validateInput()" /></td>
+              <td><input size="32" name="PA_START" id="PA_START" step="any" value="0" onblur="validateInput()" /></td>
               <td id="start_factor">Starting value for pressure advance</td>
             </tr>
             <tr>
               <td><label for="PA_END">PA End Value</label></td>
-              <td><input name="PA_END" id="PA_END" step="any" value="0.1" onblur="validateInput()" /></td>
+              <td><input size="32" name="PA_END" id="PA_END" step="any" value="0.1" onblur="validateInput()" /></td>
               <td id="end_factor">Ending value of pressure advance</td>
             </tr>
             <tr>
               <td><label for="PA_STEP">PA Increment</label></td>
-              <td><input name="PA_STEP" id="PA_STEP" step="any" value="0.01" onblur="validateInput()" /></td>
+              <td><input size="32" name="PA_STEP" id="PA_STEP" step="any" value="0.01" onblur="validateInput()" /></td>
               <td id="step_factor">Stepping of the pressure advance value in the test pattern. Needs to cleanly divide
                 into pressure
                 advance range (End - Start)</td>
             </tr>
-
-
             <!--
           <tr>
             <td><label for="LINE_NO">Line Numbering</label></td>
-            <td><input name="LINE_NO" type="checkbox" id="LINE_NO" checked="checked" /></td>
+            <td><input size="32" name="LINE_NO" type="checkbox" id="LINE_NO" checked="checked" /></td>
             <td>Prints the pressure advance value beside every second test line</td>
           </tr>
           <tr>
@@ -352,77 +395,42 @@ PRINT_END
             <!--
           <tr>
             <td><label for="PRIME">Prime Line</label></td>
-            <td><input name="PRIME" type="checkbox" id="PRIME" checked="checked" /></td>
+            <td><input size="32" name="PRIME" type="checkbox" id="PRIME" checked="checked" /></td>
             <td>Print a prime line before starting the test pattern (Disable if your start G-code performs a prime line already)</td>
           </tr>
           <tr>
             <td><label for="PRIME_EXT">Prime Line Extrusion Multiplier</label></td>
-            <td><input name="PRIME_EXT" id="PRIME_EXT" step="0.1" value="2.5" onblur="validateInput()" /></td>
+            <td><input size="32" name="PRIME_EXT" id="PRIME_EXT" step="0.1" value="2.5" onblur="validateInput()" /></td>
             <td>The default of 2.5 results in roughly 1mm of filament for 10mm line length</td>
           </tr>
           <tr>
             <td height="24"><label for="PRIME_SPEED">Prime Line Print Speed</label></td>
-            <td><input name="PRIME_SPEED" id="PRIME_SPEED" step="any" value="30" onblur="validateInput()" /></td>
+            <td><input size="32" name="PRIME_SPEED" id="PRIME_SPEED" step="any" value="30" onblur="validateInput()" /></td>
             <td>Speed of the prime move</td>
-          </tr>
-          <tr>
-            <td><label for="DWELL_PRIME">Dwell Time</label></td>
-            <td><input name="DWELL_PRIME" id="DWELL_PRIME" step="0.1" value="0" onblur="validateInput()" /></td>
-            <td>Inserts a pause of x seconds before starting the test pattern to bleed off any residual nozzle pressure</td>
           </tr>
           -->
             <tr class="calibpat2">
               <td><label for="FILENAME">Filename</label></td>
-              <td colspan="2"><input name="FILENAME" id="FILENAME" value="pa_pattern" />
-                <input name="button" type="button" id="button" onclick="genGcode()" value="Generate G-code" />
-                <input name="button3" type="button" id="button3" onclick="setLocalStorage()" value="Save as default"
-                  title="Save settings in a cookie." />
+              <td colspan="2"><input size="32" name="FILENAME" id="FILENAME" value="pa_pattern" />
+                <input size="32" name="button" type="button" id="button" onclick="genGcode()" value="Generate G-code" />
+                <input size="32" name="button3" type="button" id="button3" onclick="setLocalStorage()"
+                  value="Save Settings to Browser" title="Save settings in a cookie." />
+                <input size="32" name="button3" type="button" id="button3"
+                  onclick="window.localStorage.clear('PA_SETTINGS');location.reload();" value="Restore Defaults"
+                  title="Remove settings cookie and reload page." />
                 <p id="warning1" style="display: none;">warning</p>
                 <p id="warning2" style="display: none;">warning</p>
                 <p id="warning3" style="display: none;">warning</p>
               </td>
               <td>
                 <p>
-                  <input name="button2" type="button" id="button2" onclick="saveTextAsFile()"
+                  <input size="32" name="button2" type="button" id="button2" onclick="saveTextAsFile()"
                     value="Download as file" />
                 </p>
               </td>
             </tr>
           </tbody>
         </table>
-        <!--
-        <h3>Notes on the settings:</h3>
-        <ul>
-          <li><strong>Prime Nozzle</strong> should only be enabled if your <strong>PRINT_START</strong> macro does not
-            prime the nozzle already.</li>
-          <li><strong>Fast Printing Speed</strong> and <strong>Slow Printing Speed</strong> should be significantly
-            different or the pressure advance effect will barely be visible.</li>
-          <li>For round beds the option <strong>Origin Bed Center</strong> is automatically activated.</li>
-          <li>The overall width (X-direction) of the print depends on the <strong>Fast Speed Length</strong> and
-            <strong>Slow Speed Length</strong> settings plus 5mm for the priming line. The length (Y-direction) depends
-            on the pressure advance settings and <strong>Line Spacing</strong>.
-          </li>
-          <li><strong>Start</strong> and <strong>End Value</strong> for pressure advance determines the range that the
-            test pattern will cover. For example a <strong>Start Value</strong> of 50 and an <strong>End Value</strong>
-            of 150 will test a range of 100.</li>
-          <li>The <strong>Pressure Advance Stepping</strong> determines how many test lines are printed for the above
-            range. For example, a Stepping of 10 and a range of 100 results in 10 test lines. A stepping of 3 would not
-            work in this example as 100 cannot be exactly divided by 3. The script will throw an error message if an
-            exact division is not possible. In this case either the range or the stepping needs to be adjusted.</li>
-          <li>The <strong>Alternate Pattern</strong> has a second line of <strong>Fast Printing Speed</strong> to test 0
-            to <strong>Fast Printing Speed</strong> and back to 0 conditions. Best used with an increased <strong>Test
-              Line Spacing</strong> and reduced pressure advance range.</li>
-          <li>The proper Pressure Advance depends on the filament, nozzle size, nozzle geometry and printing
-            temperature. If any of these values change, the calibration might need to be repeated.</li>
-        </ul>
-        <h2>Screenshots</h2>
-        <p>The following screen-shots show some examples of the test patterns</p>
-        <ul>
-          <li>Blue Lines are Slow Printing Speeds</li>
-          <li>Red Lines are Fast Printing Speed</li>
-          <li>Light blue lines are movements</li>
-        </ul>
-                -->
         <div class="row">
           <div class="col-sm-12">
             <h3>Example</h3>

@@ -37,13 +37,16 @@ function genGcode() {
   var PRINTER = $('#PRINTER').val(),
       FILAMENT = $('#FILAMENT').val(),
       FILENAME = $('#FILENAME').val(),
+      HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val()),
+      BED_TEMP = parseInt($('#BED_TEMP').val()),
       FILAMENT_DIAMETER = parseFloat($('#FIL_DIA').val()),
       NOZZLE_DIAMETER = parseFloat($('#NOZ_DIA').val()),
       LINE_RATIO = parseFloat($('#LINE_RATIO').val()),
+      START_GCODE_TYPE = $('#START_GCODE_TYPE').val(),
       START_GCODE = $('#START_GCODE').val(),
       END_GCODE = $('#END_GCODE').val(),
       SPEED_FIRSTLAYER = parseInt($('#FIRSTLAYER_SPEED').val()),
-      SPEED_FILL = parseInt($('#FILL_SPEED').val()),
+      //SPEED_FILL = parseInt($('#FILL_SPEED').val()),
       SPEED_PERIMETER = parseInt($('#PERIMETER_SPEED').val()),
       SPEED_MOVE = parseInt($('#MOVE_SPEED').val()),
       SPEED_RETRACT = parseInt($('#RETRACT_SPEED').val()),
@@ -77,7 +80,6 @@ function genGcode() {
       //SPEED_PRIME = parseInt($('#PRIME_SPEED').val()),
       //USE_LINENO = $('#LINE_NO').prop('checked'),
       PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val());
-      
 
   if (BED_SHAPE === 'Round') {
     BED_Y = BED_X;
@@ -85,7 +87,7 @@ function genGcode() {
 
   if (USE_MMS) {
     SPEED_FIRSTLAYER *= 60;
-    SPEED_FILL *= 60;
+    //SEED_FILL *= 60;
     SPEED_PERIMETER *= 60;
     SPEED_MOVE *= 60;
     //SPEED_PRIME *= 60;
@@ -93,8 +95,7 @@ function genGcode() {
     SPEED_UNRETRACT *= 60;
   }
 
-  var A2D = ACCELERATION / 2,
-      RANGE_PA = PA_END - PA_START,
+  var RANGE_PA = PA_END - PA_START,
       NUM_PATTERNS = RANGE_PA / PA_STEP + 1,
       NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1),
       LINE_WIDTH = NOZZLE_DIAMETER * LINE_RATIO,
@@ -127,9 +128,8 @@ function genGcode() {
       txtArea = document.getElementById('gcodetextarea');
 
   var basicSettings = {
-    'slow': SPEED_FIRSTLAYER,
-    'fast': SPEED_PERIMETER,
-    'move': SPEED_MOVE,
+    'firstLayerSpeed': SPEED_FIRSTLAYER,
+    'moveSpeed': SPEED_MOVE,
     'centerX': CENTER_X,
     'centerY': CENTER_Y,
     'printDir': PRINT_DIR,
@@ -146,16 +146,6 @@ function genGcode() {
     'zhopHeight' : ZHOP_HEIGHT
   };
 
-  var patSettings = {
-    'sideLength': PATTERN_SIDE_LENGTH,
-    'paStart' : PA_START,
-    'paEnd' : PA_END,
-    'paStep' : PA_STEP,
-    'lineSpacing' : PATTERN_SPACING,
-    'patternAngle' : PATTERN_ANGLE,
-    'perimeters' : PERIMETERS
-  };
-
   // Start G-code for pattern
   var pa_script =  '; ### Klipper Pressure Advance Calibration Pattern ###\n' +
                   '; -------------------------------------------\n' +
@@ -169,6 +159,7 @@ function genGcode() {
                   '; Filament Diameter = ' + FILAMENT_DIAMETER + ' mm\n' +
                   '; Extrusion Multiplier = ' + EXT_MULT + '\n' +
                   '; Extruder Name = ' + EXTRUDER_NAME + ' \n' +
+                  '; Start G-code Type = ' + START_GCODE_TYPE + ' \n' +
                   '; Start G-code = ' + START_GCODE.replace(/^/gm, '; ')+ '\n' +
                   '; End G-code = ' + END_GCODE.replace(/^/gm, '; ')+ '\n' +
                   ';\n' +
@@ -193,11 +184,7 @@ function genGcode() {
                   ';\n' +
                   '; Print Settings:\n' +
                   '; Layer Height = ' + HEIGHT_LAYER + ' mm\n' +
-
-
                   '; Total Print Height = ' + HEIGHT_PRINT + ' mm\n' +
-                  
-                  
                   '; Fan Speed = ' + FAN_SPEED + ' %\n' +
                   //';\n' +
                   //'; Settings Print Bed:\n' +
@@ -231,8 +218,6 @@ function genGcode() {
                   //';\n' +
                   //'; Settings Advance:\n' +
                   '; Line Width Ratio = ' + LINE_RATIO + '\n' +
-                  
-                  
                   //'; Prime Nozzle = ' + (USE_PRIME ? 'true' : 'false') + '\n' +
                   //'; Prime Extrusion Multiplier = ' + EXT_MULT_PRIME + '\n' +
                   //'; Prime Speed = ' + SPEED_PRIME + '\n' +
@@ -240,11 +225,13 @@ function genGcode() {
                   '; prepare printing\n' +
                   ';\n' +
                   'ACTIVATE_EXTRUDER EXTRUDER=' + EXTRUDER_NAME + '\n' +
-                  START_GCODE + '\n' +
+                  (START_GCODE_TYPE != 'standalone_temp_passing' ? 'M190 S' + BED_TEMP + ' ; set & wait for bed temp\n' : '') +
+                  (START_GCODE_TYPE != 'standalone_temp_passing' ? 'M109 S' + HOTEND_TEMP + ' ; set & wait for hotend temp\n' : '') +
+                   START_GCODE + '\n' +
                   'G21 ; Millimeter units\n' +
                   'G90 ; Absolute XYZ\n' +
                   'M83 ; Relative E\n' +
-                  'SET_VELOCITY_LIMIT ACCEL=' + ACCELERATION + ' ACCEL_TO_DECEL=' + A2D + ' ; Acceleration\n' +
+                  'SET_VELOCITY_LIMIT ACCEL=' + ACCELERATION + '\n' +
                   'G92 E0 ; Reset extruder distance\n' +
                   'M106 S' + Math.round(FAN_SPEED_FIRSTLAYER * 2.55) + '\n';
 
@@ -269,8 +256,8 @@ function genGcode() {
         TO_X += Math.round10((Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH), XY_round);
         TO_Y += Math.round10((Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH), XY_round);
 
-        pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z);  //unretract
-        pa_script += createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
+        pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z) +  //unretract
+                     createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
 
         TO_X -= Math.round10(Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH, XY_round);
         TO_Y += Math.round10(Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH, XY_round);
@@ -297,10 +284,9 @@ function genGcode() {
     TO_Z += Math.round10(HEIGHT_LAYER, XY_round);
     CUR_Z = TO_Z;
 
-    pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z);  //unretract
-    
-    pa_script += 'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n' + 
-                  moveTo(TO_X, TO_Y, basicSettings);
+    pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z) +  //unretract
+                 'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n' + 
+                 moveTo(TO_X, TO_Y, basicSettings);
   }
 
 /*
@@ -464,7 +450,7 @@ function createLine(coordX, coordY, length, basicSettings, optional) {
 
   //handle optional function arguements passed as object
   var defaults = {
-    speed: basicSettings['slow'],
+    speed: basicSettings['firstLayerSpeed'],
     extMult: basicSettings['extMult'],
     extRatio: basicSettings['extRatio'],
     comment: ' ; print line\n'
@@ -486,7 +472,7 @@ function moveTo(coordX, coordY, basicSettings) {
 
   gcode += 'G0 X' + Math.round10(rotateX(coordX, basicSettings['centerX'], coordY, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
              ' Y' + Math.round10(rotateY(coordX, basicSettings['centerX'], coordY, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' F' + basicSettings['move'] + ' ; move\n';
+             ' F' + basicSettings['moveSpeed'] + ' ; move\n';
   return gcode;
 }
 
@@ -516,24 +502,24 @@ function doEfeed(dir, basicSettings, type, currentZ) {
   } else {
     switch (true) {
       case (type === 'STD' && dir === '+' && RETRACTED === true):
-        gcode += 'G1 Z' + currentZ + ' F' + basicSettings['move'] + ' ; z hop return\n' +
+        gcode += 'G1 Z' + currentZ + ' F' + basicSettings['moveSpeed'] + ' ; z hop return\n' +
                  'G1 E' + basicSettings['retractDist'] + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
         RETRACTED = false;
         break;
       case (type === 'STD' && dir === '-' && RETRACTED === false):
         gcode += 'G1 E-' + basicSettings['retractDist'] + ' F' + basicSettings['retractSpeed'] + ' ; retract\n' +
-                 'G1 Z' + (currentZ + basicSettings['zhopHeight']) + ' F' + basicSettings['move'] + ' ; z hop\n';
+                 'G1 Z' + (currentZ + basicSettings['zhopHeight']) + ' F' + basicSettings['moveSpeed'] + ' ; z hop\n';
                  
         RETRACTED = true;
         break;
       case (type === 'FWR' && dir === '+' && RETRACTED === true):
-        gcode += 'G1 Z' + currentZ + ' F' + basicSettings['move'] + ' ; z hop return\n' +
+        gcode += 'G1 Z' + currentZ + ' F' + basicSettings['moveSpeed'] + ' ; z hop return\n' +
                  'G11 ; un-retract\n';
         RETRACTED = false;
         break;
       case (type === 'FWR' && dir === '-' && RETRACTED === false):
         gcode += 'G10 ; retract\n' +
-                 'G1 Z' + (currentZ + basicSettings['zhopHeight']) + ' F' + basicSettings['move'] + ' ; z hop\n';
+                 'G1 Z' + (currentZ + basicSettings['zhopHeight']) + ' F' + basicSettings['moveSpeed'] + ' ; z hop\n';
         RETRACTED = true;
         break;
     }
@@ -569,12 +555,12 @@ function createGlyphs(startX, startY, basicSettings, value) {
   for (var i = 0, len = sNumber.length; i < len; i += 1) {
     for (var key in glyphSeg[sNumber.charAt(i)]) {
       if(glyphSeg[sNumber.charAt(i)].hasOwnProperty(key)) {
-        var up = createLine(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) + glyphSegHeight, glyphSegHeight, basicSettings, {'speed': basicSettings['slow'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            down = createLine(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) - glyphSegHeight, glyphSegHeight, basicSettings, {'speed': basicSettings['slow'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            right = createLine(startX + (xCount * glyphSegHeight) + glyphSegHeight, startY + (yCount * glyphSegHeight), glyphSegHeight, basicSettings, {'speed': basicSettings['slow'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            left = createLine(startX + (xCount * glyphSegHeight) - glyphSegHeight, startY + (yCount * glyphSegHeight), glyphSegHeight, basicSettings, {'speed': basicSettings['slow'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
+        var up = createLine(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) + glyphSegHeight, glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
+            down = createLine(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) - glyphSegHeight, glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
+            right = createLine(startX + (xCount * glyphSegHeight) + glyphSegHeight, startY + (yCount * glyphSegHeight), glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
+            left = createLine(startX + (xCount * glyphSegHeight) - glyphSegHeight, startY + (yCount * glyphSegHeight), glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
             mup = moveTo(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) + glyphSegHeight, basicSettings),
-            dot = createLine(startX, startY + glyphSegHeight2, glyphSegHeight2, basicSettings, {speed: basicSettings['slow'], comment: ' ; dot\n'});
+            dot = createLine(startX, startY + glyphSegHeight2, glyphSegHeight2, basicSettings, {speed: basicSettings['firstLayerSpeed'], comment: ' ; dot\n'});
         if (glyphSeg[sNumber.charAt(i)][key] === 'up') {
           glyphString += up;
           yCount += 1;
@@ -612,18 +598,6 @@ function createGlyphs(startX, startY, basicSettings, value) {
 }
 */
 
-/*
-// gcode for small z hop
-function zHop(hop, basicSettings) {
-  var gcode = '';
-
-  gcode += 'G1 Z' + Math.round10(hop, Z_round) + ' F' + basicSettings['slow'] + ' ; zHop\n';
-
-  return gcode;
-}
-*/
-
-
 // rotate x around a defined center xm, ym
 function rotateX(x, xm, y, ym, a) {
   a = a * Math.PI / 180; // Convert to radians
@@ -653,18 +627,23 @@ function rotateY(x, xm, y, ym, a) {
 
 // save current settings as localStorage object
 function setLocalStorage() {
-  var FILAMENT_DIAMETER = parseFloat($('#FIL_DIA').val()),
+var   HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val()),
+      BED_TEMP = parseInt($('#BED_TEMP').val()),
+      START_GCODE_TYPE = $('#START_GCODE_TYPE').val(),
+      FILAMENT_DIAMETER = parseFloat($('#FIL_DIA').val()),
       NOZZLE_DIAMETER = parseFloat($('#NOZ_DIA').val()),
       LINE_RATIO = parseFloat($('#LINE_RATIO').val()),
       START_GCODE = $('#START_GCODE').val(),
       END_GCODE = $('#END_GCODE').val(),
       SPEED_FIRSTLAYER = parseInt($('#FIRSTLAYER_SPEED').val()),
-      SPEED_FILL = parseInt($('#FILL_SPEED').val()),
+      //SPEED_FILL = parseInt($('#FILL_SPEED').val()),
       SPEED_PERIMETER = parseInt($('#PERIMETER_SPEED').val()),
       SPEED_MOVE = parseInt($('#MOVE_SPEED').val()),
       SPEED_RETRACT = parseInt($('#RETRACT_SPEED').val()),
       ACCELERATION = parseInt($('#PRINT_ACCL').val()),
       RETRACT_DIST = parseFloat($('#RETRACTION').val()),
+      ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked'),
+      ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val()),
       BED_SHAPE = $('#SHAPE_BED').val(),
       BED_X = parseInt($('#BEDSIZE_X').val()),
       BED_Y = parseInt($('#BEDSIZE_Y').val()),
@@ -684,18 +663,21 @@ function setLocalStorage() {
       PATTERN_ANGLE = parseFloat($('#PATTERN_ANGLE').val()),
       PERIMETERS = parseFloat($('#PERIMETERS').val()),
       //USE_FRAME = $('#FRAME').prop('checked'),
-      USE_PRIME = $('#PRIME').prop('checked'),
-      EXT_MULT_PRIME = parseFloat($('#PRIME_EXT').val()),
-      SPEED_PRIME = parseFloat($('#PRIME_SPEED').val()),
+      //USE_PRIME = $('#PRIME').prop('checked'),
+      //EXT_MULT_PRIME = parseFloat($('#PRIME_EXT').val()),
+      //SPEED_PRIME = parseFloat($('#PRIME_SPEED').val()),
       PATTERN_SIDE_LENGTH = parseFloat($('#PATTERN_SIDE_LENGTH').val()),
       USE_FWR = $('#USE_FWR').prop('checked'),
-      USE_MMS = $('#MM_S').prop('checked'),
-      USE_LINENO = $('#LINE_NO').prop('checked');
+      USE_MMS = $('#MM_S').prop('checked');
+      //USE_LINENO = $('#LINE_NO').prop('checked');
 
   var settings = {
+    'HOTEND_TEMP': HOTEND_TEMP,
+    'BED_TEMP': BED_TEMP,
     'FILAMENT_DIAMETER': FILAMENT_DIAMETER,
     'NOZZLE_DIAMETER': NOZZLE_DIAMETER,
     'LINE_RATIO': LINE_RATIO,
+    'START_GCODE_TYPE': START_GCODE_TYPE,
     'START_GCODE': START_GCODE,
     'END_GCODE': END_GCODE,
     'SPEED_FIRSTLAYER': SPEED_FIRSTLAYER,
@@ -704,6 +686,8 @@ function setLocalStorage() {
     'SPEED_RETRACT': SPEED_RETRACT,
     'ACCELERATION': ACCELERATION,
     'RETRACT_DIST': RETRACT_DIST,
+    'ZHOP_ENABLE': ZHOP_ENABLE,
+    'ZHOP_HEIGHT': ZHOP_HEIGHT,
     'BED_SHAPE': BED_SHAPE,
     'BED_X': BED_X,
     'BED_Y': BED_Y,
@@ -723,13 +707,13 @@ function setLocalStorage() {
     'PATTERN_ANGLE': PATTERN_ANGLE,
     'PERIMETERS': PERIMETERS,
     //'USE_FRAME': USE_FRAME,
-    'USE_PRIME': USE_PRIME,
-    'EXT_MULT_PRIME': EXT_MULT_PRIME,
-    'SPEED_PRIME' : SPEED_PRIME,
+    //'USE_PRIME': USE_PRIME,
+    //'EXT_MULT_PRIME': EXT_MULT_PRIME,
+    //'SPEED_PRIME' : SPEED_PRIME,
     'PATTERN_SIDE_LENGTH': PATTERN_SIDE_LENGTH,
     'USE_FWR': USE_FWR,
-    'USE_MMS': USE_MMS,
-    'USE_LINENO': USE_LINENO
+    'USE_MMS': USE_MMS
+    //'USE_LINENO': USE_LINENO
   };
 
   const lsSettings = JSON.stringify(settings);
@@ -809,6 +793,142 @@ function togglePrime() {
 }
 */
 
+/*
+function toggleStartMacro() {
+  if ($('#NO_HEAT_GCODES').is(':checked')) {
+    $('#START_MACRO').prop('disabled', true);
+    $('label[for=START_MACRO]').css({opacity: 0.5});
+    $('#START_MACRO_VAR').prop('disabled', false);
+    $('label[for=START_MACRO_VAR]').css({opacity: 1.0});
+  } else {
+    $('#START_MACRO').prop('disabled', false);
+    $('label[for=START_MACRO]').css({opacity: 1.0});
+    $('#START_MACRO_VAR').prop('disabled', true);
+    $('label[for=START_MACRO_VAR]').css({opacity: 0.5});
+  }
+
+  if (!$('#USE_START_MACRO').is(':checked')) {
+    $('#START_MACRO').prop('disabled', true);
+    $('label[for=START_MACRO]').css({opacity: 0.5});
+    $('#NO_HEAT_GCODES').prop('disabled', true);
+    $('label[for=NO_HEAT_GCODES]').css({opacity: 0.5});
+    $('#START_MACRO_VAR').prop('disabled', true);
+    $('label[for=START_MACRO_VAR]').css({opacity: 0.5});
+    $('#START_GCODE').prop('disabled', false);
+    $('label[for=START_GCODE]').css({opacity: 1.0});
+  } else {
+    $('#NO_HEAT_GCODES').prop('disabled', false);
+    $('label[for=NO_HEAT_GCODES]').css({opacity: 1.0});
+    $('#START_GCODE').prop('disabled', true);
+    $('label[for=START_GCODE]').css({opacity: 0.5});
+  }
+}
+*/
+
+/*
+function toggle_NO_HEAT_GCODES() {
+    if (!$('#USE_START_MACRO').is(':checked')) {
+    $('#NO_HEAT_GCODES').prop('disabled', true);
+    $('label[for=NO_HEAT_GCODES]').css({opacity: 0.5});
+  } else {
+    $('#NO_HEAT_GCODES').prop('disabled', false);
+    $('label[for=NO_HEAT_GCODES]').css({opacity: 1.0});
+  }
+}
+*/
+
+/*
+// Toggle text in START_MACRO
+function toggleStartMacroVars() {
+  var START_MACRO = $('#START_MACRO').val()
+  if ($('#USE_START_MACRO').is(':checked') && $('#NO_HEAT_GCODES').is(':checked')) {
+    $('#START_MACRO').val("PRINT_START HOTEND=200 BED=60");
+  } else {
+    $('#START_MACRO').val("PRINT_START");
+  }
+}
+*/
+
+/*
+// Toggle text in START_GCODE
+function toggleStartMacroContents() {
+  var CANNED_MACRO = `
+M112                ; Refer to https://bit.ly/3q1dChR
+G28                 ; Home all axes
+G90                 ; Use absolute positioning
+G1 Z10 F100         ; Z raise
+M190 S60            ; !!! SET BED TEMPERATURE HERE !!! - Wait to heat bed
+M109 S200           ; !!! SET HOTEND TEMPERATURE HERE !!! - Wait to heat hotend
+G28 Z               ; Home z with hot nozzle (for accuracy w/ nozzle endstops)
+G32                 ; G32 macro if used. Home all axes, tram gantry
+;BED_MESH_CALIBRATE ; Create mesh`
+
+  var START_GCODE = $('#START_GCODE').val()
+  if (!$('#USE_START_MACRO').is(':checked')) {
+    $('#START_GCODE').val(CANNED_MACRO);
+  } else if ($('#USE_START_MACRO').is(':checked') && !$('#NO_HEAT_GCODES').is(':checked')) {
+    $('#START_GCODE').val("PRINT_START");
+  } else if ($('#USE_START_MACRO').is(':checked') && $('#NO_HEAT_GCODES').is(':checked')) {
+    $('#START_GCODE').val("PRINT_START HOTEND=200 BED=60");
+  }
+}
+*/
+
+function toggleStartGcodeType(){
+
+  var CANNED_GCODE = `G28 ; Home all axes
+;G32                ; Tramming macro (uncomment if used)
+;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
+;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
+G28 Z               ; Home Z
+G90                 ; Use absolute positioning
+G1 Z10 F100         ; Z raise
+;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
+M112                ; Reading comprehension check! (emergency stop)`
+
+  var STANDALONE_MACRO = `PRINT_START
+; Make sure this macro name matches your own! 
+; (Some may use START_PRINT instead, for example.)
+`
+
+  var STANDALONE_TEMP_PASSING_MACRO = `; !!!!!!! Pass your temperatures to your start macro here !!!!!!!
+PRINT_START HOTEND=200 BED=60
+
+; Make sure the macro name AND parameter names match YOUR start macro setup
+; (Example, some macros use EXTRUDER=X rather than HOTEND=X)`
+
+  if ($('#START_GCODE_TYPE').val() == "custom"){
+    $('#START_GCODE').val(CANNED_GCODE);
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `<p>Use custom start g-code (below). The defaults have a lot of redundancies and are intended to be revised.</p>
+You should generally be able to copy your usual start g-code from your slicer.`;
+    $('#HOTEND_TEMP').prop('disabled', false);
+    $('label[for=HOTEND_TEMP]').css({opacity: 1.0});
+    $('#BED_TEMP').prop('disabled', false);
+    $('label[for=BED_TEMP]').css({opacity: 1.0});
+    document.getElementById('hotendTempRow').style.display = '';
+    document.getElementById('bedTempRow').style.display = '';
+  } else if ($('#START_GCODE_TYPE').val() == "standalone") {
+    $('#START_GCODE').val(STANDALONE_MACRO);
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = "<p>Only use if your start macro contains <font color=\"red\"><strong>all necessary start g-codes!</strong></font> (homing, quad gantry leveling, z offset, bed leveling, etc).</p>";
+    $('#HOTEND_TEMP').prop('disabled', false);
+    $('label[for=HOTEND_TEMP]').css({opacity: 1.0});
+    $('#BED_TEMP').prop('disabled', false);
+    $('label[for=BED_TEMP]').css({opacity: 1.0});
+    document.getElementById('hotendTempRow').style.display = '';
+    document.getElementById('bedTempRow').style.display = '';
+  } else {
+    $('#START_GCODE').val(STANDALONE_TEMP_PASSING_MACRO);
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `<p>Only use if your start macro contains <font color=\"red\"><strong>all necessary start g-codes</font> <i>and</i></strong> is <strong><a href=\"https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/passing_slicer_variables.md\">set up to receive variables</a></strong>!</p>
+<p><strong>This will prevent temperature gcodes from being added separately.</strong> You will have to pass temperatures yourself below.</p>`;
+    $('#HOTEND_TEMP').prop('disabled', true);
+    $('label[for=HOTEND_TEMP]').css({opacity: 0.5});
+    $('#BED_TEMP').prop('disabled', true);
+    $('label[for=BED_TEMP]').css({opacity: 0.5});
+    document.getElementById('hotendTempRow').style.display = 'none';
+    document.getElementById('bedTempRow').style.display = 'none';
+  }
+}
+
 // toggle between standard and firmware retract
 function toggleRetract() {
   if ($('#USE_FWR').is(':checked')) {
@@ -855,6 +975,8 @@ function validateInput() {
       FIRSTLAYER_SPEED: $('#FIRSTLAYER_SPEED').val(),
       PERIMETER_SPEED: $('#PERIMETER_SPEED').val(),
       PATTERN_SIDE_LENGTH: $('#PATTERN_SIDE_LENGTH').val(),
+      HOTEND_TEMP: $('#HOTEND_TEMP').val(),
+      BED_TEMP: $('#BED_TEMP').val(),
       FIL_DIA: $('#FIL_DIA').val(),
       NOZ_DIA: $('#NOZ_DIA').val(),
       LINE_RATIO: $('#LINE_RATIO').val(),
@@ -891,7 +1013,7 @@ function validateInput() {
     invalidDiv = 0;
 
   // Start clean
-  $('BEDSIZE_X,#BEDSIZE_Y,#EXTRUSION_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FIL_DIA,#FIRSTLAYER_SPEED,#LAYER_HEIGHT,#LAYER_HEIGHT_FIRSTLAYER,#LINE_RATIO,#MOVE_SPEED,#NOZ_DIA,#PA_END,'
+  $('BEDSIZE_X,#START_GCODE_TYPE,#START_GCODE,#END_GCODE,#BEDSIZE_Y,#EXTRUSION_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FIL_DIA,#HOTEND_TEMP,#BED_TEMP,#FIRSTLAYER_SPEED,#LAYER_HEIGHT,#LAYER_HEIGHT_FIRSTLAYER,#LINE_RATIO,#MOVE_SPEED,#NOZ_DIA,#PA_END,'
       + '#PA_START,#PA_STEP,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#PERIMETER_SPEED,#PERIMETERS,#PRINT_ACCL,#PRINT_HEIGHT,#RETRACT_SPEED,#RETRACTION,#UNRETRACT_SPEED,#ZHOP_HEIGHT').each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
@@ -996,6 +1118,13 @@ $(window).load(() => {
 
   if (lsSettings) {
     var settings = jQuery.parseJSON(lsSettings);
+    //$('#USE_START_MACRO').prop('checked', settings['USE_START_MACRO']);
+    //$('#NO_HEAT_GCODES').prop('checked', settings['NO_HEAT_GCODES']);
+    //$('#START_MACRO').prop('checked', settings['START_MACRO']);
+    //$('#START_MACRO_VAR').prop('checked', settings['START_MACRO_VAR']);
+    $('#BED_TEMP').val(settings['BED_TEMP']);
+    $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
+    $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
     $('#FIL_DIA').val(settings['FILAMENT_DIAMETER']);
     $('#NOZ_DIA').val(settings['NOZZLE_DIAMETER']);
     $('#LINE_RATIO').val(settings['LINE_RATIO']);
@@ -1007,6 +1136,8 @@ $(window).load(() => {
     $('#MOVE_SPEED').val(settings['SPEED_MOVE']);
     $('#RETRACT_SPEED').val(settings['SPEED_RETRACT']);
     $('#PRINT_ACCL').val(settings['ACCELERATION']);
+    $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
+    $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
     $('#RETRACTION').val(settings['RETRACT_DIST']);
     $('#SHAPE_BED').val(settings['BED_SHAPE']);
     $('#BEDSIZE_X').val(settings['BED_X']);
@@ -1035,14 +1166,19 @@ $(window).load(() => {
     $('#MM_S').prop('checked', settings['USE_MMS']);
     $('#LINE_NO').prop('checked', settings['USE_LINENO']);
 
+    //toggleStartMacroContents();
+    //toggle_NO_HEAT_GCODES();
+    //toggleStartMacro();
+    //toggleStartGcodeType();
     toggleBedShape();
     //togglePrime();
     toggleRetract();
     toggleZHop();
+
   }
 
   // toggle between mm/s and mm/min speeds
-  $('#MM_S').change(speedToggle);
+  //$('#MM_S').change(speedToggle);
 
   // Toggle Bed Shape
   $('#SHAPE_BED').change(() => {
@@ -1057,6 +1193,14 @@ $(window).load(() => {
   // frame and alternate pattern are mutually exclusive
   $('#TYPE_PATTERN').change(patternType);
   */
+
+  //$('#USE_START_MACRO').change(toggleStartMacro);
+  //$('#NO_HEAT_GCODES').change(toggleStartMacro);
+  //$('#USE_START_MACRO').change(toggle_NO_HEAT_GCODES);
+  //$('#USE_START_MACRO').change(toggleStartMacroContents);
+  //$('#NO_HEAT_GCODES').change(toggleStartMacroContents);
+  $('#START_GCODE_TYPE').change(toggleStartGcodeType);
+  
 
   // Change retract type
   $('#USE_FWR').change(toggleRetract);
