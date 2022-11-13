@@ -60,34 +60,24 @@ function genGcode() {
       PA_END = parseFloat($('#PA_END').val()),
       PA_STEP = parseFloat($('#PA_STEP').val()),
       PRINT_DIR = $('#DIR_PRINT').val(),
-      PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').val()),
-      PATTERN_ANGLE = parseFloat($('#PATTERN_ANGLE').val()),
-      PERIMETERS = parseFloat($('#PERIMETERS').val()),
+      PATTERN_SPACING = parseInt($('#PATTERN_SPACING').val()),
+      PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val()),
+      PERIMETERS = parseInt($('#PERIMETERS').val()),
       USE_PRIME = $('#PRIME').prop('checked'),
       USE_MMS = $('#MM_S').prop('checked'),
       USE_FWR = $('#USE_FWR').prop('checked'),
       EXT_MULT_PRIME = parseFloat($('#PRIME_EXT').val()),
-      SPEED_PRIME = parseFloat($('#PRIME_SPEED').val()),
-      PATTERN_SIDE_LENGTH = parseFloat($('#PATTERN_SIDE_LENGTH').val()),
+      SPEED_PRIME = parseInt($('#PRIME_SPEED').val()),
+      PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val()),
       USE_LINENO = $('#LINE_NO').prop('checked');
 
   if (BED_SHAPE === 'Round') {
     BED_Y = BED_X;
   }
 
-  if (USE_MMS) {
-    SPEED_FIRSTLAYER *= 60;
-    SPEED_FILL *= 60;
-    SPEED_PERIMETER *= 60;
-    SPEED_MOVE *= 60;
-    SPEED_PRIME *= 60;
-    SPEED_RETRACT *= 60;
-    SPEED_UNRETRACT *= 60;
-  }
-
   var RANGE_PA = PA_END - PA_START,
-      NUM_PATTERNS = RANGE_PA / PA_STEP,
-      NUM_LAYERS = Math.floor((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER),
+      NUM_PATTERNS = RANGE_PA / PA_STEP + 1,
+      NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1),
 
       LINE_WIDTH = NOZZLE_DIAMETER * LINE_RATIO,
       EXTRUSION_RATIO = LINE_WIDTH * HEIGHT_LAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI),
@@ -167,45 +157,42 @@ function genGcode() {
                   '; Extruder Name = ' + EXTRUDER_NAME + ' \n' +
                   '; First Layer Fan Speed = ' + FAN_SPEED_FIRSTLAYER + ' %\n' +
                   '; Fan Speed = ' + FAN_SPEED + ' %\n' +
-                  ';\n' +
-                  '; Settings Print Bed:\n' +
+                  //';\n' +
+                  //'; Settings Print Bed:\n' +
                   '; Bed Shape = ' + BED_SHAPE + '\n' +
                   (BED_SHAPE === 'Round' ? '; Bed Diameter = ' + BED_X + ' mm\n' : '; Bed Size X = ' + BED_X + ' mm\n') +
                   (BED_SHAPE === 'Round' ? '' : '; Bed Size Y = ' + BED_Y + ' mm\n') +
                   '; Origin Bed Center = ' + (NULL_CENTER ? 'true' : 'false') + '\n' +
-                  ';\n' +
-                  '; Settings Speed:\n' +
+                  //';\n' +
+                  //'; Settings Speed:\n' +
                   '; First Layer Printing Speed = ' + SPEED_FIRSTLAYER + ' mm/min\n' +
                   '; Perimeter Printing Speed = ' + SPEED_PERIMETER + ' mm/min\n' +
                   '; Movement Speed = ' + SPEED_MOVE + ' mm/min\n' +
                   '; Retract Speed = ' + SPEED_RETRACT + ' mm/min\n' +
                   '; Unretract Speed = ' + SPEED_UNRETRACT + ' mm/min\n' +
                   '; Printing Acceleration = ' + ACCELERATION + ' mm/s^2\n' +
-                  ';\n' +
-                  '; Settings Pattern:\n' +
+                  //';\n' +
+                  //'; Settings Pattern:\n' +
                   '; Starting Value Factor = ' + PA_START + '\n' +
                   '; Ending Value Factor = ' + PA_END + '\n' +
                   '; Factor Stepping = ' + PA_STEP + '\n' +
                   '; Pattern Spacing = ' + PATTERN_SPACING + ' mm\n' +
-                  '; Pattern Angle = ' + PATTERN_ANGLE + ' mm\n' +
+                  '; Pattern Angle = ' + PATTERN_ANGLE + 'degrees \n' +
                   '; Perimeters = ' + PERIMETERS + ' mm\n' +
                   '; Side Length = ' + PATTERN_SIDE_LENGTH + ' mm\n' +
                   '; Number Lines = ' + (USE_LINENO ? 'true' : 'false') + '\n' +
                   '; Number of Patterns to Print = ' + NUM_PATTERNS + '\n' +
                   '; Print Size X = ' + FIT_WIDTH + ' mm\n' +
                   '; Print Size Y = ' + FIT_HEIGHT + ' mm\n' +
-                  '; LINE_WIDTH = ' + LINE_WIDTH + ' mm\n' +
-                  '; LINE_SPACING = ' + LINE_SPACING + ' mm\n' +
-                  '; LINE_SPACING_ANGLE = ' + LINE_SPACING_ANGLE + ' mm\n' +
                   '; Print Rotation = ' + PRINT_DIR + ' degree\n' +
-                  ';\n' +
-                  '; Settings Advance:\n' +
+                  //';\n' +
+                  //'; Settings Advance:\n' +
                   '; Line Width Ratio = ' + LINE_RATIO + '\n' +
                   '; Use FWRETRACT = ' + (USE_FWR ? 'true' : 'false') + '\n' +
                   '; Extrusion Multiplier = ' + EXT_MULT + '\n' +
-                  '; Prime Nozzle = ' + (USE_PRIME ? 'true' : 'false') + '\n' +
-                  '; Prime Extrusion Multiplier = ' + EXT_MULT_PRIME + '\n' +
-                  '; Prime Speed = ' + SPEED_PRIME + '\n' +
+                  //'; Prime Nozzle = ' + (USE_PRIME ? 'true' : 'false') + '\n' +
+                  //'; Prime Extrusion Multiplier = ' + EXT_MULT_PRIME + '\n' +
+                  //'; Prime Speed = ' + SPEED_PRIME + '\n' +
                   ';\n' +
                   '; prepare printing\n' +
                   ';\n' +
@@ -218,32 +205,41 @@ function genGcode() {
                   'G92 E0 ; Reset extruder distance\n' +
                   'M106 S' + Math.round(FAN_SPEED_FIRSTLAYER * 2.55) + '\n';
 
+    if (USE_MMS) {
+    SPEED_FIRSTLAYER *= 60;
+    SPEED_FILL *= 60;
+    SPEED_PERIMETER *= 60;
+    SPEED_MOVE *= 60;
+    SPEED_PRIME *= 60;
+    SPEED_RETRACT *= 60;
+    SPEED_UNRETRACT *= 60;
+  }
+
   var TO_X = PAT_START_X,
       TO_Y = PAT_START_Y,
       TO_Z = HEIGHT_FIRSTLAYER;
 
   //Move to layer height then start position
-  pa_script += doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')); //retract
-  pa_script += 'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n';
-  pa_script += moveTo(PAT_START_X, PAT_START_Y, basicSettings);
+  pa_script += doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')) + //retract
+              'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n' +
+               moveTo(PAT_START_X, PAT_START_Y, basicSettings);
 
   for (let i = 0; i < NUM_LAYERS ; i++){
-    for (let j = 0; j < NUM_PATTERNS ; j++){
-      pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + (PA_START + (j * PA_STEP)) + ' EXTRUDER=' + EXTRUDER_NAME + ' ; Set Pressure Advance\n';
-      pa_script += 'M106 S' + (i == 0 ? FAN_SPEED_FIRSTLAYER * 2.55 : FAN_SPEED * 2.55) + '\n';
+    for (let j = 0; j < NUM_PATTERNS; j++){
+      pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + (PA_START + (j * PA_STEP)) + ' EXTRUDER=' + EXTRUDER_NAME + ' ; Set Pressure Advance\n' + 
+                   'M106 S' + (i == 0 ? FAN_SPEED_FIRSTLAYER * 2.55 : FAN_SPEED * 2.55) + '\n';
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH);
         TO_Y += (Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH);
 
-        pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD')); //unretract
-        pa_script += createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
+        pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +  //unretract
+                     createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
 
         TO_X -= Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH;
         TO_Y += Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH;
 
-        pa_script += createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
-
-        pa_script += doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')); //retract
+        pa_script += createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)}) +
+                     doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')); //retract
 
         if (k != PERIMETERS - 1){
           TO_X += LINE_SPACING_ANGLE;
@@ -260,16 +256,8 @@ function genGcode() {
     TO_Z += HEIGHT_LAYER;
 
     pa_script += 'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n' + 
-                moveTo(TO_X, TO_Y, basicSettings);
+                  moveTo(TO_X, TO_Y, basicSettings);
   }
-
-
- 
-  //create box
-  //pa_script += printBox(PAT_START_X, PAT_START_Y, basicSettings, patSettings);
-
-  // Second layer+ fan speed
-  //pa_script += 'M106 S' + Math.round(FAN_SPEED * 2.55) + '\n';
 
 /*
   // Prime nozzle if activated
