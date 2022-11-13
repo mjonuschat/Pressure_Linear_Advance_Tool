@@ -25,6 +25,12 @@ const Z_round = -3;
 const XY_round = -4;
 const EXT_round = -5; // Was previously -4
 
+// Globally keep track of current retract state to prevent retracting/unretracting twice on accident
+var RETRACTED = false;
+
+// Globally keep track of current Z coordinate (WITHOUT z hop applied)
+var CUR_Z = 0;
+
 function genGcode() {
 
   // get the values from the HTML elements
@@ -42,8 +48,9 @@ function genGcode() {
       SPEED_MOVE = parseInt($('#MOVE_SPEED').val()),
       SPEED_RETRACT = parseInt($('#RETRACT_SPEED').val()),
       SPEED_UNRETRACT = parseInt($('#UNRETRACT_SPEED').val()),
+      ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked'),
+      ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val()),
       ACCELERATION = parseInt($('#PRINT_ACCL').val()),
-      A2D = ACCELERATION / 2,
       RETRACT_DIST = parseFloat($('#RETRACTION').val()),
       BED_SHAPE = $('#SHAPE_BED').val(),
       BED_X = parseInt($('#BEDSIZE_X').val()),
@@ -63,13 +70,14 @@ function genGcode() {
       PATTERN_SPACING = parseInt($('#PATTERN_SPACING').val()),
       PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val()),
       PERIMETERS = parseInt($('#PERIMETERS').val()),
-      USE_PRIME = $('#PRIME').prop('checked'),
+      //USE_PRIME = $('#PRIME').prop('checked'),
       USE_MMS = $('#MM_S').prop('checked'),
       USE_FWR = $('#USE_FWR').prop('checked'),
       EXT_MULT_PRIME = parseFloat($('#PRIME_EXT').val()),
-      SPEED_PRIME = parseInt($('#PRIME_SPEED').val()),
-      PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val()),
-      USE_LINENO = $('#LINE_NO').prop('checked');
+      //SPEED_PRIME = parseInt($('#PRIME_SPEED').val()),
+      //USE_LINENO = $('#LINE_NO').prop('checked'),
+      PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val());
+      
 
   if (BED_SHAPE === 'Round') {
     BED_Y = BED_X;
@@ -80,18 +88,17 @@ function genGcode() {
     SPEED_FILL *= 60;
     SPEED_PERIMETER *= 60;
     SPEED_MOVE *= 60;
-    SPEED_PRIME *= 60;
+    //SPEED_PRIME *= 60;
     SPEED_RETRACT *= 60;
     SPEED_UNRETRACT *= 60;
   }
 
-  var RANGE_PA = PA_END - PA_START,
+  var A2D = ACCELERATION / 2,
+      RANGE_PA = PA_END - PA_START,
       NUM_PATTERNS = RANGE_PA / PA_STEP + 1,
       NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1),
-
       LINE_WIDTH = NOZZLE_DIAMETER * LINE_RATIO,
       EXTRUSION_RATIO = LINE_WIDTH * HEIGHT_LAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI),
-
       // slic3r line spacing: spacing = extrusion_width - layer_height * (1 - PI/4)
       LINE_SPACING = LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4),
       PATTERN_ANGLE_RAD = PATTERN_ANGLE * Math.PI / 180,
@@ -134,7 +141,9 @@ function genGcode() {
     'retractSpeed' : SPEED_RETRACT,
     'unretractSpeed' : SPEED_UNRETRACT,
     'fwRetract' : USE_FWR,
-    'extruderName' : EXTRUDER_NAME
+    'extruderName' : EXTRUDER_NAME,
+    'zhopEnable' : ZHOP_ENABLE,
+    'zhopHeight' : ZHOP_HEIGHT
   };
 
   var patSettings = {
@@ -174,6 +183,8 @@ function genGcode() {
                   '; Retraction Distance = ' + RETRACT_DIST + ' mm\n' +
                   '; Retract Speed = ' + (USE_MMS ? SPEED_RETRACT / 60 + "mm/s" : SPEED_RETRACT + ' mm/min') + '\n' +
                   '; Unretract Speed = ' + (USE_MMS ? SPEED_UNRETRACT / 60 + "mm/s" : SPEED_UNRETRACT + ' mm/min') + '\n' +
+                  '; Z Hop Enable = ' + ZHOP_ENABLE + '\n' +
+                  ( ZHOP_ENABLE ? '; Z Hop Height: ' + ZHOP_HEIGHT + 'mm\n' : '') + 
                   ';\n' +
                   '; First Layer:\n' +
                   '; First Layer Height = ' + HEIGHT_FIRSTLAYER + ' mm\n' +
@@ -237,46 +248,57 @@ function genGcode() {
                   'G92 E0 ; Reset extruder distance\n' +
                   'M106 S' + Math.round(FAN_SPEED_FIRSTLAYER * 2.55) + '\n';
 
-  var TO_X = PAT_START_X,
-      TO_Y = PAT_START_Y,
-      TO_Z = HEIGHT_FIRSTLAYER;
+  var TO_X = Math.round10(PAT_START_X, XY_round),
+      TO_Y = Math.round10(PAT_START_Y, XY_round),
+      TO_Z = Math.round10(HEIGHT_FIRSTLAYER, Z_round);
 
   //Move to layer height then start position
-  pa_script += doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')) + //retract
-              'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n' +
-               moveTo(PAT_START_X, PAT_START_Y, basicSettings);
+  CUR_Z = TO_Z;
+
+  pa_script += doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z) + //retract
+               moveTo(PAT_START_X, PAT_START_Y, basicSettings) + 
+               doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +  //unretract
+               'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n';
 
   for (let i = 0; i < NUM_LAYERS ; i++){
     for (let j = 0; j < NUM_PATTERNS; j++){
       pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + (PA_START + (j * PA_STEP)) + ' EXTRUDER=' + EXTRUDER_NAME + ' ; Set Pressure Advance\n' + 
-                   'M106 S' + (i == 0 ? FAN_SPEED_FIRSTLAYER * 2.55 : FAN_SPEED * 2.55) + '\n';
+                   'M106 S' + (i == 0 ? Math.round(FAN_SPEED_FIRSTLAYER * 2.55) : Math.round(FAN_SPEED * 2.55)) + '\n'; // if first layer - set fan speed to first layer - otherwise, set to printing fan speed
+
       for (let k = 0; k < PERIMETERS ; k++){
-        TO_X += (Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH);
-        TO_Y += (Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH);
+        TO_X += Math.round10((Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH), XY_round);
+        TO_Y += Math.round10((Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH), XY_round);
 
-        pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +  //unretract
-                     createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
+        pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z);  //unretract
+        pa_script += createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)});
 
-        TO_X -= Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH;
-        TO_Y += Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH;
+        TO_X -= Math.round10(Math.cos(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH, XY_round);
+        TO_Y += Math.round10(Math.sin(PATTERN_ANGLE_RAD / 2) * PATTERN_SIDE_LENGTH, XY_round);
 
         pa_script += createLine(TO_X, TO_Y, PATTERN_SIDE_LENGTH, basicSettings, {'extRatio': EXTRUSION_RATIO, 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER)}) +
-                     doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')); //retract
+                     doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z); //retract
 
-        if (k != PERIMETERS - 1){
-          TO_X += LINE_SPACING_ANGLE;
+        TO_Y = Math.round10(PAT_START_Y, XY_round);
+        if (k != PERIMETERS - 1){ // if not last perimeter yet, move forward line spacing instead of pattern spacing
+          TO_X += Math.round10(LINE_SPACING_ANGLE, XY_round);
         } else {
-          TO_X += PATTERN_SPACING;
+          if (j == NUM_PATTERNS - 1){ // if last pattern and last perimeter, travel back to start X instead of + spacing
+            TO_X = Math.round10(PAT_START_X, XY_round);
+          }else{
+            TO_X += Math.round10(PATTERN_SPACING, XY_round);
+          }
         }
-        TO_Y = PAT_START_Y;
         pa_script += moveTo(TO_X, TO_Y, basicSettings);
       }
     }
 
-    TO_X = PAT_START_X;
-    TO_Y = PAT_START_Y;
-    TO_Z += HEIGHT_LAYER;
+    TO_X = Math.round10(PAT_START_X, XY_round);
+    TO_Y = Math.round10(PAT_START_Y, XY_round);
+    TO_Z += Math.round10(HEIGHT_LAYER, XY_round);
+    CUR_Z = TO_Z;
 
+    pa_script += doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD'), CUR_Z);  //unretract
+    
     pa_script += 'G1 Z' + TO_Z + ' F' + SPEED_MOVE + ' ; Move to layer height\n' + 
                   moveTo(TO_X, TO_Y, basicSettings);
   }
@@ -319,43 +341,6 @@ function genGcode() {
                 createLine(frameStartX2 - LINE_WIDTH, frameStartY, -frameLength, basicSettings, {'extMult': EXT_MULT * 1.1}) +
                 doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD'));
   }
-
-  // insert a retract if no prime and no frame
-  if (!USE_PRIME && !USE_FRAME)
-    pa_script += doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD'));
-
-  // generate the pressure advance Test pattern
-  pa_script += ';\n' +
-              '; start the Test pattern\n' +
-              ';\n' +
-              (PRIME_DWELL ? 'G4 P' + (PRIME_DWELL * 1000) + ' ; Pause (dwell) for 2 seconds\n' : '') +
-              moveTo(PAT_START_X, PAT_START_Y, basicSettings);
-
-
-
-  if (PATTERN_TYPE === 'std')
-    pa_script += createStdPattern(PAT_START_X, PAT_START_Y, basicSettings, patSettings);
-  else if (PATTERN_TYPE === 'alt')
-    pa_script += createAltPattern(PAT_START_X, PAT_START_Y, basicSettings, patSettings);
-
-  // mark area of speed changes
-  var refStartX1 = CENTER_X - (0.5 * PATTERN_SIDE_LENGTH) + (USE_PRIME ? 5 : 0) - (USE_LINENO ? 4 : 0),
-      refStartX2 = CENTER_X + (0.5 * PATTERN_SIDE_LENGTH) + (USE_PRIME ? 5 : 0) - (USE_LINENO ? 4 : 0),
-      refStartY = CENTER_Y + (PRINT_SIZE_Y / 2) - 20;
-
-  pa_script += ';\n' +
-              '; Mark the test area for reference\n' +
-              'M117 K0\n' +
-              'SET_PRESSURE_ADVANCE ADVANCE=0 EXTRUDER=' + EXTRUDER_NAME + ' ; Set Pressure Advance 0\n' +
-              moveTo(refStartX1, refStartY, basicSettings) +
-              doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +
-              createLine(refStartX1, refStartY + 20, 20, basicSettings) +
-              doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +
-              moveTo(refStartX2, refStartY, basicSettings) +
-              doEfeed('+', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +
-              createLine(refStartX2, refStartY + 20, 20, basicSettings) +
-              doEfeed('-', basicSettings, (USE_FWR ? 'FWR' : 'STD')) +
-              zHop((HEIGHT_LAYER + Z_OFFSET) + 0.1, basicSettings);
 
   // print K values beside the test lines
   if (USE_LINENO) {
@@ -501,52 +486,60 @@ function moveTo(coordX, coordY, basicSettings) {
 
   gcode += 'G0 X' + Math.round10(rotateX(coordX, basicSettings['centerX'], coordY, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
              ' Y' + Math.round10(rotateY(coordX, basicSettings['centerX'], coordY, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' F' + basicSettings['move'] + ' ; move to start\n';
+             ' F' + basicSettings['move'] + ' ; move\n';
   return gcode;
 }
 
 // create retract / un-retract gcode
-function doEfeed(dir, basicSettings, type) {
+function doEfeed(dir, basicSettings, type, currentZ) {
   var gcode = '';
 
-  switch (true) {
-  case (type === 'STD' && dir === '+'):
-    gcode += 'G1 E' + basicSettings['retractDist'] + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
-    break;
-  case (type === 'STD' && dir === '-'):
-    gcode += 'G1 E-' + basicSettings['retractDist'] + ' F' + basicSettings['retractSpeed'] + ' ; retract\n';
-    break;
-  case (type === 'FWR' && dir === '+'):
-    gcode += 'G11 ; un-retract\n';
-    break;
-  case (type === 'FWR' && dir === '-'):
-    gcode += 'G10 ; retract\n';
-    break;
+  if (basicSettings['zhopEnable'] == false){
+    switch (true) {
+      case (type === 'STD' && dir === '+' && RETRACTED === true):
+        gcode += 'G1 E' + basicSettings['retractDist'] + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
+        RETRACTED = false;
+        break;
+      case (type === 'STD' && dir === '-' && RETRACTED === false):
+        gcode += 'G1 E-' + basicSettings['retractDist'] + ' F' + basicSettings['retractSpeed'] + ' ; retract\n';
+        RETRACTED = true;
+        break;
+      case (type === 'FWR' && dir === '+' && RETRACTED === true):
+        gcode += 'G11 ; un-retract\n';
+        RETRACTED = false;
+        break;
+      case (type === 'FWR' && dir === '-' && RETRACTED === false):
+        gcode += 'G10 ; retract\n';
+        RETRACTED = true;
+        break;
+    }
+  } else {
+    switch (true) {
+      case (type === 'STD' && dir === '+' && RETRACTED === true):
+        gcode += 'G1 Z' + currentZ + ' F' + basicSettings['move'] + ' ; z hop return\n' +
+                 'G1 E' + basicSettings['retractDist'] + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
+        RETRACTED = false;
+        break;
+      case (type === 'STD' && dir === '-' && RETRACTED === false):
+        gcode += 'G1 E-' + basicSettings['retractDist'] + ' F' + basicSettings['retractSpeed'] + ' ; retract\n' +
+                 'G1 Z' + (currentZ + basicSettings['zhopHeight']) + ' F' + basicSettings['move'] + ' ; z hop\n';
+                 
+        RETRACTED = true;
+        break;
+      case (type === 'FWR' && dir === '+' && RETRACTED === true):
+        gcode += 'G1 Z' + currentZ + ' F' + basicSettings['move'] + ' ; z hop return\n' +
+                 'G11 ; un-retract\n';
+        RETRACTED = false;
+        break;
+      case (type === 'FWR' && dir === '-' && RETRACTED === false):
+        gcode += 'G10 ; retract\n' +
+                 'G1 Z' + (currentZ + basicSettings['zhopHeight']) + ' F' + basicSettings['move'] + ' ; z hop\n';
+        RETRACTED = true;
+        break;
+    }
   }
-
   return gcode;
 }
-
-/*
-// create standard test pattern
-function createStdPattern(startX, startY, basicSettings, patSettings) {
-  var j = 0,
-      gcode = '';
-
-  for (var i = patSettings['paStart']; i <= patSettings['paEnd']; i += patSettings['paStep']) {
-    gcode += 'SET_PRESSURE_ADVANCE ADVANCE=' + Math.round10(i, PA_round) + ' EXTRUDER=' + basicSettings['extruderName'] + ' ; set Pressure Advance\n' +
-             'M117 K' + Math.round10(i, PA_round) + ' ; \n' +
-             doEfeed('+', basicSettings, (basicSettings['fwRetract'] ? 'FWR' : 'STD')) +
-             createLine(startX + patSettings['lengthSlow'], startY + j, patSettings['lengthSlow'], basicSettings, {'speed': basicSettings['slow']}) +
-             createLine(startX + patSettings['lengthSlow'] + patSettings['sideLength'], startY + j, patSettings['sideLength'], basicSettings, {'speed': basicSettings['fast']}) +
-             createLine(startX + (2 * patSettings['lengthSlow']) + patSettings['sideLength'], startY + j, patSettings['lengthSlow'], basicSettings, {'speed': basicSettings['slow']}) +
-             doEfeed('-', basicSettings, (basicSettings['fwRetract'] ? 'FWR' : 'STD')) +
-             (i !== patSettings['paEnd'] ? moveTo(startX, startY + j + patSettings['lineSpacing'], basicSettings) : '');
-    j += patSettings['lineSpacing'];
-  }
-  return gcode;
-}
-*/
 
 /*
 
@@ -683,7 +676,6 @@ function setLocalStorage() {
       FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
       FAN_SPEED = parseFloat($('#FAN_SPEED').val()),
       EXT_MULT = parseFloat($('#EXTRUSION_MULT').val()),
-      //PATTERN_TYPE = $('#TYPE_PATTERN').val(),
       PA_START = parseFloat($('#PA_START').val()),
       PA_END = parseFloat($('#PA_END').val()),
       PA_STEP = parseFloat($('#PA_STEP').val()),
@@ -695,10 +687,7 @@ function setLocalStorage() {
       USE_PRIME = $('#PRIME').prop('checked'),
       EXT_MULT_PRIME = parseFloat($('#PRIME_EXT').val()),
       SPEED_PRIME = parseFloat($('#PRIME_SPEED').val()),
-      //PRIME_DWELL = parseFloat($('#DWELL_PRIME').val()),
-      //LENGTH_SLOW = parseFloat($('#SLOW_LENGTH').val()),
       PATTERN_SIDE_LENGTH = parseFloat($('#PATTERN_SIDE_LENGTH').val()),
-      //Z_OFFSET = parseFloat($('#OFFSET_Z').val()),
       USE_FWR = $('#USE_FWR').prop('checked'),
       USE_MMS = $('#MM_S').prop('checked'),
       USE_LINENO = $('#LINE_NO').prop('checked');
@@ -726,7 +715,6 @@ function setLocalStorage() {
     'FAN_SPEED_FIRSTLAYER' : FAN_SPEED_FIRSTLAYER,
     'FAN_SPEED' : FAN_SPEED,
     'EXT_MULT': EXT_MULT,
-    //'PATTERN_TYPE': PATTERN_TYPE,
     'PA_START': PA_START,
     'PA_END': PA_END,
     'PA_STEP': PA_STEP,
@@ -738,10 +726,7 @@ function setLocalStorage() {
     'USE_PRIME': USE_PRIME,
     'EXT_MULT_PRIME': EXT_MULT_PRIME,
     'SPEED_PRIME' : SPEED_PRIME,
-    //'PRIME_DWELL': PRIME_DWELL,
-    //'LENGTH_SLOW': LENGTH_SLOW,
     'PATTERN_SIDE_LENGTH': PATTERN_SIDE_LENGTH,
-    //'Z_OFFSET': Z_OFFSET,
     'USE_FWR': USE_FWR,
     'USE_MMS': USE_MMS,
     'USE_LINENO': USE_LINENO
@@ -811,26 +796,8 @@ function toggleBedShape() {
   }
 }
 
-/*
-// toggle between standard and alternate pattern type
-function patternType() {
-  if ($('#TYPE_PATTERN').val() === 'alt') {
-    if ($('#FRAME').is(':checked')) {
-      $('#FRAME').prop('checked', false);
-      $('#FRAME').prop('disabled', true);
-      $('label[for=FRAME]').css({opacity: 0.5});
-    } else {
-      $('#FRAME').prop('disabled', true);
-      $('label[for=FRAME]').css({opacity: 0.5});
-    }
-  } else if ($('#TYPE_PATTERN').val() === 'std'){
-    $('#FRAME').prop('disabled', false);
-    $('label[for=FRAME]').css({opacity: 1});
-  }
-}
-*/
-
 // toggle prime relevant options
+/*
 function togglePrime() {
   if ($('#PRIME').is(':checked')) {
     $('#PRIME_EXT').prop('disabled', false);
@@ -840,6 +807,7 @@ function togglePrime() {
     $('label[for=PRIME_EXT]').css({opacity: 0.5});
   }
 }
+*/
 
 // toggle between standard and firmware retract
 function toggleRetract() {
@@ -861,6 +829,16 @@ function toggleRetract() {
   }
 }
 
+function toggleZHop() {
+  if ($('#ZHOP_ENABLE').is(':checked')) {
+    $('#ZHOP_HEIGHT').prop('disabled', false);
+    $('label[for=ZHOP_HEIGHT]').css({opacity: 1.0});
+  } else {
+    $('#ZHOP_HEIGHT').prop('disabled', true);
+    $('label[for=ZHOP_HEIGHT]').css({opacity: 0.5});
+  }
+}
+
 // sanity checks for pattern / bed size
 function validateInput() {
   var testNaN = {
@@ -875,51 +853,37 @@ function validateInput() {
       PATTERN_SPACING: $('#PATTERN_SPACING').val(),
       PATTERN_ANGLE: $('#PATTERN_ANGLE').val(),
       FIRSTLAYER_SPEED: $('#FIRSTLAYER_SPEED').val(),
-      FILL_SPEED: $('#FILL_SPEED').val(),
       PERIMETER_SPEED: $('#PERIMETER_SPEED').val(),
-      //SLOW_LENGTH: $('#SLOW_LENGTH').val(),
       PATTERN_SIDE_LENGTH: $('#PATTERN_SIDE_LENGTH').val(),
       FIL_DIA: $('#FIL_DIA').val(),
       NOZ_DIA: $('#NOZ_DIA').val(),
       LINE_RATIO: $('#LINE_RATIO').val(),
       LAYER_HEIGHT: $('#LAYER_HEIGHT').val(),
-      HEIGHT_FIRSTLAYER: $('#LAYER_HEIGHT_FIRSTLAYER').val(),
+      LAYER_HEIGHT_FIRSTLAYER: $('#LAYER_HEIGHT_FIRSTLAYER').val(),
       FAN_SPEED_FIRSTLAYER: $('#FAN_SPEED_FIRSTLAYER').val(),
       FAN_SPEED: $('#FAN_SPEED').val(),
       EXTRUSION_MULT: $('#EXTRUSION_MULT').val(),
-      PRIME_EXT: $('#PRIME_EXT').val(),
-      //OFFSET_Z: $('#OFFSET_Z').val(),
+      //PRIME_EXT: $('#PRIME_EXT').val(),
       MOVE_SPEED: $('#MOVE_SPEED').val(),
       RETRACT_SPEED: $('#RETRACT_SPEED').val(),
+      UNRETRACT_SPEED: $('#UNRETRACT_SPEED').val(),
       PRINT_ACCL: $('#PRINT_ACCL').val(),
-      RETRACTION: $('#RETRACTION').val(),
-      PRIME_SPEED: $('#PRIME_SPEED').val(),
-      //DWELL_PRIME: $('#DWELL_PRIME').val()
+      ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val(),
+      PRINT_HEIGHT: $('#PRINT_HEIGHT').val(),
+      PERIMETERS: $('#PERIMETERS').val(),
+      //PRIME_SPEED: $('#PRIME_SPEED').val(),
+      RETRACTION: $('#RETRACTION').val()
     },
     selectShape = $('#SHAPE_BED'),
     bedShape = selectShape.val(),
     selectDir = $('#DIR_PRINT'),
     printDir = selectDir.val(),
-    usePrime = $('#PRIME').prop('checked'),
-    useLineNo = $('#LINE_NO').prop('checked'),
+    //usePrime = $('#PRIME').prop('checked'),
+    //useLineNo = $('#LINE_NO').prop('checked'),
     //sizeY = ((parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START'])) / parseFloat(testNaN['PA_STEP']) * parseFloat(testNaN['PATTERN_SPACING'])) + 25, // +25 with ref marking
     //sizeX = (2 * parseFloat(testNaN['SLOW_LENGTH'])) + parseFloat(testNaN['PATTERN_SIDE_LENGTH']) + (usePrime ? 10 : 0) + (useLineNo ? 8 : 0),
     sizeY = 999999, // TODO
     sizeX = 999999, // TODO
-
-    /* TODO: This is almost certainly trash
-            RANGE_PA = parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']),
-            NUM_PATTERNS = RANGE_PA / parseFloat(testNaN['PA_STEP']),
-
-            PRINT_SIZE_X = (NUM_PATTERNS * ((parseFloat(testNaN['PERIMETERS']) - 1) * LINE_SPACING_45)) + ((NUM_PATTERNS - 1) *  parseFloat(testNaN['PATTERN_SPACING'])) + Math.sqrt((Math.pow(parseFloat(testNaN['PATTERN_SIDE_LENGTH']), 2) / 2)),
-            PRINT_SIZE_X = Math.round10(PRINT_SIZE_X, XY_round), // round it
-            sizeX = PRINT_SIZE_X + LINE_WIDTH, // yes, this is right... just adds the round ends. Half-circle on each side (so = whole circle)... which is diameter of LINE_WIDTH
-
-            PRINT_SIZE_Y = Math.sqrt(Math.pow(PATTERN_SIDE_LENGTH, 2) * 2),
-            PRINT_SIZE_Y = Math.round10(PRINT_SIZE_Y, XY_round), // round it
-            sizeY = PRINT_SIZE_Y + LINE_WIDTH, // yes, this is right... just adds the round ends. Half-circle on each side (so = whole circle)... which is diameter of LINE_WIDTH
-    */
-
     printDirRad = printDir * Math.PI / 180,
     fitWidth = Math.round10(Math.abs(sizeX * Math.cos(printDirRad)) + Math.abs(sizeY * Math.sin(printDirRad)), 0),
     fitHeight = Math.round10(Math.abs(sizeX * Math.sin(printDirRad)) + Math.abs(sizeY * Math.cos(printDirRad)), 0),
@@ -927,8 +891,8 @@ function validateInput() {
     invalidDiv = 0;
 
   // Start clean
-  $('#PA_START,#PA_END,#PA_STEP,#PATTERN_SPACING,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#FIL_DIA,#NOZ_DIA,#LAYER_HEIGHT,#LAYER_HEIGHT_FIRSTLAYER,#EXTRUSION_MULT,#PRIME_EXT,#LINE_RATIO,'
-     + '#START_GCODE,#END_GCODE,#MOVE_SPEED,#RETRACT_SPEED,#UNRETRACT_SPEED,#PRINT_ACCL,#RETRACTION,#PRIME_SPEED,#FIRSTLAYER_SPEED','#FILL_SPEED','#PERIMETER_SPEED').each((i,t) => {
+  $('BEDSIZE_X,#BEDSIZE_Y,#EXTRUSION_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FIL_DIA,#FIRSTLAYER_SPEED,#LAYER_HEIGHT,#LAYER_HEIGHT_FIRSTLAYER,#LINE_RATIO,#MOVE_SPEED,#NOZ_DIA,#PA_END,'
+      + '#PA_START,#PA_STEP,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#PERIMETER_SPEED,#PERIMETERS,#PRINT_ACCL,#PRINT_HEIGHT,#RETRACT_SPEED,#RETRACTION,#UNRETRACT_SPEED,#ZHOP_HEIGHT').each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
     $(`label[for=${tid}]`).removeClass();
@@ -938,19 +902,17 @@ function validateInput() {
   $('#warning3').hide();
   $('#button').prop('disabled', false);
 
-  /* // TODO
   // Check for proper numerical values
   Object.keys(testNaN).forEach((k) => {
     if ((isNaN(testNaN[k]) && !isFinite(testNaN[k])) || testNaN[k].trim().length === 0) {
       $('label[for=' + k + ']').addClass('invalidNumber');
-      //$('#' + k)[0].setCustomValidity('The value is not a proper number.'); // TODO ??
+      $('#' + k)[0].setCustomValidity('The value is not a proper number.');
       $('#warning3').text('Some values are not proper numbers. Check highlighted Settings.');
       $('#warning3').addClass('invalidNumber');
       $('#warning3').show();
       $('#button').prop('disabled', true);
     }
   });
-  */
 
   // Check if Pressure Advance Stepping is a multiple of the Pressure Advance Range
   if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
@@ -1057,7 +1019,6 @@ $(window).load(() => {
     $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
     $('#FAN_SPEED').val(settings['FAN_SPEED']);
     $('#EXTRUSION_MULT').val(settings['EXT_MULT']);
-    //$('#TYPE_PATTERN').val(settings['PATTERN_TYPE']);
     $('#PA_START').val(settings['PA_START']);
     $('#PA_END').val(settings['PA_END']);
     $('#PA_STEP').val(settings['PA_STEP']);
@@ -1069,18 +1030,15 @@ $(window).load(() => {
     $('#PRIME').prop('checked', settings['USE_PRIME']);
     $('#PRIME_EXT').val(settings['EXT_MULT_PRIME']);
     $('#PRIME_SPEED').val(settings['SPEED_PRIME']);
-    //$('#DWELL_PRIME').val(settings['PRIME_DWELL']);
-    //$('#SLOW_LENGTH').val(settings['LENGTH_SLOW']);
     $('#PATTERN_SIDE_LENGTH').val(settings['PATTERN_SIDE_LENGTH']);
-    //$('#OFFSET_Z').val(settings['Z_OFFSET']);
     $('#USE_FWR').prop('checked', settings['USE_FWR']);
     $('#MM_S').prop('checked', settings['USE_MMS']);
     $('#LINE_NO').prop('checked', settings['USE_LINENO']);
 
-    //toggleBedShape();
-    //patternType();
+    toggleBedShape();
     //togglePrime();
-    //toggleRetract();
+    toggleRetract();
+    toggleZHop();
   }
 
   // toggle between mm/s and mm/min speeds
@@ -1093,7 +1051,7 @@ $(window).load(() => {
   });
 
   // toggle prime relevant html elements
-  $('#PRIME').change(togglePrime);
+  //$('#PRIME').change(togglePrime);
 
   /*
   // frame and alternate pattern are mutually exclusive
@@ -1103,7 +1061,10 @@ $(window).load(() => {
   // Change retract type
   $('#USE_FWR').change(toggleRetract);
 
+  // Toggle hop settings
+  $('#ZHOP_ENABLE').change(toggleZHop);
+
   // Focus the first field
-  $('#kfactor input:first').focus();
+  //$('#padv input:first').focus();
 
 });
