@@ -74,6 +74,16 @@ function genGcode() {
   if (BED_SHAPE === 'Round') {
     BED_Y = BED_X;
   }
+  
+  if (USE_MMS) {
+    SPEED_FIRSTLAYER *= 60;
+    SPEED_FILL *= 60;
+    SPEED_PERIMETER *= 60;
+    SPEED_MOVE *= 60;
+    SPEED_PRIME *= 60;
+    SPEED_RETRACT *= 60;
+    SPEED_UNRETRACT *= 60;
+  }
 
   var RANGE_PA = PA_END - PA_START,
       NUM_PATTERNS = RANGE_PA / PA_STEP + 1,
@@ -204,16 +214,6 @@ function genGcode() {
                   'SET_VELOCITY_LIMIT ACCEL=' + ACCELERATION + ' ACCEL_TO_DECEL=' + A2D + ' ; Acceleration\n' +
                   'G92 E0 ; Reset extruder distance\n' +
                   'M106 S' + Math.round(FAN_SPEED_FIRSTLAYER * 2.55) + '\n';
-
-    if (USE_MMS) {
-    SPEED_FIRSTLAYER *= 60;
-    SPEED_FILL *= 60;
-    SPEED_PERIMETER *= 60;
-    SPEED_MOVE *= 60;
-    SPEED_PRIME *= 60;
-    SPEED_RETRACT *= 60;
-    SPEED_UNRETRACT *= 60;
-  }
 
   var TO_X = PAT_START_X,
       TO_Y = PAT_START_Y,
