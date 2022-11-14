@@ -20,7 +20,7 @@
 
 // Settings version of localStorage
 // Increase if default settings are changed / amended
-const SETTINGS_VERSION = '1.2';
+const SETTINGS_VERSION = '1.3';
 
 const PA_round = -4; // Was previously -3
 const Z_round = -3;
