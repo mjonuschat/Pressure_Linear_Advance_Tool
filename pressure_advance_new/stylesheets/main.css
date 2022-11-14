@@ -11123,7 +11123,7 @@ pre.highlight .il {
     height: 100%;
     padding: 4px;
     vertical-align: middle;
-    border: thin solid var(--kf-k-border)
+    border: thin solid var(--kf-k-border);
 }
 
 #padv .txtareatd {
@@ -11232,6 +11232,148 @@ pre.highlight .il {
 }
 
 #padv :invalid {
+    box-shadow: 0 0 3px var(--kf-k-invalid-border);
+    outline: 0
+}
+
+#gcodeTable {
+    border-collapse: separate;
+    border-spacing: 0px;
+    border: thin solid var(--kf-k-border);
+    height: 200px;
+    width: 100%
+}
+
+#gcodeTable textarea {
+    background: var(--kf-k-textarea)
+}
+
+#gcodeTable h1,
+#gcodeTable h2,
+#gcodeTable h3,
+#gcodeTable h4,
+#gcodeTable h5 {
+    color: var(--kf-k--header)
+}
+
+#gcodeTable tr {
+    height: 100%;
+    border: thin solid var(--kf-k-border)
+}
+
+#gcodeTable td {
+    height: 100%;
+    padding: 4px;
+    vertical-align: middle;
+    border: thin solid var(--kf-k-border);
+}
+
+#gcodeTable .txtareatd {
+    width: 34% !important;
+    min-width: 34% !important;
+    max-width: 34% !important
+}
+
+#gcodeTable td:nth-child(1) {
+    width: 14%
+}
+
+#gcodeTable td:nth-child(2) {
+    width: 7%;
+    min-width: 7%
+}
+
+#gcodeTable td:nth-child(3) {
+    width: 45%;
+    font-size: 80%
+}
+
+#gcodeTable .tdHead {
+    background-color: var(--kf-k-td-head-bg)
+}
+
+#gcodeTable .tdSection {
+    background-color: var(--kf-k-td-section-bg)
+}
+
+#gcodeTable textarea {
+    font-family: "Oxygen Mono", monospace;
+    font-size: 90%;
+    border: none;
+    width: 100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    display: block;
+    resize: none
+}
+
+#gcodeTable input[type="number"] {
+    width: 140px
+}
+
+#gcodeTable select {
+    width: 140px;
+    color: var(--kf-k--header)
+}
+
+#gcodeTable #button2 {
+    background: var(--kf-k-btn-bg)
+}
+
+#gcodeTable label {
+    color: var(--kf-k-label);
+    font-weight: bold;
+    display: block;
+    width: 150px;
+    float: left
+}
+
+#gcodeTable .calibpat2 td {
+    padding: 1em 0;
+    vertical-align: middle;
+    background-color: var(--kf-k-td-head-bg)
+}
+
+#gcodeTable .calibpat2 td:nth-child(2) {
+    text-align: inherit
+}
+
+#gcodeTable .calibpat2 td:nth-child(3) {
+    font-size: inherit
+}
+
+#gcodeTable .disabled {
+    color: var(--kf-k-disbale);
+    font-weight: bold;
+    display: block;
+    width: 150px;
+    float: left;
+    opacity: 0.5
+}
+
+#gcodeTable .invalidDiv {
+    background-color: var(--kf-k-invalid-bg);
+    font-weight: bold;
+    display: block;
+    float: left
+}
+
+#gcodeTable .invalidSize {
+    background-color: var(--kf-k-invalid-bg);
+    font-weight: bold;
+    display: block;
+    float: left
+}
+
+#gcodeTable .invalidNumber {
+    background-color: var(--kf-k-invalid-bg);
+    font-weight: bold;
+    display: block;
+    float: left
+}
+
+#gcodeTable :invalid {
     box-shadow: 0 0 3px var(--kf-k-invalid-border);
     outline: 0
 }

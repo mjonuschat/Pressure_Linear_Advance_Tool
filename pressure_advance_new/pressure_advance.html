@@ -17,40 +17,56 @@
     <div class="row">
       <div class="calibpat" id="calibpat">
         <h1>Pressure Advance Calibration Pattern</h1>
-        <h2>WARNING: THIS IS STILL IN TESTING</h2>
+        <br>
+        <h2>Warning: This is still in testing</h2>
         <h2>Dimension checks are currently disabled</h2>
+        <!--
         <div class="row alert alert-info custom-alert">
           <div class="col-lg-1 col-md-2 visible-lg-block visible-md-block custom-alert-icon"> <i
               class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
-          <div class="col-lg-11 col-md-10 custom-alert-text">
+          
+              <div class="col-lg-11 col-md-10 custom-alert-text">
             <p><em>Caution!</em><br />
               If Start G-code is incorrect, it could damage your printer. Anything which could damage your printer could
               cause other damage. Be <em>absolutely sure</em> your Start G-code is correct before printing the generated
               G-code</p>
           </div>
+          
         </div>
+        -->
+        <!--
         <p>Use this form to generate G-code that you can use to calibrate your pressure advance. Default values apply to
           standard ABS with a 0.4mm nozzle</p>
         <p>Press the <strong>Generate G-code</strong> button followed by <strong>Download as file</strong> to save the
           result</p>
+        -->
+        <div class="row">
+          <div class="col-sm-12">
+            <h3>Example</h3>
+            <img src="./images/example.png" alt="Example" />
+          </div>
+          <!--
+          <div class="col-sm-12">
+            <h3>Example w/ Anchor Layer</h3>
+            <img src="./images/example_anchorlayer.png" alt="Example" />
+          </div>
+          -->
+        </div>
         <table id="padv">
           <!--
           <col style="width: 25%;" />
           -->
+          <br>
           <tbody>
             <tr>
               <td colspan="3" class="tdHead">
                 <h3>Settings</h3>
-              </td>
-              <td class="tdHead">
-                <h3>G-code</h3>
               </td>
             </tr>
             <tr>
               <td colspan="3" class="tdSection">
                 <h4>General</h4>
               </td>
-              <td rowspan="52" class="txtareatd"><textarea name="textarea" id="gcodetextarea"></textarea></td>
             </tr>
             <tr>
               <td><label for="MM_S">Use mm/s</label></td>
@@ -59,15 +75,15 @@
             </tr>
             <tr>
               <td colspan="3" class="tdSection">
-                <h4>Notes (Optional)</h4>
+                <h4>Notes &nbsp;<input name="NOTES_ENABLE" type="checkbox" id="NOTES_ENABLE" /></input></h4>
               </td>
             </tr>
-            <tr>
+            <tr id="printerNameRow">
               <td><label for="PRINTER">Printer Name</label></td>
               <td><input size="32" name="PRINTER" id="PRINTER" value="" /></td>
               <td>Optional. Puts printer name in a comment in the g-code</td>
             </tr>
-            <tr>
+            <tr id="filamentNameRow">
               <td><label for="FILAMENT">Filament Name</label></td>
               <td><input size="32" name="FILAMENT" id="FILAMENT" value="" /></td>
               <td>Optional. Puts filament name in a comment in the g-code</td>
@@ -91,13 +107,13 @@
               </td>
               <td id="shape">Size (mm) of the bed in X</td>
             </tr>
-            <tr>
+            <tr id="bedSizeYRow">
               <td><label for="BEDSIZE_Y">Bed Size Y</label></td>
               <td><input size="32" name="BEDSIZE_Y" id="BEDSIZE_Y" step="any" value="200" onblur="validateInput()" />
               </td>
               <td>Size (mm) of the bed in Y</td>
             </tr>
-            <tr>
+            <tr id="originBedCenterRow">
               <td><label for="CENTER_NULL">Origin Bed Center</label></td>
               <td><input size="32" name="CENTER_NULL" type="checkbox" id="CENTER_NULL" /></td>
               <td>Set the origin position (X0 Y0) to bed center instead of front-left corner</td>
@@ -213,19 +229,19 @@ PRINT_END
               <td><input type="checkbox" name="USE_FWR" id="USE_FWR" /></td>
               <td>Use firmware retract. Needs to be set up in Klipper</td>
             </tr>
-            <tr>
+            <tr id="retractionDistanceRow">
               <td><label for="RETRACTION">Retraction Distance</label></td>
               <td><input size="32" name="RETRACTION" id="RETRACTION" step="any" value="0.5" onblur="validateInput()" />
               </td>
               <td>Retraction distance (mm)</td>
             </tr>
-            <tr>
+            <tr id="retractionSpeedRow">
               <td><label for="RETRACT_SPEED">Retract Speed</label></td>
               <td><input size="32" name="RETRACT_SPEED" id="RETRACT_SPEED" step="1" value="35"
                   onblur="validateInput()" /></td>
               <td>Retract speed of the extruder</td>
             </tr>
-            <tr>
+            <tr id="unretractionSpeedRow">
               <td><label for="UNRETRACT_SPEED">Unretract Speed</label></td>
               <td><input size="32" name="UNRETRACT_SPEED" id="UNRETRACT_SPEED" step="1" value="35"
                   onblur="validateInput()" />
@@ -237,7 +253,7 @@ PRINT_END
               <td><input type="checkbox" name="ZHOP_ENABLE" id="ZHOP_ENABLE" checked /></td>
               <td>Enable Z hop on retracts</td>
             </tr>
-            <tr>
+            <tr id="zhopHeightRow">
               <td><label for="ZHOP_HEIGHT">Z Hop Height</label></td>
               <td><input size="32" name="ZHOP_HEIGHT" id="ZHOP_HEIGHT" step="any" value="0.2"
                   onblur="validateInput()" />
@@ -268,13 +284,35 @@ PRINT_END
                   onblur="validateInput()" /></td>
               <td>First layer fan speed (%)</td>
             </tr>
+
+            <tr>
+              <td><label for="ANCHOR_OPTION">Anchor Option</label></td>
+              <td colspan="1"><select style="width: 295px;" size="1" name="ANCHOR_OPTION" id="ANCHOR_OPTION"
+                  onchange="validateInput()">
+                  <option value="anchor_frame" selected="selected">Anchor Frame</option>
+                  <option value="anchor_layer">Full Anchor Layer</option>
+                  <option value="no_anchor">No Anchor</option>
+                </select></td>
+              <td id="ANCHOR_OPTION_Description">
+                <p>Select an anchor option</p>
+              </td>
+            </tr>
+            <tr id="anchorPerimetersRow">
+              <td><label for="ANCHOR_PERIMETERS">Anchor Frame Perimeters</label></td>
+              <td><input size="32" name="ANCHOR_PERIMETERS" id="ANCHOR_PERIMETERS" step="1" value="3"
+                  onblur="validateInput()" />
+              </td>
+              <td>Print an anchor frame</td>
+            </tr>validateInput
+            <!--
             <tr>
               <td><label for="ANCHOR_LAYER">Print Anchor Layer</label></td>
               <td><input type="checkbox" name="ANCHOR_LAYER" id="ANCHOR_LAYER" checked /></td>
-              <td>Print an anchor layer</td>
+              <td>Print a full anchor layer rather than a frame</td>
             </tr>
-            <tr>
-              <td><label for="ANCHOR_LAYER_LINE_RATIO">Anchor Layer Line Width Ratio</label></td>
+            -->
+            <tr id="anchorLineRatioRow">
+              <td><label for="ANCHOR_LAYER_LINE_RATIO">Anchor Line Width Ratio</label></td>
               <td><input size="32" name="ANCHOR_LAYER_LINE_RATIO" id="ANCHOR_LAYER_LINE_RATIO" step="any" value="1.4"
                   onblur="validateInput()" />
               </td>
@@ -323,41 +361,42 @@ PRINT_END
 
             <tr>
               <td colspan="3" class="tdsection">
-                <h4>Pattern Settings</h4> <i>(Defaults are usually fine)</i>
+                <h4>Pattern Settings &nbsp;</input><input name="PATTERN_OPTIONS_ENABLE" type="checkbox"
+                    id="PATTERN_OPTIONS_ENABLE" /></h4>
+                <i>(Defaults are usually fine)</i>
               </td>
             </tr>
-            <tr>
+            <tr id="printHeightRow">
               <td><label for="PRINT_HEIGHT">Print Height</label></td>
               <td><input size="32" name="PRINT_HEIGHT" id="PRINT_HEIGHT" step="any" value="1"
                   onblur="validateInput()" /></td>
               <td>How tall to print the pattern (mm)</td>
             </tr>
-            <tr>
+            <tr id="perimetersRow">
               <td><label for="PERIMETERS">Perimeter Count</label></td>
               <td><input size="32" name="PERIMETERS" id="PERIMETERS" step="1" value="3" onblur="validateInput()" /></td>
               <td>Perimeter count. This will slightly impact print size</td>
             </tr>
-            <tr>
+            <tr id="patternSideLengthRow">
               <td><label for="PATTERN_SIDE_LENGTH">Side Length</label></td>
               <td><input size="32" name="PATTERN_SIDE_LENGTH" id="PATTERN_SIDE_LENGTH" step="1" value="30"
                   onblur="validateInput()" /></td>
               <td>Length of the pattern sides (mm)</td>
             </tr>
-            <tr>
+            <tr id="patternSpacingRow">
               <td><label for="PATTERN_SPACING">Spacing</label></td>
               <td><input size="32" name="PATTERN_SPACING" id="PATTERN_SPACING" step="any" value="5"
                   onblur="validateInput()" />
               </td>
               <td>Horizontal distance between the corner patterns. This will impact print size</td>
             </tr>
-            <tr>
+            <tr id="patternAngleRow">
               <td><label for="PATTERN_ANGLE">Corner Angle</label></td>
               <td><input size="32" name="PATTERN_ANGLE" id="PATTERN_ANGLE" step="any" value="90"
                   onblur="validateInput()" /></td>
               <td>Angle of the test pattern corners.</td>
             </tr>
-
-            <tr>
+            <tr id="printDirectionRow">
               <td><label for="DIR_PRINT">Printing Direction</label></td>
               <td><select name="DIR_PRINT" id="DIR_PRINT" onchange="validateInput()">
                   <option value="0" selected="selected">Left to Right (0°)</option>
@@ -422,37 +461,42 @@ PRINT_END
           </tr>
           -->
             <tr class="calibpat2">
-              <td><label for="FILENAME">Filename</label></td>
-              <td colspan="2"><input size="32" name="FILENAME" id="FILENAME" value="pa_pattern" />
-                <input size="32" name="button" type="button" id="button" onclick="genGcode()" value="Generate G-code" />
-                <input size="32" name="button3" type="button" id="button3" onclick="setLocalStorage()"
+              <td colspan="3">
+                &nbsp;&nbsp;&nbsp;<input size="32" name="button3" type="button" id="button3" onclick="setLocalStorage()"
                   value="Save Settings to Browser" title="Save settings in a cookie." />
-                <input size="32" name="button3" type="button" id="button3"
+                &nbsp;&nbsp;&nbsp;<input size="32" name="button3" type="button" id="button3"
                   onclick="window.localStorage.clear('PA_SETTINGS');location.reload();" value="Restore Defaults"
                   title="Remove settings cookie and reload page." />
+
                 <p id="warning1" style="display: none;">warning</p>
                 <p id="warning2" style="display: none;">warning</p>
                 <p id="warning3" style="display: none;">warning</p>
               </td>
-              <td>
-                <p>
-                  <input size="32" name="button2" type="button" id="button2" onclick="saveTextAsFile()"
-                    value="Download as file" />
-                </p>
-              </td>
             </tr>
           </tbody>
         </table>
-        <div class="row">
-          <div class="col-sm-12">
-            <h3>Example</h3>
-            <img src="./images/example.png" alt="Example" />
-          </div>
-          <div class="col-sm-12">
-            <h3>Example w/ Anchor Layer</h3>
-            <img src="./images/example_anchorlayer.png" alt="Example" />
-          </div>
-        </div>
+        <br>
+        <table id="gcodeTable">
+          <tbody>
+            <tr>
+              <td colspan="3" class="tdHead">
+                <h3>G-Code</h3>
+              </td>
+            </tr>
+            <tr>
+              <td class="tdSection">&nbsp;&nbsp;&nbsp;<input size="32" name="button" type="button" id="button"
+                  onclick="genGcode()" value="Generate G-code" />
+                &nbsp;&nbsp;File Name:&nbsp;&nbsp; <input size="32" name="FILENAME" id="FILENAME"
+                  value="pa_pattern" />&nbsp;&nbsp;&nbsp;<input size="32" name="button2" type="button" id="button2"
+                  onclick="saveTextAsFile()" value="Download as file" />
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" class="txtareatd"><textarea style="height: 600px; background-color:#ffffff;"
+                  name="textarea" id="gcodetextarea"></textarea></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 </body>
