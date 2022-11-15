@@ -599,15 +599,16 @@ function createLine(to_x, to_y, basicSettings, optional) {
   var defaults = {
     extMult: basicSettings['extMult'],
     extRatio: basicSettings['extRatio'],
+    speed: basicSettings['firstLayerSpeed'],
     comment: ' ; print line\n'
   };
   var optArgs = $.extend({}, defaults, optional);
 
   // change speed if first layer
   if (Math.round10(CUR_Z, Z_round) == basicSettings['firstLayerHeight']){
-    var speed = basicSettings['firstLayerSpeed'];
+    optArgs['speed'] = basicSettings['firstLayerSpeed'];
   } else {
-    var speed = basicSettings['perimSpeed'];
+    optArgs['speed'] = basicSettings['perimSpeed'];
   }
 
   length = getDistance(CUR_X, CUR_Y, to_x, to_y);
@@ -615,7 +616,7 @@ function createLine(to_x, to_y, basicSettings, optional) {
 
   gcode += 'G1 X' + Math.round10(rotateX(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
              ' Y' + Math.round10(rotateY(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' E' + ext + ' F' + speed + optArgs['comment'];
+             ' E' + ext + ' F' + optArgs['speed'] + optArgs['comment'];
 
   CUR_X = to_x, // update global position vars
   CUR_Y = to_y;
@@ -718,8 +719,8 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
   //handle optional function arguements passed as object
   var defaults = {
     spacing: basicSettings['anchorLineSpacing'],
-    speed: basicSettings['firstLayerSpeed'],
     extRatio: basicSettings['anchorExtRatio'],
+    speed: basicSettings['firstLayerSpeed'],
     comment: ' ; print line\n'
   };
 
@@ -734,19 +735,19 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
     }
     // draw line up
     to_y += max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {comment: ' ; draw anchor perimeter (up)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (up)\n'});
 
     // draw line right
     to_x += max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {comment: ' ; draw anchor perimeter (right)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (right)\n'});
 
     // draw line down
     to_y -= max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {comment: ' ; draw anchor perimeter (down)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (down)\n'});
 
     // draw line left
     to_x -= max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {comment: ' ; draw anchor perimeter (left)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (left)\n'});
   }
   return gcode;
 }
