@@ -20,7 +20,7 @@
 
 // Settings version of localStorage
 // Increase if default settings are changed / amended
-const SETTINGS_VERSION = '1.3';
+const SETTINGS_VERSION = '1.4';
 
 const PA_round = -4; // Was previously -3
 const Z_round = -3;
@@ -221,58 +221,6 @@ function setCalculatedVars(){
 function genGcode() {
   setHtmlVars();
   setCalculatedVars();
-  /*
-  // get the values from the HTML elements
-  var PRINTER = $('#PRINTER').val(),
-      FILAMENT = $('#FILAMENT').val(),
-      FILENAME = $('#FILENAME').val(),
-      NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked'),
-      PATTERN_OPTIONS_ENABLE = $('#PATTERN_OPTIONS_ENABLE').prop('checked'),
-      HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val()),
-      BED_TEMP = parseInt($('#BED_TEMP').val()),
-      FILAMENT_DIAMETER = parseFloat($('#FILAMENT_DIAMETER').val()),
-      NOZZLE_DIAMETER = parseFloat($('#NOZZLE_DIAMETER').val()),
-      LINE_RATIO = parseFloat($('#LINE_RATIO').val()),
-      ANCHOR_OPTION = $('#ANCHOR_OPTION').val(),
-      ANCHOR_PERIMETERS = parseFloat($('#ANCHOR_PERIMETERS').val()),
-      ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
-      START_GCODE_TYPE = $('#START_GCODE_TYPE').val(),
-      START_GCODE = $('#START_GCODE').val(),
-      END_GCODE = $('#END_GCODE').val(),
-      SPEED_FIRSTLAYER = parseInt($('#SPEED_FIRSTLAYER').val()),
-      SPEED_PERIMETER = parseInt($('#PERIMETER_SPEED').val()),
-      SPEED_TRAVEL = parseInt($('#SPEED_TRAVEL').val()),
-      SPEED_RETRACT = parseInt($('#SPEED_RETRACT').val()),
-      SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val()),
-      ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked'),
-      ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val()),
-      ACCELERATION = parseInt($('#PRINT_ACCL').val()),
-      RETRACT_DIST = parseFloat($('#RETRACT_DIST').val()),
-      BED_SHAPE = $('#BED_SHAPE').val(),
-      BED_X = parseInt($('#BED_X').val()),
-      BED_Y = parseInt($('#BED_Y').val()),
-      ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked'),
-      HEIGHT_FIRSTLAYER = parseFloat($('#HEIGHT_FIRSTLAYER').val()),
-      HEIGHT_LAYER = parseFloat($('#HEIGHT_LAYER').val()),
-      HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').val()),
-      EXTRUDER_NAME = $('#EXTRUDER_NAME').val(),
-      FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
-      FAN_SPEED = parseFloat($('#FAN_SPEED').val()),
-      EXT_MULT = parseFloat($('#EXT_MULT').val()),
-      PA_START = parseFloat($('#PA_START').val()),
-      PA_END = parseFloat($('#PA_END').val()),
-      PA_STEP = parseFloat($('#PA_STEP').val()),
-      PRINT_DIR = $('#PRINT_DIR').val(),
-      PATTERN_SPACING = parseInt($('#PATTERN_SPACING').val()),
-      PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val()),
-      PERIMETERS = parseInt($('#PERIMETERS').val()),
-      //USE_PRIME = $('#PRIME').prop('checked'),
-      USE_MMS = $('#USE_MMS').prop('checked'),
-      USE_FWR = $('#USE_FWR').prop('checked'),
-      EXT_MULT_PRIME = parseFloat($('#ENT_MULT_PRIME').val()),
-      //SPEED_PRIME = parseInt($('#PRIME_SPEED').val()),
-      //USE_LINENO = $('#LINE_NO').prop('checked'),
-      PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val());*/
 
   var basicSettings = {
     'firstLayerSpeed': SPEED_FIRSTLAYER,

@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>Pressure Advance Calibration Pattern</title>
+  <title>Ellis' Pressure Advance Calibration Tool</title>
   <meta charset="UTF-8">
   <meta name="description" content="Create G-code to calibrate Pressure Advance setting">
   <link rel="stylesheet" href="stylesheets/main.css" />
@@ -16,29 +16,27 @@
   <div class="container" role="main">
     <div class="row">
       <div class="calibpat" id="calibpat">
-        <h1>Pressure Advance Calibration Pattern</h1>
-        <br>
-        <h2>Warning: This is still in testing</h2>
-        <!--
+        <h1>Ellis' Pressure Advance Calibration Tool</h1>
+        Original <a href="https://marlinfw.org/tools/lin_advance/k-factor.html">Marlin calibration tool</a> by <a
+          href="https://github.com/Sineos/k-factorjs">Sineos</a><br>
+        Heavily modified/rewritten by <a href="https://github.com/AndrewEllis93">Andrew Ellis</a><br>
+        Also see my <a href="https://github.com/AndrewEllis93/Print-Tuning-Guide">print tuning guide</a><br><br>
         <div class="row alert alert-info custom-alert">
           <div class="col-lg-1 col-md-2 visible-lg-block visible-md-block custom-alert-icon"> <i
               class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
-          
-              <div class="col-lg-11 col-md-10 custom-alert-text">
+          <div class="col-lg-11 col-md-10 custom-alert-text">
             <p><em>Caution!</em><br />
               If Start G-code is incorrect, it could damage your printer. Anything which could damage your printer could
               cause other damage. Be <em>absolutely sure</em> your Start G-code is correct before printing the generated
               G-code</p>
           </div>
-          
         </div>
-        -->
-        <!--
-        <p>Use this form to generate G-code that you can use to calibrate your pressure advance. Default values apply to
-          standard ABS with a 0.4mm nozzle</p>
-        <p>Press the <strong>Generate G-code</strong> button followed by <strong>Download as file</strong> to save the
-          result</p>
-        -->
+        <br>
+        Use this form to generate G-code that you can use to calibrate your pressure advance.<br><br>
+        Press the <strong>"Generate G-code"</strong> button followed by <strong>"Download as file"</strong> to save
+        the
+        result.<br>
+        <strong>If having issues, click "Restore Defaults" at the bottom.</strong>
         <div class="row">
           <div class="col-sm-12">
             <h3>Example</h3>
@@ -118,13 +116,15 @@
             </tr>
             <tr>
               <td><label for="SPEED_TRAVEL">Travel Speed</label></td>
-              <td><input size="32" name="SPEED_TRAVEL" id="SPEED_TRAVEL" step="1" value="120" onblur="validateInput()" />
+              <td><input size="32" name="SPEED_TRAVEL" id="SPEED_TRAVEL" step="1" value="120"
+                  onblur="validateInput()" />
               </td>
               <td>Travel speed</td>
             </tr>
             <tr>
               <td><label for="NOZZLE_DIAMETER">Nozzle Diameter</label></td>
-              <td><input size="32" name="NOZZLE_DIAMETER" id="NOZZLE_DIAMETER" step="any" value="0.4" onblur="validateInput()" /></td>
+              <td><input size="32" name="NOZZLE_DIAMETER" id="NOZZLE_DIAMETER" step="any" value="0.4"
+                  onblur="validateInput()" /></td>
               <td>Diameter of the nozzle (mm)</td>
             </tr>
 
@@ -194,13 +194,13 @@ PRINT_END
 
             <tr>
               <td><label for="FILAMENT_DIAMETER">Filament Diameter</label></td>
-              <td><input size="32" name="FILAMENT_DIAMETER" id="FILAMENT_DIAMETER" step="any" value="1.75" onblur="validateInput()" /></td>
+              <td><input size="32" name="FILAMENT_DIAMETER" id="FILAMENT_DIAMETER" step="any" value="1.75"
+                  onblur="validateInput()" /></td>
               <td>Diameter of the used filament (mm)</td>
             </tr>
             <tr>
               <td><label for="EXT_MULT">Extrusion Multiplier</label></td>
-              <td><input size="32" name="EXT_MULT" id="EXT_MULT" step="any" value="0.94"
-                  onblur="validateInput()" />
+              <td><input size="32" name="EXT_MULT" id="EXT_MULT" step="any" value="0.94" onblur="validateInput()" />
               </td>
               <td>Usually around 0.94 for ABS</td>
             </tr>
@@ -224,7 +224,8 @@ PRINT_END
             </tr>
             <tr id="retractionDistanceRow">
               <td><label for="RETRACT_DIST">Retraction Distance</label></td>
-              <td><input size="32" name="RETRACT_DIST" id="RETRACT_DIST" step="any" value="0.5" onblur="validateInput()" />
+              <td><input size="32" name="RETRACT_DIST" id="RETRACT_DIST" step="any" value="0.5"
+                  onblur="validateInput()" />
               </td>
               <td>Retraction distance (mm)</td>
             </tr>
@@ -283,7 +284,7 @@ PRINT_END
               <td colspan="1"><select style="width: 295px;" size="3" name="ANCHOR_OPTION" id="ANCHOR_OPTION"
                   onchange="validateInput()">
                   <option value="anchor_frame" selected="selected">Anchor Frame</option>
-                  <option value="anchor_layer">Full Anchor Layer</option>
+                  <option value="anchor_layer">Anchor Layer</option>
                   <option value="no_anchor">No Anchor</option>
                 </select></td>
               <td id="anchorOptionDescription"></td>
