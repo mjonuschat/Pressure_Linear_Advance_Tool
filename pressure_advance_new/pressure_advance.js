@@ -134,7 +134,7 @@ function setHtmlVars(){
   PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val());
   PATTERN_OPTIONS_ENABLE = $('#PATTERN_OPTIONS_ENABLE').prop('checked');
   PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val());
-  PATTERN_SPACING = parseInt($('#PATTERN_SPACING').val());
+  PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').val());
   PA_END = parseFloat($('#PA_END').val());
   PA_START = parseFloat($('#PA_START').val());
   PA_STEP = parseFloat($('#PA_STEP').val());
@@ -164,7 +164,7 @@ function setCalculatedVars(){
   NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1);
 
   // line widths and extrusion ratios
-  LINE_WIDTH = NOZZLE_DIAMETER * LINE_RATIO;
+  LINE_WIDTH = NOZZLE_DIAMETER * LINE_RATIO; // this has to be rounded or it causes issues
   ANCHOR_LAYER_LINE_WIDTH = NOZZLE_DIAMETER * ANCHOR_LAYER_LINE_RATIO;
   EXTRUSION_RATIO = LINE_WIDTH * HEIGHT_LAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI);
   ANCHOR_LAYER_EXTRUSION_RATIO = ANCHOR_LAYER_LINE_WIDTH * HEIGHT_FIRSTLAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI);
@@ -209,11 +209,11 @@ function setCalculatedVars(){
   }
 
   if (!PATTERN_OPTIONS_ENABLE){
-    HEIGHT_PRINT = document.getElementById("HEIGHT_PRINT").defaultValue;
-    PERIMETERS = document.getElementById("PERIMETERS").defaultValue;
-    PATTERN_SIDE_LENGTH = document.getElementById("PATTERN_SIDE_LENGTH").defaultValue;
-    PATTERN_SPACING = document.getElementById("PATTERN_SPACING").defaultValue;
-    PATTERN_ANGLE = document.getElementById("PATTERN_ANGLE").defaultValue;
+    HEIGHT_PRINT = parseFloat(document.getElementById("HEIGHT_PRINT").defaultValue);
+    PERIMETERS = parseInt(document.getElementById("PERIMETERS").defaultValue);
+    PATTERN_SIDE_LENGTH = parseInt(document.getElementById("PATTERN_SIDE_LENGTH").defaultValue);
+    PATTERN_SPACING = parseFloat(document.getElementById("PATTERN_SPACING").defaultValue);
+    PATTERN_ANGLE = parseInt(document.getElementById("PATTERN_ANGLE").defaultValue);
     PRINT_DIR = 0;
   }
 }
@@ -315,7 +315,7 @@ function genGcode() {
     (!PATTERN_OPTIONS_ENABLE ? '; (Using defaults)\n': '') +
     (PATTERN_OPTIONS_ENABLE ? '; (Customized)\n': '') +
     '; - Print Height: ' + HEIGHT_PRINT + ' mm\n' +
-    '; - Perimeter Count: ' + PERIMETERS + ' mm\n' +
+    '; - Perimeter Count: ' + PERIMETERS + '\n' +
     '; - Side Length: ' + PATTERN_SIDE_LENGTH + ' mm\n' +
     '; - Spacing: ' + PATTERN_SPACING + ' mm\n' +
     '; - Corner Angle: ' + PATTERN_ANGLE + ' degrees \n' +
@@ -400,7 +400,7 @@ function genGcode() {
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ 
       var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1)) / Math.sin(toRadians(PATTERN_ANGLE) / 2);
       var SIDE_LENGTH = PATTERN_SIDE_LENGTH - SHRINK; 
-      TO_X += SHRINK * Math.sin(1.5708 - toRadians(PATTERN_ANGLE) / 2); // 1.5708 = 90 degrees in radians
+      TO_X += SHRINK * Math.sin(toRadians(90) - toRadians(PATTERN_ANGLE) / 2);
       TO_Y += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
     } else {
       var SIDE_LENGTH = PATTERN_SIDE_LENGTH;
@@ -423,11 +423,11 @@ function genGcode() {
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter (diagonal x+ y+)\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter\n'});
 
         TO_X -= Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
         TO_Y += Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter (diagonal x- y+)\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter\n'});
 
         TO_Y = INITIAL_Y;
         if (k != PERIMETERS - 1){ // if not last perimeter yet, move forward line spacing instead of pattern spacing
