@@ -406,18 +406,20 @@ function genGcode() {
       var SIDE_LENGTH = PATTERN_SIDE_LENGTH;
     }
 
+    var INITIAL_X = TO_X,
+        INITIAL_Y = TO_Y;
+
     // move to start xy then layer height
     pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start\n'}) +
                  moveToZ(TO_Z, basicSettings, {comment: ' ; move to layer height\n'});
 
     for (let j = 0; j < NUM_PATTERNS; j++){
-      var INITIAL_X = TO_X;
-      var INITIAL_Y = TO_Y;
+
       // increment pressure advance
       pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + (PA_START + (j * PA_STEP)) + ' EXTRUDER=' + EXTRUDER_NAME + ' ; set pressure advance\n';
 
       if (i > 0){
-         'M106 S' + Math.round(FAN_SPEED * 2.55) + '; Set fan speed\n';
+        pa_script += 'M106 S' + Math.round(FAN_SPEED * 2.55) + '; Set fan speed\n';
       }
                    
       for (let k = 0; k < PERIMETERS ; k++){
@@ -437,7 +439,7 @@ function genGcode() {
           if (j == NUM_PATTERNS - 1){ // if last pattern and last perimeter, travel back to start X instead of + spacing
             TO_X = INITIAL_X;
             pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move back to start position\n'});
-          }else{
+          } else {
             TO_X += (PATTERN_SPACING + LINE_WIDTH);
             pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to next pattern\n'});
           }
