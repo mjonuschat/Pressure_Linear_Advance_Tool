@@ -19,7 +19,6 @@
         <h1>Pressure Advance Calibration Pattern</h1>
         <br>
         <h2>Warning: This is still in testing</h2>
-        <h2>Dimension checks are currently disabled</h2>
         <!--
         <div class="row alert alert-info custom-alert">
           <div class="col-lg-1 col-md-2 visible-lg-block visible-md-block custom-alert-icon"> <i
@@ -45,12 +44,6 @@
             <h3>Example</h3>
             <img src="./images/example.png" alt="Example" />
           </div>
-          <!--
-          <div class="col-sm-12">
-            <h3>Example w/ Anchor Layer</h3>
-            <img src="./images/example_anchorlayer.png" alt="Example" />
-          </div>
-          -->
         </div>
         <table id="padv">
           <!--
@@ -69,8 +62,8 @@
               </td>
             </tr>
             <tr>
-              <td><label for="MM_S">Use mm/s</label></td>
-              <td><input size="32" name="MM_S" type="checkbox" id="MM_S" checked="checked" /></td>
+              <td><label for="USE_MMS">Use mm/s</label></td>
+              <td><input size="32" name="USE_MMS" type="checkbox" id="USE_MMS" checked="checked" /></td>
               <td>Use mm/s instead of mm/min</td>
             </tr>
             <tr>
@@ -94,28 +87,28 @@
               </td>
             </tr>
             <tr>
-              <td><label for="SHAPE_BED">Bed Shape</label></td>
-              <td><select name="SHAPE_BED" id="SHAPE_BED">
+              <td><label for="BED_SHAPE">Bed Shape</label></td>
+              <td><select name="BED_SHAPE" id="BED_SHAPE">
                   <option value="Rect">Rectangular</option>
                   <option value="Round">Round</option>
                 </select></td>
               <td>Rectangular or round bed. Round beds will activate Origin Bed Center</td>
             </tr>
             <tr>
-              <td><label for="BEDSIZE_X">Bed Size X</label></td>
-              <td><input size="32" name="BEDSIZE_X" id="BEDSIZE_X" step="any" value="200" onblur="validateInput()" />
+              <td><label for="BED_X">Bed Size X</label></td>
+              <td><input size="32" name="BED_X" id="BED_X" step="any" value="200" onblur="validateInput()" />
               </td>
               <td id="shape">Size (mm) of the bed in X</td>
             </tr>
             <tr id="bedSizeYRow">
-              <td><label for="BEDSIZE_Y">Bed Size Y</label></td>
-              <td><input size="32" name="BEDSIZE_Y" id="BEDSIZE_Y" step="any" value="200" onblur="validateInput()" />
+              <td><label for="BED_Y">Bed Size Y</label></td>
+              <td><input size="32" name="BED_Y" id="BED_Y" step="any" value="200" onblur="validateInput()" />
               </td>
               <td>Size (mm) of the bed in Y</td>
             </tr>
             <tr id="originBedCenterRow">
-              <td><label for="CENTER_NULL">Origin Bed Center</label></td>
-              <td><input size="32" name="CENTER_NULL" type="checkbox" id="CENTER_NULL" /></td>
+              <td><label for="ORIGIN_CENTER">Origin Bed Center</label></td>
+              <td><input size="32" name="ORIGIN_CENTER" type="checkbox" id="ORIGIN_CENTER" /></td>
               <td>Set the origin position (X0 Y0) to bed center instead of front-left corner</td>
             </tr>
             <tr>
@@ -124,14 +117,14 @@
               <td>Usually "extruder" if only one extruder. Allows choosing extruder if more than one</td>
             </tr>
             <tr>
-              <td><label for="MOVE_SPEED">Travel Speed</label></td>
-              <td><input size="32" name="MOVE_SPEED" id="MOVE_SPEED" step="1" value="120" onblur="validateInput()" />
+              <td><label for="SPEED_TRAVEL">Travel Speed</label></td>
+              <td><input size="32" name="SPEED_TRAVEL" id="SPEED_TRAVEL" step="1" value="120" onblur="validateInput()" />
               </td>
               <td>Travel speed</td>
             </tr>
             <tr>
-              <td><label for="NOZ_DIA">Nozzle Diameter</label></td>
-              <td><input size="32" name="NOZ_DIA" id="NOZ_DIA" step="any" value="0.4" onblur="validateInput()" /></td>
+              <td><label for="NOZZLE_DIAMETER">Nozzle Diameter</label></td>
+              <td><input size="32" name="NOZZLE_DIAMETER" id="NOZZLE_DIAMETER" step="any" value="0.4" onblur="validateInput()" /></td>
               <td>Diameter of the nozzle (mm)</td>
             </tr>
 
@@ -142,7 +135,7 @@
             </tr>
             <tr>
               <td><label for="START_GCODE_TYPE">Start G-code Option</label></td>
-              <td colspan="1"><select style="width: 320px; height: 130px;" size="3" name="START_GCODE_TYPE"
+              <td colspan="1"><select style="width: 320px; height: 72px;" size="3" name="START_GCODE_TYPE"
                   id="START_GCODE_TYPE" onchange="validateInput()">
                   <option value="custom" selected="selected">Manual Start G-code</option>
                   <option value="standalone">Standalone Start Macro</option>
@@ -200,13 +193,13 @@ PRINT_END
             </tr>
 
             <tr>
-              <td><label for="FIL_DIA">Filament Diameter</label></td>
-              <td><input size="32" name="FIL_DIA" id="FIL_DIA" step="any" value="1.75" onblur="validateInput()" /></td>
+              <td><label for="FILAMENT_DIAMETER">Filament Diameter</label></td>
+              <td><input size="32" name="FILAMENT_DIAMETER" id="FILAMENT_DIAMETER" step="any" value="1.75" onblur="validateInput()" /></td>
               <td>Diameter of the used filament (mm)</td>
             </tr>
             <tr>
-              <td><label for="EXTRUSION_MULT">Extrusion Multiplier</label></td>
-              <td><input size="32" name="EXTRUSION_MULT" id="EXTRUSION_MULT" step="any" value="0.94"
+              <td><label for="EXT_MULT">Extrusion Multiplier</label></td>
+              <td><input size="32" name="EXT_MULT" id="EXT_MULT" step="any" value="0.94"
                   onblur="validateInput()" />
               </td>
               <td>Usually around 0.94 for ABS</td>
@@ -215,7 +208,7 @@ PRINT_END
               <td><label for="LINE_RATIO">Line Width Ratio</label></td>
               <td><input size="32" name="LINE_RATIO" id="LINE_RATIO" step="any" value="1.15" onblur="validateInput()" />
               </td>
-              <td>Line width as a ratio of nozzle diameter. Match your thickest perimeter from your slicer settings
+              <td>Line width (as a ratio of nozzle diameter). Match your thickest perimeter from your slicer settings
                 (internal/external)</td>
             </tr>
 
@@ -230,20 +223,20 @@ PRINT_END
               <td>Use firmware retract. Needs to be set up in Klipper</td>
             </tr>
             <tr id="retractionDistanceRow">
-              <td><label for="RETRACTION">Retraction Distance</label></td>
-              <td><input size="32" name="RETRACTION" id="RETRACTION" step="any" value="0.5" onblur="validateInput()" />
+              <td><label for="RETRACT_DIST">Retraction Distance</label></td>
+              <td><input size="32" name="RETRACT_DIST" id="RETRACT_DIST" step="any" value="0.5" onblur="validateInput()" />
               </td>
               <td>Retraction distance (mm)</td>
             </tr>
             <tr id="retractionSpeedRow">
-              <td><label for="RETRACT_SPEED">Retract Speed</label></td>
-              <td><input size="32" name="RETRACT_SPEED" id="RETRACT_SPEED" step="1" value="35"
+              <td><label for="SPEED_RETRACT">Retract Speed</label></td>
+              <td><input size="32" name="SPEED_RETRACT" id="SPEED_RETRACT" step="1" value="35"
                   onblur="validateInput()" /></td>
               <td>Retract speed of the extruder</td>
             </tr>
             <tr id="unretractionSpeedRow">
-              <td><label for="UNRETRACT_SPEED">Unretract Speed</label></td>
-              <td><input size="32" name="UNRETRACT_SPEED" id="UNRETRACT_SPEED" step="1" value="35"
+              <td><label for="SPEED_UNRETRACT">Unretract Speed</label></td>
+              <td><input size="32" name="SPEED_UNRETRACT" id="SPEED_UNRETRACT" step="1" value="35"
                   onblur="validateInput()" />
               </td>
               <td>Unretract speed of the extruder</td>
@@ -266,14 +259,14 @@ PRINT_END
               </td>
             </tr>
             <tr>
-              <td><label for="LAYER_HEIGHT_FIRSTLAYER">FL Height</label></td>
-              <td><input size="32" name="LAYER_HEIGHT_FIRSTLAYER" id="LAYER_HEIGHT_FIRSTLAYER" step="any" value="0.25"
+              <td><label for="HEIGHT_FIRSTLAYER">FL Height</label></td>
+              <td><input size="32" name="HEIGHT_FIRSTLAYER" id="HEIGHT_FIRSTLAYER" step="any" value="0.25"
                   onblur="validateInput()" /></td>
               <td>First layer height (mm)</td>
             </tr>
             <tr>
-              <td><label for="FIRSTLAYER_SPEED">FL Print Speed</label></td>
-              <td><input size="32" name="FIRSTLAYER_SPEED" id="FIRSTLAYER_SPEED" step="1" value="30"
+              <td><label for="SPEED_FIRSTLAYER">FL Print Speed</label></td>
+              <td><input size="32" name="SPEED_FIRSTLAYER" id="SPEED_FIRSTLAYER" step="1" value="30"
                   onblur="validateInput()" />
               </td>
               <td>Speed for first layer</td>
@@ -287,36 +280,27 @@ PRINT_END
 
             <tr>
               <td><label for="ANCHOR_OPTION">Anchor Option</label></td>
-              <td colspan="1"><select style="width: 295px;" size="1" name="ANCHOR_OPTION" id="ANCHOR_OPTION"
+              <td colspan="1"><select style="width: 295px;" size="3" name="ANCHOR_OPTION" id="ANCHOR_OPTION"
                   onchange="validateInput()">
                   <option value="anchor_frame" selected="selected">Anchor Frame</option>
                   <option value="anchor_layer">Full Anchor Layer</option>
                   <option value="no_anchor">No Anchor</option>
                 </select></td>
-              <td id="ANCHOR_OPTION_Description">
-                <p>Select an anchor option</p>
-              </td>
+              <td id="anchorOptionDescription"></td>
             </tr>
             <tr id="anchorPerimetersRow">
               <td><label for="ANCHOR_PERIMETERS">Anchor Frame Perimeters</label></td>
               <td><input size="32" name="ANCHOR_PERIMETERS" id="ANCHOR_PERIMETERS" step="1" value="3"
                   onblur="validateInput()" />
               </td>
-              <td>Print an anchor frame</td>
-            </tr>validateInput
-            <!--
-            <tr>
-              <td><label for="ANCHOR_LAYER">Print Anchor Layer</label></td>
-              <td><input type="checkbox" name="ANCHOR_LAYER" id="ANCHOR_LAYER" checked /></td>
-              <td>Print a full anchor layer rather than a frame</td>
+              <td>Perimeter count for anchor frame</td>
             </tr>
-            -->
             <tr id="anchorLineRatioRow">
               <td><label for="ANCHOR_LAYER_LINE_RATIO">Anchor Line Width Ratio</label></td>
               <td><input size="32" name="ANCHOR_LAYER_LINE_RATIO" id="ANCHOR_LAYER_LINE_RATIO" step="any" value="1.4"
                   onblur="validateInput()" />
               </td>
-              <td>Anchor layer line width as a ratio of nozzle diameter</td>
+              <td>Anchor layer line width (as a ratio of nozzle diameter)</td>
             </tr>
             <tr>
               <td colspan="3" class="tdsection">
@@ -324,8 +308,8 @@ PRINT_END
               </td>
             </tr>
             <tr>
-              <td><label for="LAYER_HEIGHT">Layer Height</label></td>
-              <td><input size="32" name="LAYER_HEIGHT" id="LAYER_HEIGHT" step="any" value="0.2"
+              <td><label for="HEIGHT_LAYER">Layer Height</label></td>
+              <td><input size="32" name="HEIGHT_LAYER" id="HEIGHT_LAYER" step="any" value="0.2"
                   onblur="validateInput()" /></td>
               <td>Layer height (mm)</td>
             </tr>
@@ -367,8 +351,8 @@ PRINT_END
               </td>
             </tr>
             <tr id="printHeightRow">
-              <td><label for="PRINT_HEIGHT">Print Height</label></td>
-              <td><input size="32" name="PRINT_HEIGHT" id="PRINT_HEIGHT" step="any" value="1"
+              <td><label for="HEIGHT_PRINT">Print Height</label></td>
+              <td><input size="32" name="HEIGHT_PRINT" id="HEIGHT_PRINT" step="any" value="1"
                   onblur="validateInput()" /></td>
               <td>How tall to print the pattern (mm)</td>
             </tr>
@@ -397,8 +381,8 @@ PRINT_END
               <td>Angle of the test pattern corners.</td>
             </tr>
             <tr id="printDirectionRow">
-              <td><label for="DIR_PRINT">Printing Direction</label></td>
-              <td><select name="DIR_PRINT" id="DIR_PRINT" onchange="validateInput()">
+              <td><label for="PRINT_DIR">Printing Direction</label></td>
+              <td><select name="PRINT_DIR" id="PRINT_DIR" onchange="validateInput()">
                   <option value="0" selected="selected">Left to Right (0°)</option>
                   <option value="45">45°</option>
                   <option value="90">Front to Back (90°)</option>
@@ -450,8 +434,8 @@ PRINT_END
             <td>Print a prime line before starting the test pattern (Disable if your start G-code performs a prime line already)</td>
           </tr>
           <tr>
-            <td><label for="PRIME_EXT">Prime Line Extrusion Multiplier</label></td>
-            <td><input size="32" name="PRIME_EXT" id="PRIME_EXT" step="0.1" value="2.5" onblur="validateInput()" /></td>
+            <td><label for="ENT_MULT_PRIME">Prime Line Extrusion Multiplier</label></td>
+            <td><input size="32" name="ENT_MULT_PRIME" id="ENT_MULT_PRIME" step="0.1" value="2.5" onblur="validateInput()" /></td>
             <td>The default of 2.5 results in roughly 1mm of filament for 10mm line length</td>
           </tr>
           <tr>
