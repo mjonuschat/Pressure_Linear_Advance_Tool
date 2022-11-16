@@ -485,8 +485,8 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
   }
   */
 
-  pa_script +=  `\
-SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance to start value
+  pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance to start value\n` +
+                doEfeed('-', basicSettings) +`\
 ;
 ; FINISH
 ;
