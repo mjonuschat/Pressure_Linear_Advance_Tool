@@ -144,7 +144,7 @@ function setHtmlVars(){
   RETRACT_DIST = parseFloat($('#RETRACT_DIST').val());
   SPEED_FIRSTLAYER = parseInt($('#SPEED_FIRSTLAYER').val());
   SPEED_TRAVEL = parseInt($('#SPEED_TRAVEL').val());
-  SPEED_PERIMETER = parseInt($('#PERIMETER_SPEED').val());
+  SPEED_PERIMETER = parseInt($('#SPEED_PERIMETER').val());
   SPEED_RETRACT = parseInt($('#SPEED_RETRACT').val());
   SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val());
   START_GCODE = $('#START_GCODE').val();
@@ -160,6 +160,18 @@ function setHtmlVars(){
 
 // set global calculated variables
 function setCalculatedVars(){
+  if (BED_SHAPE === 'Round') {BED_Y = BED_X;}
+
+  // if "pattern settings" checkbox isn't checked, set to defaults instead
+  if (!PATTERN_OPTIONS_ENABLE){
+    HEIGHT_PRINT = parseFloat(document.getElementById("HEIGHT_PRINT").defaultValue);
+    PERIMETERS = parseInt(document.getElementById("PERIMETERS").defaultValue);
+    PATTERN_SIDE_LENGTH = parseInt(document.getElementById("PATTERN_SIDE_LENGTH").defaultValue);
+    PATTERN_SPACING = parseFloat(document.getElementById("PATTERN_SPACING").defaultValue);
+    PATTERN_ANGLE = parseInt(document.getElementById("PATTERN_ANGLE").defaultValue);
+    PRINT_DIR = 0;
+  }
+
   NUM_PATTERNS = Math.round((PA_END - PA_START) / PA_STEP + 1);
   NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1);
 
@@ -172,25 +184,27 @@ function setCalculatedVars(){
   // line spacings
   LINE_SPACING = LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4); // from slic3r documentation: spacing = extrusion_width - layer_height * (1 - PI/4)
   ANCHOR_LAYER_LINE_SPACING = ANCHOR_LAYER_LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4);
-
   LINE_SPACING_ANGLE = LINE_SPACING / Math.sin(toRadians(PATTERN_ANGLE)/2);
 
+  // calculate end dimensions so we can center the print properly & know where to start/end
   CENTER_X = (ORIGIN_CENTER ? 0 : BED_X / 2);
   CENTER_Y = (ORIGIN_CENTER ? 0 : BED_Y / 2);
-
-  PRINT_SIZE_X = (NUM_PATTERNS * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)) + ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) + (Math.cos(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH);
-  PRINT_SIZE_X = Math.round10(PRINT_SIZE_X, XY_round);
-  FIT_WIDTH = PRINT_SIZE_X + LINE_WIDTH; // Actual size is technically + one line width
-
-  PRINT_SIZE_Y = 2 * (Math.sin(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH);
-  PRINT_SIZE_Y = Math.round10(PRINT_SIZE_Y, XY_round);
-  FIT_HEIGHT = PRINT_SIZE_Y + LINE_WIDTH; // Actual size is technically + one line width
-
+  PRINT_SIZE_X = Math.round10((NUM_PATTERNS * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)) + 
+                 ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) + 
+                 (Math.cos(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round);
+  PRINT_SIZE_Y = Math.round10(2 * (Math.sin(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round); // hypotenuse of given angle
+  if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out (frame thickness - 1 perim) so last pattern's tip doesn't run over it on the first layer
+    PRINT_SIZE_X += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
+  }
   PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
   PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
 
-  // adjust fit width / height for print direction
-  FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.sin(toRadians(PRINT_DIR)));
+  // real world print size, accounting for rotation and line widths.
+  // this is just used to ensure it will fit on the print bed during input validation
+  // actual gcode rotation is done during gcode generation
+  FIT_WIDTH = PRINT_SIZE_X + LINE_WIDTH; // actual size is technically + one line width in each direction, as it squishes outwards.... this is probably being excessively anal
+  FIT_HEIGHT = PRINT_SIZE_Y + LINE_WIDTH;
+  FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.sin(toRadians(PRINT_DIR))); // rotate by PRINT_DIR
   FIT_HEIGHT = Math.abs(PRINT_SIZE_X * Math.sin(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.cos(toRadians(PRINT_DIR)));
 
   txtArea = document.getElementById('gcodetextarea');
@@ -202,19 +216,6 @@ function setCalculatedVars(){
     //SPEED_PRIME *= 60;
     SPEED_RETRACT *= 60;
     SPEED_UNRETRACT *= 60;
-  }
-
-  if (BED_SHAPE === 'Round') {
-    BED_Y = BED_X;
-  }
-
-  if (!PATTERN_OPTIONS_ENABLE){
-    HEIGHT_PRINT = parseFloat(document.getElementById("HEIGHT_PRINT").defaultValue);
-    PERIMETERS = parseInt(document.getElementById("PERIMETERS").defaultValue);
-    PATTERN_SIDE_LENGTH = parseInt(document.getElementById("PATTERN_SIDE_LENGTH").defaultValue);
-    PATTERN_SPACING = parseFloat(document.getElementById("PATTERN_SPACING").defaultValue);
-    PATTERN_ANGLE = parseInt(document.getElementById("PATTERN_ANGLE").defaultValue);
-    PRINT_DIR = 0;
   }
 }
 
@@ -249,108 +250,123 @@ function genGcode() {
   };
 
   // Start G-code for pattern
-  var pa_script = 
-    '; ### Klipper Pressure Advance Calibration Pattern ###\n' +
-    ';\n' +
-    '; Original Marlin linear advance calibration tool by Sineos [https://github.com/Sineos]\n' +
-    '; Heavily modified/rewritten by Andrew Ellis [https://github.com/AndrewEllis93]\n' +
-    ';\n' +
-    '; -------------------------------------------\n' +
-    '; Generated: ' + new Date() + '\n' +
-    '; -------------------------------------------\n' +
-    ';\n' +
-    '; General:\n' +
-    '; - Use mm/s: ' + USE_MMS + '\n' +
-    ( NOTES_ENABLE ? '\n': '') +
-    ( NOTES_ENABLE ? '; Notes:\n': '') +
-    ( PRINTER && NOTES_ENABLE ? '; - Printer Name: ' + PRINTER + '\n': '') +
-    ( FILAMENT && NOTES_ENABLE ? '; - Filament Name: ' + FILAMENT + '\n': '') +
-    ';\n' +
-    '; Printer:\n' +
-    '; - Bed Shape: ' + BED_SHAPE + '\n' +
-    (BED_SHAPE === 'Round' ? '; - Bed Diameter: ' + BED_X + ' mm\n': '; - Bed Size X: ' + BED_X + ' mm\n') +
-    (BED_SHAPE === 'Round' ? '': '; - Bed Size Y: ' + BED_Y + ' mm\n') +
-    '; - Origin Bed Center: ' + (ORIGIN_CENTER ? 'true': 'false') + '\n' +
-    '; - Extruder Name: ' + EXTRUDER_NAME + ' \n' +
-    '; - Travel Speed: ' + (USE_MMS ? SPEED_TRAVEL / 60 + "mm/s" : SPEED_TRAVEL + ' mm/min') + '\n' +
-    '; - Nozzle Diameter: ' + NOZZLE_DIAMETER + ' mm\n' +
-    ';\n' +
-    '; Start / END G-code:\n' +
-    '; - Start G-code Type: ' + START_GCODE_TYPE + ' \n' +
-    (START_GCODE_TYPE != 'standalone_temp_passing'? '; - Hotend Temp: ' + HOTEND_TEMP + 'C\n': '') +
-    (START_GCODE_TYPE != 'standalone_temp_passing'? '; - Bed Temp: ' + BED_TEMP + 'C\n': '') +
-    '; - Start G-code = \n' + 
-    START_GCODE.replace(/^/gm, ';      ')+ '\n' +
-    '; - End G-code = \n' + 
-    END_GCODE.replace(/^/gm, ';      ')+ '\n' +
-      ';\n' +
-    '; Filament / Flow:\n' +
-    '; - Filament Diameter: ' + FILAMENT_DIAMETER + ' mm\n' +
-    '; - Extrusion Multiplier: ' + EXT_MULT + '\n' +
-    '; - Line Width Ratio: ' + LINE_RATIO + '\n' +
-    ';\n' +
-    '; Retraction / Z Hop:\n' +
-    '; - Use FWRETRACT: ' + (USE_FWR ? 'true': 'false') + '\n' +
-    (!USE_FWR ? '; - Retraction Distance: ' + RETRACT_DIST + ' mm\n': '') +
-    (!USE_FWR ? '; - Retract Speed: ' + (USE_MMS ? SPEED_RETRACT / 60 + " mm/s" : SPEED_RETRACT + ' mm/min') + '\n': '') +
-    (!USE_FWR ? '; - Unretract Speed: ' + (USE_MMS ? SPEED_UNRETRACT / 60 + " mm/s" : SPEED_UNRETRACT + ' mm/min') + '\n': '') +
-    '; - Z Hop Enable: ' + ZHOP_ENABLE + '\n' +
-    ( ZHOP_ENABLE ? '; - Z Hop Height: ' + ZHOP_HEIGHT + 'mm\n': '') + 
-    ';\n' +
-    '; First Layer Settings:\n' +
-    '; - First Layer Height: ' + HEIGHT_FIRSTLAYER + ' mm\n' +
-    '; - First Layer Printing Speed: ' + (USE_MMS ? SPEED_FIRSTLAYER / 60 + "mm/s" : SPEED_FIRSTLAYER + ' mm/min') + '\n' +
-    '; - First Layer Fan %: ' + FAN_SPEED_FIRSTLAYER + '\n' +
-    '; - Anchor Option: ' + ANCHOR_OPTION + '\n' +
-    (ANCHOR_OPTION == 'anchor_frame' ? '; - Anchor Frame Perimeters: ' + ANCHOR_PERIMETERS + '\n': '') +
-    (ANCHOR_OPTION != 'no_anchor' ? '; - Anchor Line Width Ratio: ' + ANCHOR_LAYER_LINE_RATIO + '\n': '') +
-    ';\n' +
-    '; Print Settings:\n' +
-    '; - Layer Height: ' + HEIGHT_LAYER + ' mm\n' +
-    '; - Print Speed: ' + (USE_MMS ? SPEED_PERIMETER / 60 + "mm/s" : SPEED_PERIMETER + ' mm/min') + '\n' +
-    '; - Acceleration: ' + ACCELERATION + ' mm/s^2\n' +
-    '; - Fan Speed: ' + FAN_SPEED + ' %\n' +
-    ';\n' +
-    '; Pattern Settings:\n' +
-    (!PATTERN_OPTIONS_ENABLE ? '; (Using defaults)\n': '') +
-    (PATTERN_OPTIONS_ENABLE ? '; (Customized)\n': '') +
-    '; - Print Height: ' + HEIGHT_PRINT + ' mm\n' +
-    '; - Perimeter Count: ' + PERIMETERS + '\n' +
-    '; - Side Length: ' + PATTERN_SIDE_LENGTH + ' mm\n' +
-    '; - Spacing: ' + PATTERN_SPACING + ' mm\n' +
-    '; - Corner Angle: ' + PATTERN_ANGLE + ' degrees \n' +
-    '; - Printing Direction: ' + PRINT_DIR + ' degree\n' +
-    ';\n' +
-    '; Pressure Advance Stepping:\n' +
-    '; - PA Start Value: ' + PA_START + '\n' +
-    '; - PA End Value: ' + PA_END + '\n' +
-    '; - PA Increment: ' + PA_STEP + '\n' +
-    ';\n' +
-    '; Calculated Values:\n' +
-    '; - Print Size X: ' + FIT_WIDTH + ' mm\n' +
-    '; - Print Size Y: ' + FIT_HEIGHT + ' mm\n' +
-    '; - Number of Patterns to Print: ' + NUM_PATTERNS + '\n' +
-    '; - Total Number of Layers: ' + NUM_LAYERS + ' mm\n' +
-    ';\n' +
-    //'; Number Lines: ' + (USE_LINENO ? 'true': 'false') + '\n' +                  
-    //'; Prime Nozzle: ' + (USE_PRIME ? 'true': 'false') + '\n' +
-    //'; Prime Extrusion Multiplier: ' + EXT_MULT_PRIME + '\n' +
-    //'; Prime Speed: ' + SPEED_PRIME + '\n' +
-    '; Prepare printing\n' +
-    ';\n' +
-    'ACTIVATE_EXTRUDER EXTRUDER=' + EXTRUDER_NAME + '\n' +
-    (START_GCODE_TYPE != 'standalone_temp_passing' ? 'M190 S' + BED_TEMP + ' ; set and wait for bed temp\n': '') + // don't add temps if option is set to "Standalone Start Macro + Temp Params"
-    (START_GCODE_TYPE != 'standalone_temp_passing' ? 'M109 S' + HOTEND_TEMP + ' ; set and wait for hotend temp\n': '') + // don't add temps if option is set to "Standalone Start Macro + Temp Params"
-    START_GCODE + '\n' +
-    'G21 ; Millimeter units\n' +
-    'G90 ; Absolute XYZ\n' +
-    'M83 ; Relative E\n' +
-    'G92 E0 ; Reset extruder distance\n' +
-    'M106 S' + Math.round(FAN_SPEED_FIRSTLAYER * 2.55) + '; Set fan speed\n' +
-    'SET_VELOCITY_LIMIT ACCEL=' + ACCELERATION + '; Set printing acceleration\n' +
-    ';\n' +
-    '; Begin printing\n' +
-    ';\n';
+  var pa_script = `\
+; ### Klipper Pressure Advance Calibration Pattern ###
+;
+; Original Marlin linear advance calibration tool by Sineos [https://github.com/Sineos]
+; Heavily modified/rewritten by Andrew Ellis [https://github.com/AndrewEllis93]
+;
+; -------------------------------------------
+; Generated: ${new Date()}
+; -------------------------------------------
+;
+; General:
+;  - Use mm/s: ${USE_MMS}
+${( NOTES_ENABLE ? '\n': '')}\
+${( NOTES_ENABLE ?  '; Notes:\n' : '')}\
+${( PRINTER && NOTES_ENABLE ? `;  - Printer Name: ${PRINTER}\n` : '')}\
+${( FILAMENT && NOTES_ENABLE ? `;  - Filament Name: ${FILAMENT}\n` : '')}\
+;
+; Printer:
+;  - Bed Shape: ${BED_SHAPE}
+${(BED_SHAPE === 'Round' ? `;  - Bed Diameter: ${BED_X} mm\n`: `;  - Bed Size X: ${BED_X} mm\n`)}\
+${(BED_SHAPE === 'Round' ? '': `;  - Bed Size Y: ${BED_Y} mm\n`)}\
+;  - Origin Bed Center: ${(ORIGIN_CENTER ? 'true': 'false')}
+;  - Extruder Name: ${EXTRUDER_NAME} 
+;  - Travel Speed: ${(USE_MMS ? `${SPEED_TRAVEL / 60} mm/s` : `${SPEED_TRAVEL} mm/min`)}
+;  - Nozzle Diameter: ${NOZZLE_DIAMETER} mm
+;
+; Start / END G-code:
+;  - Start G-code Type: ${START_GCODE_TYPE}
+${(START_GCODE_TYPE != 'standalone_temp_passing' ? `;  - Hotend Temp: ${HOTEND_TEMP}C\n`: '')}\
+${(START_GCODE_TYPE != 'standalone_temp_passing' ? `;  - Bed Temp: ${BED_TEMP}C\n`: '')}\
+;  - Start G-code = 
+${START_GCODE.replace(/^/gm, ';      ')}
+;  - End G-code = 
+${END_GCODE.replace(/^/gm, ';      ')}
+;
+; Filament / Flow:
+;  - Filament Diameter: ${FILAMENT_DIAMETER} mm
+;  - Extrusion Multiplier: ${EXT_MULT}
+;  - Line Width Ratio: ${LINE_RATIO}
+;
+; Retraction / Z Hop:
+;  - Use FW Retract: ${(USE_FWR ? 'true': 'false')}
+${(!USE_FWR ? `;  - Retraction Distance: ${RETRACT_DIST} mm\n` : '')}\
+${(!USE_FWR ? `;  - Retract Speed: ${(USE_MMS ? `${SPEED_RETRACT / 60} mm/s\n` : `${SPEED_RETRACT} mm/min\n`)}`: '')}\
+${(!USE_FWR ? `;  - Unretract Speed: ${(USE_MMS ? `${SPEED_UNRETRACT / 60} mm/s\n` : `${SPEED_UNRETRACT} mm/min\n`)}`: '')}\
+;  - Z Hop Enable: ${ZHOP_ENABLE}
+${(ZHOP_ENABLE ? `;  - Z Hop Height: ${ZHOP_HEIGHT}mm`: '')} 
+;
+; First Layer Settings:
+;  - First Layer Height: ${HEIGHT_FIRSTLAYER} mm
+;  - First Layer Printing Speed: ${(USE_MMS ? `${SPEED_FIRSTLAYER / 60} mm/s` : `${SPEED_FIRSTLAYER} mm/min`)}
+;  - First Layer Fan: ${FAN_SPEED_FIRSTLAYER}%
+;  - Anchor Option: ${ANCHOR_OPTION}
+${(ANCHOR_OPTION == 'anchor_frame' ? `;  - Anchor Frame Perimeters: ${ANCHOR_PERIMETERS}\n`: '')}\
+${(ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width Ratio: ${ANCHOR_LAYER_LINE_RATIO}\n`: '')}\
+;
+; Print Settings:
+;  - Layer Height: ${HEIGHT_LAYER} mm
+;  - Print Speed: ${(USE_MMS ? `${SPEED_PERIMETER / 60} mm/s` : `${SPEED_PERIMETER} mm/min`)}
+;  - Acceleration: ${ACCELERATION} mm/s^2
+;  - Fan Speed: ${FAN_SPEED}%
+;
+; Pattern Settings:
+${(!PATTERN_OPTIONS_ENABLE ? `; (Using defaults)\n`: '')}\
+${(PATTERN_OPTIONS_ENABLE ? `; (Customized)\n`: '')}\
+;  - Print Height: ${HEIGHT_PRINT} mm
+;  - Perimeter Count: ${PERIMETERS}
+;  - Side Length: ${PATTERN_SIDE_LENGTH} mm
+;  - Spacing: ${PATTERN_SPACING} mm
+;  - Corner Angle: ${PATTERN_ANGLE} degrees 
+;  - Printing Direction: ${PRINT_DIR} degree
+;
+; Pressure Advance Stepping:
+;  - PA Start Value: ${PA_START}
+;  - PA End Value: ${PA_END}
+;  - PA Increment: ${PA_STEP}
+;
+; Calculated Values:
+;  - Number of Patterns to Print: ${NUM_PATTERNS}
+;  - PA Values: `;
+ 
+for (let i = 0; i < NUM_PATTERNS; i++){
+  pa_script += Math.round10((PA_START + i * PA_STEP),PA_round);
+  if (i != NUM_PATTERNS - 1){ // add comma separator if not last item in list
+    pa_script += ', '
+  }
+  else {
+      pa_script += '\n'
+  }
+}
+
+pa_script += `\
+;  - Print Size X: ${FIT_WIDTH} mm
+;  - Print Size Y: ${FIT_HEIGHT} mm
+;  - Total Number of Layers: ${NUM_LAYERS}
+;
+; Prepare printing
+; 
+ACTIVATE_EXTRUDER EXTRUDER=${EXTRUDER_NAME}
+${(START_GCODE_TYPE != 'standalone_temp_passing' ? `M190 S${BED_TEMP} ; set and wait for bed temp\n` : '')}\
+${(START_GCODE_TYPE != 'standalone_temp_passing' ? `M109 S${HOTEND_TEMP} ; set and wait for hotend temp\n` : '')}\
+${START_GCODE}
+G21 ; Millimeter units
+G90 ; Absolute XYZ
+M83 ; Relative E
+G92 E0 ; Reset extruder distance
+M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}; Set fan speed
+SET_VELOCITY_LIMIT ACCEL='${ACCELERATION}; Set printing acceleration
+;
+;  Begin printing
+;
+`;
+
+// Number Lines: ${(USE_LINENO ? 'true': 'false')}\n             
+// Prime Nozzle: ${(USE_PRIME ? 'true': 'false')}\n
+// Prime Extrusion Multiplier: ${EXT_MULT_PRIME}\n
+// Prime Speed: ${SPEED_PRIME}\n`
 
   var TO_X = PAT_START_X,
       TO_Y = PAT_START_Y,
@@ -358,46 +374,27 @@ function genGcode() {
 
   CUR_Z = HEIGHT_FIRSTLAYER; // set initial Z coordinate, otherwise z hop will go back to 0 at first
 
-  //Move to layer height then start position
+  //Move to layer height then start position, set initial PA
   pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start position\n'}) + 
-               moveToZ(TO_Z, basicSettings, {comment: ' ; move to start layer height\n'});
-
-  // create multiple anchor layers (currently just set to 1)
-  if (ANCHOR_OPTION != 'no_anchor'){
-    var NUM_ANCHOR_LAYERS = 1; // might add as a setting later
-    pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + PA_START + ' EXTRUDER=' + EXTRUDER_NAME + ' ; set pressure advance\n'
-
-    // loop for total number of solid layers (don't exceed max print height)
-    for (let i = 0; i < Math.min(NUM_ANCHOR_LAYERS, NUM_LAYERS) ; i++){
-
-      if (i != 0){ // for more layers, move back to start + layer height
-        TO_Z = i * HEIGHT_LAYER + HEIGHT_FIRSTLAYER;
-        pa_script += moveTo(PAT_START_X, PAT_START_Y, basicSettings, {comment: ' ; move back to start\n'}) + 
-                     moveToZ(TO_Z, basicSettings, {comment: ' ; move to layer height\n'});
-      }
-      
-      if (ANCHOR_OPTION == 'anchor_frame'){
-        pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, (PRINT_SIZE_X + ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1)), PRINT_SIZE_Y, ANCHOR_PERIMETERS, basicSettings);
-        var NUM_ANCHOR_LAYERS = 0; // So that it still prints the pattern on the first layer (inside the frame)
-      }
-      else if (ANCHOR_OPTION == 'anchor_layer'){
-        // create enough perims to reach center (concentric fill)
-        var NUM_CONCENTRIC = Math.floor((PRINT_SIZE_Y * Math.sin(toRadians(45))) / (ANCHOR_LAYER_LINE_SPACING / Math.sin(toRadians(45))));
-        pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, NUM_CONCENTRIC, basicSettings);
-      }
-    }
-  } else {
-    var NUM_ANCHOR_LAYERS = 0;
+               moveToZ(TO_Z, basicSettings, {comment: ' ; move to start layer height\n'}) +
+               `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance\n`;
+    
+  if (ANCHOR_OPTION == 'anchor_frame'){
+    pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, ANCHOR_PERIMETERS, basicSettings);
+  }
+  else if (ANCHOR_OPTION == 'anchor_layer'){
+    // create enough perims to reach center (concentric fill)
+    var NUM_CONCENTRIC = Math.floor((PRINT_SIZE_Y * Math.sin(toRadians(45))) / (ANCHOR_LAYER_LINE_SPACING / Math.sin(toRadians(45))));
+    pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, NUM_CONCENTRIC, basicSettings);
   }
 
   // draw PA pattern
-  for (let i = NUM_ANCHOR_LAYERS; i < NUM_LAYERS ; i++){
+  for (let i = (ANCHOR_OPTION == 'anchor_layer' ? 1 : 0); i < NUM_LAYERS ; i++){ // skip first layer if using full anchor layer
     TO_X = PAT_START_X;
     TO_Y = PAT_START_Y;
     TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
 
-    // shrink (adjust x/y) first layer to fit inside frame
-    if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ 
+    if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
       var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1)) / Math.sin(toRadians(PATTERN_ANGLE) / 2);
       var SIDE_LENGTH = PATTERN_SIDE_LENGTH - SHRINK; 
       TO_X += SHRINK * Math.sin(toRadians(90) - toRadians(PATTERN_ANGLE) / 2);
@@ -488,11 +485,12 @@ function genGcode() {
   }
   */
 
-  pa_script +=  'SET_PRESSURE_ADVANCE ADVANCE=' + PA_START + ' EXTRUDER=' + EXTRUDER_NAME + ' ; set pressure advance to start value\n' +
-                ';\n' +
-                '; FINISH\n' +
-                ';\n' +
-                END_GCODE + '\n';
+  pa_script +=  `\
+SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance to start value
+;
+; FINISH
+;
+${END_GCODE}`;
 
   txtArea.value = pa_script;
 }
@@ -654,7 +652,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
 
 function moveToZ(to_z, basicSettings){
   var gcode = '';
-  gcode += 'G1 Z' + to_z + ' F' + basicSettings['moveSpeed'] + ' ; move to z height\n';
+  gcode += 'G1 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; move to z height\n';
   CUR_Z = to_z; // update global position var
   return gcode;
 }
@@ -716,7 +714,7 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
       to_x = min_x,
       to_y = min_y;
 
-  //handle optional function arguements passed as object
+  //handle optional function arguments passed as object
   var defaults = {
     spacing: basicSettings['anchorLineSpacing'],
     extRatio: basicSettings['anchorExtRatio'],
@@ -864,7 +862,7 @@ var   NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked'),
       START_GCODE = $('#START_GCODE').val(),
       END_GCODE = $('#END_GCODE').val(),
       SPEED_FIRSTLAYER = parseInt($('#SPEED_FIRSTLAYER').val()),
-      SPEED_PERIMETER = parseInt($('#PERIMETER_SPEED').val()),
+      SPEED_PERIMETER = parseInt($('#SPEED_PERIMETER').val()),
       SPEED_TRAVEL = parseInt($('#SPEED_TRAVEL').val()),
       SPEED_RETRACT = parseInt($('#SPEED_RETRACT').val()),
       SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val()),
@@ -954,33 +952,33 @@ var   NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked'),
 // toggle between mm/s and mm/min speed settings
 function speedToggle() {
   var SPEED_FIRSTLAYER = $('#SPEED_FIRSTLAYER').val(),
-      SPEED_PERIMETER = $('#PERIMETER_SPEED').val(),
+      SPEED_PERIMETER = $('#SPEED_PERIMETER').val(),
       SPEED_TRAVEL = $('#SPEED_TRAVEL').val(),
       SPEED_RETRACT = $('#SPEED_RETRACT').val(),
       SPEED_PRIME = $('#PRIME_SPEED').val(),
       SPEED_UNRETRACT = $('#SPEED_UNRETRACT').val();
   if ($('#USE_MMS').is(':checked')) {
     SPEED_FIRSTLAYER = $('#SPEED_FIRSTLAYER').val();
-    SPEED_PERIMETER = $('#PERIMETER_SPEED').val();
+    SPEED_PERIMETER = $('#SPEED_PERIMETER').val();
     SPEED_TRAVEL = $('#SPEED_TRAVEL').val();
     SPEED_RETRACT = $('#SPEED_RETRACT').val();
     SPEED_UNRETRACT = $('#SPEED_UNRETRACT').val();
     SPEED_PRIME = $('#PRIME_SPEED').val();
     $('#SPEED_FIRSTLAYER').val(SPEED_FIRSTLAYER / 60);
-    $('#PERIMETER_SPEED').val(SPEED_PERIMETER / 60);
+    $('#SPEED_PERIMETER').val(SPEED_PERIMETER / 60);
     $('#SPEED_TRAVEL').val(SPEED_TRAVEL / 60);
     $('#SPEED_RETRACT').val(SPEED_RETRACT / 60);
     $('#SPEED_UNRETRACT').val(SPEED_UNRETRACT / 60);
     $('#PRIME_SPEED').val(SPEED_PRIME / 60);
   } else {
     SPEED_FIRSTLAYER = $('#SPEED_FIRSTLAYER').val();
-    SPEED_PERIMETER = $('#PERIMETER_SPEED').val();
+    SPEED_PERIMETER = $('#SPEED_PERIMETER').val();
     SPEED_TRAVEL = $('#SPEED_TRAVEL').val();
     SPEED_RETRACT = $('#SPEED_RETRACT').val();
     SPEED_UNRETRACT = $('#SPEED_UNRETRACT').val();
     SPEED_PRIME = $('#PRIME_SPEED').val();
     $('#SPEED_FIRSTLAYER').val(SPEED_FIRSTLAYER * 60);
-    $('#PERIMETER_SPEED').val(SPEED_PERIMETER * 60);
+    $('#SPEED_PERIMETER').val(SPEED_PERIMETER * 60);
     $('#SPEED_TRAVEL').val(SPEED_TRAVEL * 60);
     $('#SPEED_RETRACT').val(SPEED_RETRACT * 60);
     $('#SPEED_UNRETRACT').val(SPEED_UNRETRACT * 60);
@@ -991,7 +989,7 @@ function speedToggle() {
 // toggle between round and rectangular bed shape
 function toggleBedShape() {
   if ($('#BED_SHAPE').val() === 'Round') {
-    $('label[for=\'BEDSIZE_X\']').text('Bed Diameter:');
+    $('label[for=\'BED_X\']').text('Bed Diameter:');
     $('#shape').text('Diameter (mm) of the bed');
     document.getElementById('bedSizeYRow').style.display = 'none';
     if (!$('#ORIGIN_CENTER').is(':checked')) {
@@ -999,7 +997,7 @@ function toggleBedShape() {
     }
     document.getElementById('originBedCenterRow').style.display = 'none';
   } else {
-    $('label[for=\'BEDSIZE_X\']').text('Bed Size X:');
+    $('label[for=\'BED_X\']').text('Bed Size X:');
     $('#shape').text('Size (mm) of the bed in X');
     document.getElementById('bedSizeYRow').style.display = '';
     document.getElementById('originBedCenterRow').style.display = '';
@@ -1021,7 +1019,8 @@ function togglePrime() {
 
 
 function toggleStartGcode(){
-  var CANNED_GCODE = `G28 ; Home all axes
+  var CANNED_GCODE = `\
+G28 ; Home all axes
 ;G32                ; Tramming macro (uncomment if used)
 ;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
 ;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
@@ -1031,12 +1030,13 @@ G1 Z10 F100         ; Z raise
 ;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
 M112                ; Reading comprehension check! (emergency stop)`
 
-  var STANDALONE_MACRO = `PRINT_START
+  var STANDALONE_MACRO = `\
+PRINT_START
 ; Make sure this macro name matches your own! 
-; (Some may use START_PRINT instead, for example.)
-`
+; (Some may use START_PRINT instead, for example.)`
 
-  var STANDALONE_TEMP_PASSING_MACRO = `; !!!!!!! Pass your temperatures to your start macro here !!!!!!!
+  var STANDALONE_TEMP_PASSING_MACRO = `\
+; !!!!!!! Pass your temperatures to your start macro here !!!!!!!
 PRINT_START HOTEND=200 BED=60
 
 ; Make sure the macro name AND parameter names match YOUR start macro setup
@@ -1154,6 +1154,33 @@ function toggleZHop() {
   }
 }
 
+// show the calculated values at the bottom of the form
+function displayCalculatedValues(action = 'show'){
+  var body='';
+
+  if (action == 'show'){
+    body += `&nbsp;<strong>Pattern count: </strong> ${NUM_PATTERNS}<br>`;
+    body += '&nbsp;<strong>PA values: </strong> ';
+    for (let i = 0; i < NUM_PATTERNS; i++){
+      body += `${Math.round10((PA_START + i * PA_STEP),PA_round)}`;
+      if (i != NUM_PATTERNS - 1){ // add comma separator if not last item in list
+        body += ', '; 
+      }
+      else {
+         body += '<br>';
+      }
+    }
+    body += `&nbsp;<strong>Print size X: </strong> ${Math.round10(FIT_WIDTH, -2)}mm<br>`;
+    body += `&nbsp;<strong>Print size Y: </strong> ${Math.round10(FIT_HEIGHT, -2)}mm`;
+    document.getElementById("information").innerHTML = body;
+    document.getElementById('informationTable').style.display = '';
+  } else {
+    body = '';
+    document.getElementById("information").innerHTML = '';
+    document.getElementById('informationTable').style.display = 'none';
+  }
+}
+
 // sanity checks for pattern / bed size
 function validateInput() {
   setHtmlVars();
@@ -1163,46 +1190,46 @@ function validateInput() {
       // do not use parseInt or parseFloat for validating, since both
       // functions will have special parsing characteristics leading to
       // false numeric validation
-      BEDSIZE_X: $('#BED_X').val(),
-      BEDSIZE_Y: $('#BED_Y').val(),
+      BED_X: $('#BED_X').val(),
+      BED_Y: $('#BED_Y').val(),
       PA_START: $('#PA_START').val(),
       PA_END: $('#PA_END').val(),
       PA_STEP: $('#PA_STEP').val(),
       PATTERN_SPACING: $('#PATTERN_SPACING').val(),
       PATTERN_ANGLE: $('#PATTERN_ANGLE').val(),
-      FIRSTLAYER_SPEED: $('#SPEED_FIRSTLAYER').val(),
-      PERIMETER_SPEED: $('#PERIMETER_SPEED').val(),
+      SPEED_FIRSTLAYER: $('#SPEED_FIRSTLAYER').val(),
+      SPEED_PERIMETER: $('#SPEED_PERIMETER').val(),
       PATTERN_SIDE_LENGTH: $('#PATTERN_SIDE_LENGTH').val(),
       HOTEND_TEMP: $('#HOTEND_TEMP').val(),
       BED_TEMP: $('#BED_TEMP').val(),
-      FIL_DIA: $('#FILAMENT_DIAMETER').val(),
-      NOZ_DIA: $('#NOZZLE_DIAMETER').val(),
+      FILAMENT_DIAMETER: $('#FILAMENT_DIAMETER').val(),
+      NOZZLE_DIAMETER: $('#NOZZLE_DIAMETER').val(),
       LINE_RATIO: $('#LINE_RATIO').val(),
       ANCHOR_LAYER_LINE_RATIO: $('#ANCHOR_LAYER_LINE_RATIO').val(),
       ANCHOR_PERIMETERS : $('#ANCHOR_PERIMETERS').val(),
-      LAYER_HEIGHT: $('#HEIGHT_LAYER').val(),
+      HEIGHT_LAYER: $('#HEIGHT_LAYER').val(),
       HEIGHT_FIRSTLAYER: $('#HEIGHT_FIRSTLAYER').val(),
       FAN_SPEED_FIRSTLAYER: $('#FAN_SPEED_FIRSTLAYER').val(),
       FAN_SPEED: $('#FAN_SPEED').val(),
-      EXTRUSION_MULT: $('#EXT_MULT').val(),
+      EXT_MULT: $('#EXT_MULT').val(),
       //PRIME_EXT: $('#ENT_MULT_PRIME').val(),
-      MOVE_SPEED: $('#SPEED_TRAVEL').val(),
-      RETRACT_SPEED: $('#SPEED_RETRACT').val(),
-      UNRETRACT_SPEED: $('#SPEED_UNRETRACT').val(),
+      SPEED_TRAVEL: $('#SPEED_TRAVEL').val(),
+      SPEED_RETRACT: $('#SPEED_RETRACT').val(),
+      SPEED_UNRETRACT: $('#SPEED_UNRETRACT').val(),
       PRINT_ACCL: $('#PRINT_ACCL').val(),
       ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val(),
       HEIGHT_PRINT: $('#HEIGHT_PRINT').val(),
       PERIMETERS: $('#PERIMETERS').val(),
       //PRIME_SPEED: $('#PRIME_SPEED').val(),
-      RETRACTION: $('#RETRACT_DIST').val()
+      RETRACT_DIST: $('#RETRACT_DIST').val()
     }
 
     var decimals = getDecimals(parseFloat(testNaN['PA_STEP']));
     var invalidDiv = 0;
   
   // Start clean
-  $('BEDSIZE_X,#START_GCODE_TYPE,#START_GCODE,#END_GCODE,#BED_Y,#EXT_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#HOTEND_TEMP,#BED_TEMP,#SPEED_FIRSTLAYER,#LAYER_HEIGHT,#HEIGHT_FIRSTLAYER,#LINE_RATIO,#ANCHOR_LAYER_LINE_RATIO,#SPEED_TRAVEL,#NOZZLE_DIAMETER,#PA_END,'
-      + '#PA_START,#PA_STEP,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#PERIMETER_SPEED,#PERIMETERS,#PRINT_ACCL,#HEIGHT_PRINT,#SPEED_RETRACT,#RETRACT_DIST,#SPEED_UNRETRACT,#ZHOP_HEIGHT').each((i,t) => {
+  $('BED_X,#START_GCODE_TYPE,#START_GCODE,#END_GCODE,#BED_Y,#EXT_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#HOTEND_TEMP,#BED_TEMP,#SPEED_FIRSTLAYER,#LAYER_HEIGHT,#HEIGHT_FIRSTLAYER,#LINE_RATIO,#ANCHOR_LAYER_LINE_RATIO,#SPEED_TRAVEL,#NOZZLE_DIAMETER,#PA_END,'
+      + '#PA_START,#PA_STEP,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#SPEED_PERIMETER,#PERIMETERS,#PRINT_ACCL,#HEIGHT_PRINT,#SPEED_RETRACT,#RETRACT_DIST,#SPEED_UNRETRACT,#ZHOP_HEIGHT').each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
     $(`label[for=${tid}]`).removeClass();
@@ -1216,84 +1243,98 @@ function validateInput() {
   Object.keys(testNaN).forEach((k) => {
     if ((isNaN(testNaN[k]) && !isFinite(testNaN[k])) || testNaN[k].trim().length === 0) {
       $('label[for=' + k + ']').addClass('invalidNumber');
-      $('#' + k)[0].setCustomValidity('The value is not a proper number.');
       $('#warning3').text('Some values are not proper numbers. Check highlighted Settings.');
       $('#warning3').addClass('invalidNumber');
       $('#warning3').show();
       $('#button').prop('disabled', true);
     }
   });
-
-  // Check if Pressure Advance Stepping is a multiple of the Pressure Advance Range
+  
+    // Check if pressure advance stepping is a multiple of the pressure advance Range
   if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
     $('label[for=PA_START]').addClass('invalidDiv');
-    $('#PA_START')[0].setCustomValidity('Pressure Advance range cannot be cleanly divided.');
     $('label[for=PA_END]').addClass('invalidDiv');
-    $('#PA_END')[0].setCustomValidity('Pressure Advance range cannot be cleanly divided.');
     $('label[for=PA_STEP]').addClass('invalidDiv');
-    $('#PA_STEP')[0].setCustomValidity('Pressure Advance range cannot be cleanly divided.');
-    $('#warning1').text('Your Pressure Advance range cannot be cleanly divided. Check highlighted Pattern Settings.');
+    $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted Pattern Settings.');
     $('#warning1').addClass('invalidDiv');
     $('#warning1').show();
     $('#button').prop('disabled', true);
     invalidDiv = 1;
-  }
+    displayCalculatedValues('hide');
+  } else if (parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']) < 0) { // Check if pressure advance stepping is a multiple of the pressure advance Range
+    $('label[for=PA_START]').addClass('invalidDiv');
+    $('label[for=PA_END]').addClass('invalidDiv');
+    $('#warning1').text('Your PA start value cannot be higher than your PA end value. Check highlighted settings.');
+    $('#warning1').addClass('invalidDiv');
+    $('#warning1').show();
+    $('#button').prop('disabled', true);
+    invalidDiv = 1;
+    displayCalculatedValues('hide');
+  } else {
+      displayCalculatedValues('show');
 
-  // Check if pattern settings exceed bed size
-  // too tall for round bed
-  if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BEDSIZE_X']) - 5)) && FIT_HEIGHT > FIT_WIDTH) {
-    $('label[for=PA_START]').addClass('invalidSize');
-    $('label[for=PA_END]').addClass('invalidSize');
-    $('label[for=PA_STEP]').addClass('invalidSize');
-    $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-    $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-    $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-    $('label[for=PERIMETERS]').addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + FIT_WIDTH + ', y: ' + FIT_HEIGHT + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
-    $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).show();
-  }
+      // only check bed dimensions if above checks pass
 
-  // too wide for round bed
-  if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BEDSIZE_X']) - 5)) && FIT_WIDTH > FIT_HEIGHT) {
-    $('label[for=PA_START]').addClass('invalidSize');
-    $('label[for=PA_END]').addClass('invalidSize');
-    $('label[for=PA_STEP]').addClass('invalidSize');
-    $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-    $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-    $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-    $('label[for=PERIMETERS]').addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + FIT_WIDTH + ', y: ' + FIT_HEIGHT + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
-    $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).show();
-  }
+      // Check if pattern settings exceed bed size
+      // too tall for round bed
+      if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BED_X']) - 5)) && FIT_HEIGHT > FIT_WIDTH) {
+        $('label[for=PA_START]').addClass('invalidSize');
+        $('label[for=PA_END]').addClass('invalidSize');
+        $('label[for=PA_STEP]').addClass('invalidSize');
+        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
+        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
+        $('label[for=PERIMETERS]').addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        displayCalculatedValues('hide');
+      }
 
-  // too wide
-  if (BED_SHAPE === 'Rect' && FIT_WIDTH > (parseInt(testNaN['BEDSIZE_X']) - 5)) {
-    $('label[for=PA_START]').addClass('invalidSize');
-    $('label[for=PA_END]').addClass('invalidSize');
-    $('label[for=PA_STEP]').addClass('invalidSize');
-    $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-    $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-    $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-    $('label[for=PERIMETERS]').addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + FIT_WIDTH + ', y: ' + FIT_HEIGHT + ') exceeds your X bed size. Check highlighted Pattern Settings.');
-    $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).show();
-  }
+      // too wide for round bed
+      if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BED_X']) - 5)) && FIT_WIDTH > FIT_HEIGHT) {
+        $('label[for=PA_START]').addClass('invalidSize');
+        $('label[for=PA_END]').addClass('invalidSize');
+        $('label[for=PA_STEP]').addClass('invalidSize');
+        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
+        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
+        $('label[for=PERIMETERS]').addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        displayCalculatedValues('hide');
+      }
 
-  // too tall
-  if (BED_SHAPE === 'Rect' && FIT_HEIGHT > (parseInt(testNaN['BEDSIZE_Y']) - 5)) {
-    $('label[for=PA_START]').addClass('invalidSize');
-    $('label[for=PA_END]').addClass('invalidSize');
-    $('label[for=PA_STEP]').addClass('invalidSize');
-    $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-    $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-    $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-    $('label[for=PERIMETERS]').addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + FIT_WIDTH + ', y: ' + FIT_HEIGHT + ') exceeds your Y bed size. Check highlighted Pattern Settings.');
-    $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-    $((invalidDiv ? '#warning2' : '#warning1')).show();
+      // too wide
+      if (BED_SHAPE === 'Rect' && FIT_WIDTH > (parseInt(testNaN['BED_X']) - 5)) {
+        $('label[for=PA_START]').addClass('invalidSize');
+        $('label[for=PA_END]').addClass('invalidSize');
+        $('label[for=PA_STEP]').addClass('invalidSize');
+        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
+        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
+        $('label[for=PERIMETERS]').addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        displayCalculatedValues('hide');
+      }
+
+      // too tall
+      if (BED_SHAPE === 'Rect' && FIT_HEIGHT > (parseInt(testNaN['BEDSIZE_Y']) - 5)) {
+        $('label[for=PA_START]').addClass('invalidSize');
+        $('label[for=PA_END]').addClass('invalidSize');
+        $('label[for=PA_STEP]').addClass('invalidSize');
+        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
+        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
+        $('label[for=PERIMETERS]').addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
+        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        displayCalculatedValues('hide');
+      }
   }
 }
 
@@ -1325,7 +1366,7 @@ $(window).load(() => {
     $('#START_GCODE').val(settings['START_GCODE']);
     $('#END_GCODE').val(settings['END_GCODE']);
     $('#SPEED_FIRSTLAYER').val(settings['SPEED_FIRSTLAYER']);
-    $('#PERIMETER_SPEED').val(settings['SPEED_PERIMETER']);
+    $('#SPEED_PERIMETER').val(settings['SPEED_PERIMETER']);
     $('#SPEED_TRAVEL').val(settings['SPEED_TRAVEL']);
     $('#SPEED_RETRACT').val(settings['SPEED_RETRACT']);
     $('#SPEED_UNRETRACT').val(settings['SPEED_UNRETRACT']);
@@ -1360,6 +1401,7 @@ $(window).load(() => {
     $('#LINE_NO').prop('checked', settings['USE_LINENO']);
   }
 
+  // run all toggles on initial page load
   toggleBedShape();
   //togglePrime();
   toggleRetract();
@@ -1370,10 +1412,13 @@ $(window).load(() => {
   toggleTemps();
   toggleStartGcodeTypeDescriptions();
 
+  // validate input on page load (also triggers displayCalculatedValues();)
+  validateInput();
+
   // toggle between mm/s and mm/min speeds
   $('#USE_MMS').change(speedToggle);
 
-  // Toggle Bed Shape
+  // Toggle bed options when bed shape is changed
   $('#BED_SHAPE').change(() => {
     toggleBedShape();
     validateInput();
@@ -1382,22 +1427,23 @@ $(window).load(() => {
   // toggle prime relevant html elements
   //$('#PRIME').change(togglePrime);
 
-  // Toggle notes fields
+  // Toggle notes fields with toggle checkbox
   $('#NOTES_ENABLE').change(toggleNotes);
 
   // Toggle start gcode and hotend/bed temp visibility when choosing start g-code option
   $('#START_GCODE_TYPE').change(toggleStartGcode);
   $('#START_GCODE_TYPE').change(toggleStartGcodeTypeDescriptions);
 
-  // Anchor frame sub-options
+  // Toggle visibility of anchor options depending on anchor selection
   $('#ANCHOR_OPTION').change(toggleAnchorOptions);
 
+  // Toggle pattern setting fields with toggle checkbox, and sets values to default when unchecked
   $('#PATTERN_OPTIONS_ENABLE').change(togglePatternOptions);
 
-  // Change retract type
+  // Toggle retraction option visibility when firmware retract is toggled
   $('#USE_FWR').change(toggleRetract);
 
-  // Toggle hop settings
+  // Toggle z hop option visibility when z hop is toggled
   $('#ZHOP_ENABLE').change(toggleZHop);
 
   // Focus the first field

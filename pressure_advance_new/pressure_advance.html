@@ -1,16 +1,19 @@
+<!DOCTYPE html>
 <html>
+
+<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
 
 <head>
   <title>Ellis' Pressure Advance Calibration Tool</title>
   <meta charset="UTF-8">
-  <meta name="description" content="Create G-code to calibrate Pressure Advance setting">
-  <link rel="stylesheet" href="stylesheets/main.css" />
-  <link rel="stylesheet" href="stylesheets/font-awesome.min.css" />
+  <meta content="Create G-code to calibrate Pressure Advance setting">
+  <link rel="stylesheet" href="./stylesheets/main.css" />
+  <link rel="stylesheet" href="./stylesheets/font-awesome.min.css" />
 </head>
 
 <body>
-  <script language="JavaScript" type="text/javascript" src="javascript/jquery-2.2.1.min.js"></script>
-  <script language="JavaScript" type="text/javascript" src="javascript/jquery-ui.min.js"></script>
+  <script language="JavaScript" type="text/javascript" src="../javascript/jquery-2.2.1.min.js"></script>
+  <script language="JavaScript" type="text/javascript" src="../javascript/jquery-ui.min.js"></script>
   <script language="JavaScript" type="text/javascript" src="./FileSaver.min.js"></script>
   <script language="JavaScript" type="text/javascript" src="./pressure_advance.js"></script>
   <div class="container" role="main">
@@ -21,10 +24,9 @@
           href="https://github.com/Sineos/k-factorjs">Sineos</a><br>
         Heavily modified/rewritten by <a href="https://github.com/AndrewEllis93">Andrew Ellis</a><br>
         Also see my <a href="https://github.com/AndrewEllis93/Print-Tuning-Guide">print tuning guide</a><br><br>
-        <div class="row alert alert-info custom-alert">
-          <div class="col-lg-1 col-md-2 visible-lg-block visible-md-block custom-alert-icon"> <i
-              class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
-          <div class="col-lg-11 col-md-10 custom-alert-text">
+        <div class="alert-info custom-alert">
+          <div class="custom-alert-icon"> <i class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
+          <div class="custom-alert-text">
             <p><em>Caution!</em><br />
               If Start G-code is incorrect, it could damage your printer. Anything which could damage your printer could
               cause other damage. Be <em>absolutely sure</em> your Start G-code is correct before printing the generated
@@ -43,103 +45,98 @@
             <img src="./images/example.png" alt="Example" />
           </div>
         </div>
-        <table id="padv">
-          <!--
-          <col style="width: 25%;" />
-          -->
+        <table>
           <br>
           <tbody>
             <tr>
-              <td colspan="3" class="tdHead">
+              <td colspan=3 class=tdHead>
                 <h3>Settings</h3>
               </td>
             </tr>
             <tr>
-              <td colspan="3" class="tdSection">
+              <td colspan=3 class=tdSection>
                 <h4>General</h4>
               </td>
             </tr>
             <tr>
-              <td><label for="USE_MMS">Use mm/s</label></td>
-              <td><input size="32" name="USE_MMS" type="checkbox" id="USE_MMS" checked="checked" /></td>
+              <td><label for=USE_MMS>Use mm/s</label></td>
+              <td><input type=checkbox id="USE_MMS" checked=checked /></td>
               <td>Use mm/s instead of mm/min</td>
             </tr>
             <tr>
-              <td colspan="3" class="tdSection">
-                <h4>Notes &nbsp;<input name="NOTES_ENABLE" type="checkbox" id="NOTES_ENABLE" /></input></h4>
+              <td colspan=3 class=tdSection>
+                <h4>Notes &nbsp;<input type=checkbox id="NOTES_ENABLE" /></input></h4>
+                <i>(Optionally add notes in comments at the top of the g-code)</i>
               </td>
             </tr>
             <tr id="printerNameRow">
-              <td><label for="PRINTER">Printer Name</label></td>
-              <td><input size="32" name="PRINTER" id="PRINTER" value="" /></td>
+              <td><label for=PRINTER>Printer Name</label></td>
+              <td><input type=text id="PRINTER" /></td>
               <td>Optional. Puts printer name in a comment in the g-code</td>
             </tr>
             <tr id="filamentNameRow">
-              <td><label for="FILAMENT">Filament Name</label></td>
-              <td><input size="32" name="FILAMENT" id="FILAMENT" value="" /></td>
+              <td><label for=FILAMENT>Filament Name</label></td>
+              <td><input type=text id="FILAMENT" /></td>
               <td>Optional. Puts filament name in a comment in the g-code</td>
             </tr>
             <tr>
-              <td colspan="3" class="tdSection">
+              <td colspan=3 class=tdSection>
                 <h4>Printer</h4>
               </td>
             </tr>
             <tr>
-              <td><label for="BED_SHAPE">Bed Shape</label></td>
-              <td><select name="BED_SHAPE" id="BED_SHAPE">
+              <td><label for=BED_SHAPE>Bed Shape</label></td>
+              <td><select id="BED_SHAPE">
                   <option value="Rect">Rectangular</option>
                   <option value="Round">Round</option>
                 </select></td>
               <td>Rectangular or round bed. Round beds will activate Origin Bed Center</td>
             </tr>
             <tr>
-              <td><label for="BED_X">Bed Size X</label></td>
-              <td><input size="32" name="BED_X" id="BED_X" step="any" value="200" onblur="validateInput()" />
+              <td><label for=BED_X>Bed Size X</label></td>
+              <td><input type=number id="BED_X" step=1 value=200 onblur=validateInput() />
               </td>
               <td id="shape">Size (mm) of the bed in X</td>
             </tr>
             <tr id="bedSizeYRow">
-              <td><label for="BED_Y">Bed Size Y</label></td>
-              <td><input size="32" name="BED_Y" id="BED_Y" step="any" value="200" onblur="validateInput()" />
+              <td><label for=BED_Y>Bed Size Y</label></td>
+              <td><input type=number id="BED_Y" step=1 value=200 onblur=validateInput() />
               </td>
               <td>Size (mm) of the bed in Y</td>
             </tr>
             <tr id="originBedCenterRow">
-              <td><label for="ORIGIN_CENTER">Origin Bed Center</label></td>
-              <td><input size="32" name="ORIGIN_CENTER" type="checkbox" id="ORIGIN_CENTER" /></td>
+              <td><label for=ORIGIN_CENTER>Origin Bed Center</label></td>
+              <td><input type=checkbox id="ORIGIN_CENTER" /></td>
               <td>Set the origin position (X0 Y0) to bed center instead of front-left corner</td>
             </tr>
             <tr>
-              <td><label for="EXTRUDER_NAME">Extruder Name</label></th>
-              <td><input size="32" name="EXTRUDER_NAME" id="EXTRUDER_NAME" value="extruder" /></td>
+              <td><label for=EXTRUDER_NAME>Extruder Name</label></th>
+              <td><input type=text id="EXTRUDER_NAME" value="extruder" /></td>
               <td>Usually "extruder" if only one extruder. Allows choosing extruder if more than one</td>
             </tr>
             <tr>
-              <td><label for="SPEED_TRAVEL">Travel Speed</label></td>
-              <td><input size="32" name="SPEED_TRAVEL" id="SPEED_TRAVEL" step="1" value="120"
-                  onblur="validateInput()" />
+              <td><label for=SPEED_TRAVEL>Travel Speed</label></td>
+              <td><input type=number id="SPEED_TRAVEL" step=1 value=120 onblur=validateInput() />
               </td>
               <td>Travel speed</td>
             </tr>
             <tr>
-              <td><label for="NOZZLE_DIAMETER">Nozzle Diameter</label></td>
-              <td><input size="32" name="NOZZLE_DIAMETER" id="NOZZLE_DIAMETER" step="any" value="0.4"
-                  onblur="validateInput()" /></td>
+              <td><label for=NOZZLE_DIAMETER>Nozzle Diameter</label></td>
+              <td><input type=number id="NOZZLE_DIAMETER" step=0.05 value=0.4 onblur=validateInput() /></td>
               <td>Diameter of the nozzle (mm)</td>
             </tr>
 
             <tr>
-              <td colspan="3" class="tdSection">
+              <td colspan=3 class=tdSection>
                 <h4>Start / End G-code</h4>
               </td>
             </tr>
             <tr>
-              <td><label for="START_GCODE_TYPE">Start G-code Option</label></td>
-              <td colspan="1"><select style="width: 320px; height: 72px;" size="3" name="START_GCODE_TYPE"
-                  id="START_GCODE_TYPE" onchange="validateInput()">
+              <td><label for=START_GCODE_TYPE>Start G-code Option</label></td>
+              <td><select size="3" id="START_GCODE_TYPE" onchange="validateInput()">
                   <option value="custom" selected="selected">Manual Start G-code</option>
-                  <option value="standalone">Standalone Start Macro</option>
-                  <option value="standalone_temp_passing">Standalone Start Macro + Temp Params</option>
+                  <option value="standalone">Standalone Macro</option>
+                  <option value="standalone_temp_passing">Standalone Macro w/ Temp Params</option>
                 </select></td>
               <td id="START_GCODE_TYPE_Description">
                 <p>Use custom start g-code (below). The defaults have a lot of redundancies and are intended to be
@@ -148,20 +145,26 @@
               </td>
             </tr>
             <tr id="hotendTempRow">
-              <td><label for="HOTEND_TEMP">Hotend Temp</label></td>
-              <td><input size="32" name="HOTEND_TEMP" id="HOTEND_TEMP" step="1" value="200" onblur="validateInput()" />
+              <td><label for=HOTEND_TEMP>Hotend Temp</label></td>
+              <td><input type=number id="HOTEND_TEMP" step=1 value=200 onblur=validateInput() />
               </td>
               <td>Hotend temperature in celcius</td>
             </tr>
             <tr id="bedTempRow">
-              <td><label for="BED_TEMP">Bed Temp</label></td>
-              <td><input size="32" name="BED_TEMP" id="BED_TEMP" step="1" value="60" onblur="validateInput()" /></td>
+              <td><label for=BED_TEMP>Bed Temp</label></td>
+              <td><input type=number id="BED_TEMP" step=1 value=60 onblur=validateInput() /></td>
               <td>Bed temperature in celcius</td>
             </tr>
             <tr>
-              <td><label for="START_GCODE">Start G-code</label></td>
-              <td colspan=2><textarea name="START_GCODE" id="START_GCODE" rows="14" cols="100">
-G28                 ; Home all axes
+
+              <td><label for=START_GCODE>Start G-code</label></td>
+              <td colspan=2>
+                <p><strong>
+                    <font color="red">Thoroughly check this before printing. Incorrect start G-code can potentially
+                      cause crashes and
+                      damage.
+                  </strong></font>
+                </p><textarea id="START_GCODE">G28                 ; Home all axes
 ;G32                ; Tramming macro (uncomment if used)
 ;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
 ;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
@@ -170,119 +173,103 @@ G90                 ; Use absolute positioning
 G1 Z10 F100         ; Z raise
 ;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
 M112                ; Reading comprehension check! (emergency stop)</textarea>
-                <p><strong>
-                    <font color="red">Thoroughly check this before printing. Incorrect start G-code can potentially
-                      cause crashes and
-                      damage.
-                  </strong></font>
-                </p>
+
               </td>
             </tr>
             <tr>
-              <td><label for="END_GCODE">End G-code</label></td>
-              <td colspan=2><textarea name="END_GCODE" id="END_GCODE" rows="3" cols="100">
-PRINT_END
-                        </textarea>
+              <td><label for=END_GCODE>End G-code</label></td>
+              <td colspan=2><textarea id="END_GCODE">PRINT_END</textarea>
                 <p>Copy your normal end G-code from your slicer (and replace any dynamic variables with real values).
               </td>
             </tr>
             <tr>
-              <td colspan="3" class="tdSection">
+              <td colspan=3 class=tdSection>
                 <h4>Filament / Flow</h4>
               </td>
             </tr>
 
             <tr>
-              <td><label for="FILAMENT_DIAMETER">Filament Diameter</label></td>
-              <td><input size="32" name="FILAMENT_DIAMETER" id="FILAMENT_DIAMETER" step="any" value="1.75"
-                  onblur="validateInput()" /></td>
+              <td><label for=FILAMENT_DIAMETER>Filament Diameter</label></td>
+              <td><input type=number id="FILAMENT_DIAMETER" step=0.005 min=1 value=1.75 onblur=validateInput() /></td>
               <td>Diameter of the used filament (mm)</td>
             </tr>
             <tr>
-              <td><label for="EXT_MULT">Extrusion Multiplier</label></td>
-              <td><input size="32" name="EXT_MULT" id="EXT_MULT" step="any" value="0.94" onblur="validateInput()" />
+              <td><label for=EXT_MULT>Extrusion Multiplier</label></td>
+              <td><input type=number id="EXT_MULT" step=0.0005 value=0.94 onblur=validateInput() />
               </td>
               <td>Usually around 0.94 for ABS</td>
             </tr>
             <tr>
-              <td><label for="LINE_RATIO">Line Width Ratio</label></td>
-              <td><input size="32" name="LINE_RATIO" id="LINE_RATIO" step="any" value="1.15" onblur="validateInput()" />
+              <td><label for=LINE_RATIO>Line Width Ratio</label></td>
+              <td><input type=number id="LINE_RATIO" step=0.01 value=1.15 onblur=validateInput() />
               </td>
               <td>Line width (as a ratio of nozzle diameter). Match your thickest perimeter from your slicer settings
                 (internal/external)</td>
             </tr>
 
             <tr>
-              <td colspan="3" class="tdsection">
+              <td colspan=3 class=tdSection>
                 <h4>Retraction / Z Hop</h4>
               </td>
             </tr>
             <tr>
-              <td><label for="USE_FWR">Use FW Retract</label></td>
-              <td><input type="checkbox" name="USE_FWR" id="USE_FWR" /></td>
+              <td><label for=USE_FWR>Use FW Retract</label></td>
+              <td><input type=checkbox id="USE_FWR" /></td>
               <td>Use firmware retract. Needs to be set up in Klipper</td>
             </tr>
             <tr id="retractionDistanceRow">
-              <td><label for="RETRACT_DIST">Retraction Distance</label></td>
-              <td><input size="32" name="RETRACT_DIST" id="RETRACT_DIST" step="any" value="0.5"
-                  onblur="validateInput()" />
+              <td><label for=RETRACT_DIST>Retraction Distance</label></td>
+              <td><input type=number id="RETRACT_DIST" step=0.1 value=0.5 onblur=validateInput() />
               </td>
               <td>Retraction distance (mm)</td>
             </tr>
             <tr id="retractionSpeedRow">
-              <td><label for="SPEED_RETRACT">Retract Speed</label></td>
-              <td><input size="32" name="SPEED_RETRACT" id="SPEED_RETRACT" step="1" value="35"
-                  onblur="validateInput()" /></td>
+              <td><label for=SPEED_RETRACT>Retract Speed</label></td>
+              <td><input type=number id="SPEED_RETRACT" step=1 value=35 onblur=validateInput() /></td>
               <td>Retract speed of the extruder</td>
             </tr>
             <tr id="unretractionSpeedRow">
-              <td><label for="SPEED_UNRETRACT">Unretract Speed</label></td>
-              <td><input size="32" name="SPEED_UNRETRACT" id="SPEED_UNRETRACT" step="1" value="35"
-                  onblur="validateInput()" />
+              <td><label for=SPEED_UNRETRACT>Unretract Speed</label></td>
+              <td><input type=number id="SPEED_UNRETRACT" step=1 value=35 onblur=validateInput() />
               </td>
               <td>Unretract speed of the extruder</td>
             </tr>
             <tr>
-              <td><label for="ZHOP_ENABLE">Z Hop</label></td>
-              <td><input type="checkbox" name="ZHOP_ENABLE" id="ZHOP_ENABLE" checked /></td>
+              <td><label for=ZHOP_ENABLE>Z Hop</label></td>
+              <td><input type=checkbox id="ZHOP_ENABLE" checked /></td>
               <td>Enable Z hop on retracts</td>
             </tr>
             <tr id="zhopHeightRow">
-              <td><label for="ZHOP_HEIGHT">Z Hop Height</label></td>
-              <td><input size="32" name="ZHOP_HEIGHT" id="ZHOP_HEIGHT" step="any" value="0.2"
-                  onblur="validateInput()" />
+              <td><label for=ZHOP_HEIGHT>Z Hop Height</label></td>
+              <td><input type=number id="ZHOP_HEIGHT" step=0.05 value=0.2 onblur=validateInput() />
               </td>
               <td>Z hop height</td>
             </tr>
             <tr>
-              <td colspan="3" class="tdsection">
+              <td colspan=3 class=tdSection>
                 <h4>First Layer Settings</h4>
               </td>
             </tr>
             <tr>
-              <td><label for="HEIGHT_FIRSTLAYER">FL Height</label></td>
-              <td><input size="32" name="HEIGHT_FIRSTLAYER" id="HEIGHT_FIRSTLAYER" step="any" value="0.25"
-                  onblur="validateInput()" /></td>
+              <td><label for=HEIGHT_FIRSTLAYER>FL Height</label></td>
+              <td><input type=number id="HEIGHT_FIRSTLAYER" step=0.001 value=0.25 onblur=validateInput() /></td>
               <td>First layer height (mm)</td>
             </tr>
             <tr>
-              <td><label for="SPEED_FIRSTLAYER">FL Print Speed</label></td>
-              <td><input size="32" name="SPEED_FIRSTLAYER" id="SPEED_FIRSTLAYER" step="1" value="30"
-                  onblur="validateInput()" />
+              <td><label for=SPEED_FIRSTLAYER>FL Print Speed</label></td>
+              <td><input type=number id="SPEED_FIRSTLAYER" step=1 value=30 onblur=validateInput() />
               </td>
               <td>Speed for first layer</td>
             </tr>
             <tr>
-              <td><label for="FAN_SPEED_FIRSTLAYER">FL Fan %</label></td>
-              <td><input size="32" name="FAN_SPEED_FIRSTLAYER" id="FAN_SPEED_FIRSTLAYER" step="1" value="0"
-                  onblur="validateInput()" /></td>
+              <td><label for=FAN_SPEED_FIRSTLAYER>FL Fan %</label></td>
+              <td><input type=number id="FAN_SPEED_FIRSTLAYER" step=1 value=0 onblur=validateInput() /></td>
               <td>First layer fan speed (%)</td>
             </tr>
 
             <tr>
-              <td><label for="ANCHOR_OPTION">Anchor Option</label></td>
-              <td colspan="1"><select style="width: 295px;" size="3" name="ANCHOR_OPTION" id="ANCHOR_OPTION"
-                  onchange="validateInput()">
+              <td><label for=ANCHOR_OPTION>Anchor Option</label></td>
+              <td><select size="3" id="ANCHOR_OPTION" onchange="validateInput()">
                   <option value="anchor_frame" selected="selected">Anchor Frame</option>
                   <option value="anchor_layer">Anchor Layer</option>
                   <option value="no_anchor">No Anchor</option>
@@ -290,36 +277,32 @@ PRINT_END
               <td id="anchorOptionDescription"></td>
             </tr>
             <tr id="anchorPerimetersRow">
-              <td><label for="ANCHOR_PERIMETERS">Anchor Frame Perimeters</label></td>
-              <td><input size="32" name="ANCHOR_PERIMETERS" id="ANCHOR_PERIMETERS" step="1" value="3"
-                  onblur="validateInput()" />
+              <td><label for=ANCHOR_PERIMETERS>Anchor Frame Perimeters</label></td>
+              <td><input type=number id="ANCHOR_PERIMETERS" step=1 value=4 onblur=validateInput() />
               </td>
               <td>Perimeter count for anchor frame</td>
             </tr>
             <tr id="anchorLineRatioRow">
-              <td><label for="ANCHOR_LAYER_LINE_RATIO">Anchor Line Width Ratio</label></td>
-              <td><input size="32" name="ANCHOR_LAYER_LINE_RATIO" id="ANCHOR_LAYER_LINE_RATIO" step="any" value="1.4"
-                  onblur="validateInput()" />
+              <td><label for=ANCHOR_LAYER_LINE_RATIO>Anchor Line Width Ratio</label></td>
+              <td><input type=number id="ANCHOR_LAYER_LINE_RATIO" step=0.01 value=1.4 onblur=validateInput() />
               </td>
               <td>Anchor layer line width (as a ratio of nozzle diameter)</td>
             </tr>
             <tr>
-              <td colspan="3" class="tdsection">
+              <td colspan=3 class=tdSection>
                 <h4>Print Settings</h4>
               </td>
             </tr>
             <tr>
-              <td><label for="HEIGHT_LAYER">Layer Height</label></td>
-              <td><input size="32" name="HEIGHT_LAYER" id="HEIGHT_LAYER" step="any" value="0.2"
-                  onblur="validateInput()" /></td>
+              <td><label for=HEIGHT_LAYER>Layer Height</label></td>
+              <td><input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 onblur=validateInput() /></td>
               <td>Layer height (mm)</td>
             </tr>
 
 
             <tr>
-              <td><label for="PERIMETER_SPEED">Print Speed</label></td>
-              <td><input size="32" name="PERIMETER_SPEED" id="PERIMETER_SPEED" step="1" value="120"
-                  onblur="validateInput()" />
+              <td><label for=SPEED_PERIMETER>Print Speed</label></td>
+              <td><input type=number id="SPEED_PERIMETER" step=1 value=120 onblur=validateInput() />
               </td>
               <td>
                 <p>Pattern print speed</p>
@@ -329,8 +312,8 @@ PRINT_END
               </td>
             </tr>
             <tr>
-              <td><label for="PRINT_ACCL">Acceleration</label></td>
-              <td><input size="32" name="PRINT_ACCL" id="PRINT_ACCL" step="1" value="2000" onblur="validateInput()" />
+              <td><label for=PRINT_ACCL>Acceleration</label></td>
+              <td><input type=number id="PRINT_ACCL" step=1 value=2000 onblur=validateInput() />
               </td>
               <td>
                 <p>Printing acceleration (mm/s<sup>2</sup>). Use your fastest perimeter acceleration from your slicer
@@ -339,51 +322,46 @@ PRINT_END
             </tr>
 
             <tr>
-              <td><label for="FAN_SPEED">Fan %</label></td>
-              <td><input size="32" name="FAN_SPEED" id="FAN_SPEED" step="1" value="100" onblur="validateInput()" /></td>
+              <td><label for=FAN_SPEED>Fan %</label></td>
+              <td><input type=number id="FAN_SPEED" step=1 value=100 onblur=validateInput() /></td>
               <td>Fan Speed (%). High fan speed recommended, as this print has very short layer times</td>
             </tr>
 
             <tr>
-              <td colspan="3" class="tdsection">
-                <h4>Pattern Settings &nbsp;</input><input name="PATTERN_OPTIONS_ENABLE" type="checkbox"
-                    id="PATTERN_OPTIONS_ENABLE" /></h4>
-                <i>(Defaults are usually fine)</i>
+              <td colspan=3 class=tdSection>
+                <h4>Pattern Settings &nbsp;</input><input type=checkbox id="PATTERN_OPTIONS_ENABLE" /></h4>
+                <i>(Unchecked will use defaults. Defaults are usually fine.)</i>
               </td>
             </tr>
             <tr id="printHeightRow">
-              <td><label for="HEIGHT_PRINT">Print Height</label></td>
-              <td><input size="32" name="HEIGHT_PRINT" id="HEIGHT_PRINT" step="any" value="1"
-                  onblur="validateInput()" /></td>
+              <td><label for=HEIGHT_PRINT>Print Height</label></td>
+              <td><input type=number id="HEIGHT_PRINT" step=0.1 value=1 onblur=validateInput() /></td>
               <td>How tall to print the pattern (mm)</td>
             </tr>
             <tr id="perimetersRow">
-              <td><label for="PERIMETERS">Perimeter Count</label></td>
-              <td><input size="32" name="PERIMETERS" id="PERIMETERS" step="1" value="3" onblur="validateInput()" /></td>
+              <td><label for=PERIMETERS>Perimeter Count</label></td>
+              <td><input type=number id="PERIMETERS" step=1 value=3 onblur=validateInput() /></td>
               <td>Perimeter count. This will slightly impact print size</td>
             </tr>
             <tr id="patternSideLengthRow">
-              <td><label for="PATTERN_SIDE_LENGTH">Side Length</label></td>
-              <td><input size="32" name="PATTERN_SIDE_LENGTH" id="PATTERN_SIDE_LENGTH" step="1" value="30"
-                  onblur="validateInput()" /></td>
+              <td><label for=PATTERN_SIDE_LENGTH>Side Length</label></td>
+              <td><input type=number id="PATTERN_SIDE_LENGTH" step=1 value=30 onblur=validateInput() /></td>
               <td>Length of the pattern sides (mm)</td>
             </tr>
             <tr id="patternSpacingRow">
-              <td><label for="PATTERN_SPACING">Spacing</label></td>
-              <td><input size="32" name="PATTERN_SPACING" id="PATTERN_SPACING" step="any" value="5"
-                  onblur="validateInput()" />
+              <td><label for=PATTERN_SPACING>Spacing</label></td>
+              <td><input type=number id="PATTERN_SPACING" step=1 value="5" onblur=validateInput() />
               </td>
               <td>Horizontal distance between the corner patterns. This will impact print size</td>
             </tr>
             <tr id="patternAngleRow">
-              <td><label for="PATTERN_ANGLE">Corner Angle</label></td>
-              <td><input size="32" name="PATTERN_ANGLE" id="PATTERN_ANGLE" step="any" value="90"
-                  onblur="validateInput()" /></td>
+              <td><label for=PATTERN_ANGLE>Corner Angle</label></td>
+              <td><input type=number id="PATTERN_ANGLE" step=1 value=90 onblur=validateInput() /></td>
               <td>Angle of the test pattern corners.</td>
             </tr>
             <tr id="printDirectionRow">
-              <td><label for="PRINT_DIR">Printing Direction</label></td>
-              <td><select name="PRINT_DIR" id="PRINT_DIR" onchange="validateInput()">
+              <td><label for=PRINT_DIR>Printing Direction</label></td>
+              <td><select id="PRINT_DIR" onchange="validateInput()">
                   <option value="0" selected="selected">Left to Right (0°)</option>
                   <option value="45">45°</option>
                   <option value="90">Front to Back (90°)</option>
@@ -396,89 +374,99 @@ PRINT_END
               <td>Rotates the print in 45° steps</td>
             </tr>
             <tr>
-              <td colspan="3" class="tdSection">
-                <h4>Pressure Advance Stepping</h4> <i>(Start with 0-0.1 for direct drive or 0-1 for bowden)</i>
+              <td colspan=3 class=tdSection>
+                <h4>Pressure Advance Stepping</h4> <i>(Start with ~0-0.1 for direct drive or ~0-1 for bowden.)</i>
               </td>
             </tr>
             <tr>
               <!--TODO: Smooth time toggle?-->
-              <td><label for="PA_START">PA Start Value</label></td>
-              <td><input size="32" name="PA_START" id="PA_START" step="any" value="0" onblur="validateInput()" /></td>
+              <td><label for=PA_START>PA Start Value</label></td>
+              <td><input type=number id="PA_START" step=0.0005 value=0 onblur=validateInput() /></td>
               <td id="start_factor">Starting value for pressure advance</td>
             </tr>
             <tr>
-              <td><label for="PA_END">PA End Value</label></td>
-              <td><input size="32" name="PA_END" id="PA_END" step="any" value="0.1" onblur="validateInput()" /></td>
+              <td><label for=PA_END>PA End Value</label></td>
+              <td><input type=number id="PA_END" step=0.0005 value=0.1 onblur=validateInput() /></td>
               <td id="end_factor">Ending value of pressure advance</td>
             </tr>
             <tr>
-              <td><label for="PA_STEP">PA Increment</label></td>
-              <td><input size="32" name="PA_STEP" id="PA_STEP" step="any" value="0.01" onblur="validateInput()" /></td>
+              <td><label for=PA_STEP>PA Increment</label></td>
+              <td><input type=number id="PA_STEP" step=0.0005 value=0.01 onblur=validateInput() /></td>
               <td id="step_factor">Stepping of the pressure advance value in the test pattern. Needs to cleanly divide
                 into pressure
                 advance range (End - Start)</td>
             </tr>
             <!--
           <tr>
-            <td><label for="LINE_NO">Line Numbering</label></td>
-            <td><input size="32" name="LINE_NO" type="checkbox" id="LINE_NO" checked="checked" /></td>
+            <td><label for=LINE_NO>Line Numbering</label></td>
+            <td><input type=checkbox id="LINE_NO" checked=checked /></td>
             <td>Prints the pressure advance value beside every second test line</td>
           </tr>
           <tr>
-            <td colspan="3" class="tdSection"><h4>Advanced</h4></td>
+            <td colspan=3 class=tdSection><h4>Advanced</h4></td>
           </tr>
           -->
             <!--
           <tr>
-            <td><label for="PRIME">Prime Line</label></td>
-            <td><input size="32" name="PRIME" type="checkbox" id="PRIME" checked="checked" /></td>
+            <td><label for=PRIME>Prime Line</label></td>
+            <td><input type=checkbox id="PRIME" checked=checked /></td>
             <td>Print a prime line before starting the test pattern (Disable if your start G-code performs a prime line already)</td>
           </tr>
           <tr>
-            <td><label for="ENT_MULT_PRIME">Prime Line Extrusion Multiplier</label></td>
-            <td><input size="32" name="ENT_MULT_PRIME" id="ENT_MULT_PRIME" step="0.1" value="2.5" onblur="validateInput()" /></td>
+            <td><label for=ENT_MULT_PRIME>Prime Line Extrusion Multiplier</label></td>
+            <td><input type=number id="ENT_MULT_PRIME" step="0.1" value="2.5" onblur=validateInput() /></td>
             <td>The default of 2.5 results in roughly 1mm of filament for 10mm line length</td>
           </tr>
           <tr>
-            <td height="24"><label for="PRIME_SPEED">Prime Line Print Speed</label></td>
-            <td><input size="32" name="PRIME_SPEED" id="PRIME_SPEED" step="any" value="30" onblur="validateInput()" /></td>
+            <td height="24"><label for=PRIME_SPEED>Prime Line Print Speed</label></td>
+            <td><input type=number id="PRIME_SPEED" step=1 value="30" onblur=validateInput() /></td>
             <td>Speed of the prime move</td>
           </tr>
           -->
-            <tr class="calibpat2">
-              <td colspan="3">
-                &nbsp;&nbsp;&nbsp;<input size="32" name="button3" type="button" id="button3" onclick="setLocalStorage()"
-                  value="Save Settings to Browser" title="Save settings in a cookie." />
-                &nbsp;&nbsp;&nbsp;<input size="32" name="button3" type="button" id="button3"
+            <tr class=calibpat2>
+              <td colspan=3>
+                &nbsp;&nbsp;&nbsp;<input type=button onclick=setLocalStorage() value="Save Settings to Browser"
+                  title="Save settings in a cookie." />
+                &nbsp;&nbsp;&nbsp;<input type=button
                   onclick="window.localStorage.clear('PA_SETTINGS');location.reload();" value="Restore Defaults"
                   title="Remove settings cookie and reload page." />
 
-                <p id="warning1" style="display: none;">warning</p>
-                <p id="warning2" style="display: none;">warning</p>
-                <p id="warning3" style="display: none;">warning</p>
+                <p id=warning1 style="display: none;">warning</p>
+                <p id=warning2 style="display: none;">warning</p>
+                <p id=warning3 style="display: none;">warning</p>
               </td>
             </tr>
           </tbody>
         </table>
         <br>
-        <table id="gcodeTable">
+        <table id=informationTable>
+          <tr class=tdHead>
+            <td>
+              <h3>Information</h3>
+            </td>
+          </tr>
+          <tr>
+            <td id=information class=tdSection>
+            </td>
+          </tr>
+        </table>
+        <br>
+        <table id=gcodeTable>
           <tbody>
             <tr>
-              <td colspan="3" class="tdHead">
+              <td colspan=3 class=tdHead>
                 <h3>G-Code</h3>
               </td>
             </tr>
             <tr>
-              <td class="tdSection">&nbsp;&nbsp;&nbsp;<input size="32" name="button" type="button" id="button"
-                  onclick="genGcode()" value="Generate G-code" />
-                &nbsp;&nbsp;File Name:&nbsp;&nbsp; <input size="32" name="FILENAME" id="FILENAME"
-                  value="pa_pattern" />&nbsp;&nbsp;&nbsp;<input size="32" name="button2" type="button" id="button2"
-                  onclick="saveTextAsFile()" value="Download as file" />
+              <td class=tdSection><input type=button id="button2" onclick=genGcode() value="Generate G-code" />
+              <td colspan=2 class=tdSection>
+                File Name: <input type=text id="FILENAME" value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input
+                  type=button onclick=saveTextAsFile() value="Download as file" /></td>
               </td>
             </tr>
             <tr>
-              <td colspan="3" class="txtareatd"><textarea style="height: 600px; background-color:#ffffff;"
-                  name="textarea" id="gcodetextarea"></textarea></td>
+              <td colspan=3 class="txtareatd"><textarea id="gcodetextarea"></textarea></td>
             </tr>
           </tbody>
         </table>
