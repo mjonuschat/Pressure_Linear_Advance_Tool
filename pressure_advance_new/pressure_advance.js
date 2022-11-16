@@ -342,8 +342,8 @@ for (let i = 0; i < NUM_PATTERNS; i++){
 }
 
 pa_script += `\
-;  - Print Size X: ${FIT_WIDTH} mm
-;  - Print Size Y: ${FIT_HEIGHT} mm
+;  - Print Size X: ${Math.round10(FIT_WIDTH, -2)}mm
+;  - Print Size Y: ${Math.round10(FIT_HEIGHT, -2)} mm
 ;  - Total Number of Layers: ${NUM_LAYERS}
 ;
 ; Prepare printing

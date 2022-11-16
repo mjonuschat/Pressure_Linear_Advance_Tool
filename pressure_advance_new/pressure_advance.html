@@ -220,7 +220,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
             </tr>
             <tr id="retractionDistanceRow">
               <td><label for=RETRACT_DIST>Retraction Distance</label></td>
-              <td><input type=number id="RETRACT_DIST" step=0.1 value=0.5 onblur=validateInput() />
+              <td><input type=number id="RETRACT_DIST" step=0.05 value=0.5 onblur=validateInput() />
               </td>
               <td>Retraction distance (mm)</td>
             </tr>
@@ -351,7 +351,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
             </tr>
             <tr id="patternSpacingRow">
               <td><label for=PATTERN_SPACING>Spacing</label></td>
-              <td><input type=number id="PATTERN_SPACING" step=1 value="5" onblur=validateInput() />
+              <td><input type=number id="PATTERN_SPACING" step=1 value="3" onblur=validateInput() />
               </td>
               <td>Horizontal distance between the corner patterns. This will impact print size</td>
             </tr>
@@ -376,7 +376,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
             </tr>
             <tr>
               <td colspan=3 class=tdSection>
-                <h4>Pressure Advance Stepping</h4> <i>(Start with ~0-0.1 for direct drive or ~0-1 for bowden.)</i>
+                <h4>Pressure Advance Stepping</h4> <i>(Start with ~0 to ~0.<font color="red"><strong><u>0</u></strong></font>8 for direct drive or ~0 to ~0.8 for bowden.)</i>
               </td>
             </tr>
             <tr>
@@ -387,7 +387,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
             </tr>
             <tr>
               <td><label for=PA_END>PA End Value</label></td>
-              <td><input type=number id="PA_END" step=0.0005 value=0.1 onblur=validateInput() /></td>
+              <td><input type=number id="PA_END" step=0.0005 value=0.08 onblur=validateInput() /></td>
               <td id="end_factor">Ending value of pressure advance</td>
             </tr>
             <tr>
