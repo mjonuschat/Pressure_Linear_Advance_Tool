@@ -52034,7 +52034,7 @@ class GCodeParser {
                     const newPoint = new three_1.Vector3(x, y, z);
                     const length = getLength(lastPoint, newPoint);
                     if (length !== 0) {
-                        let radius = (e - lastE) / length * 10;
+                        let radius = (e - lastE) / length * 5; // mine - was 10
                         // Hide negative extrusions as only move-extrusions
                         if (radius < 0) {
                             radius = 0;
