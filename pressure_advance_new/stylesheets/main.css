@@ -1931,7 +1931,7 @@ textarea {
     resize: none
 }
 
-#button2 {
+#gcodeButton {
     background: var(--kf-k-btn-bg);
     font-weight: bold;
     border-width: 1px;
@@ -2034,8 +2034,6 @@ label {
     box-shadow: 0 0 3px var(--kf-k-invalid-border);
     outline: 0
 }
-
-
 
 #gcode-viewer canvas {
     display: block;

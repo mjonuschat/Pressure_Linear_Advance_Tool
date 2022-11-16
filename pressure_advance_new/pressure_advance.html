@@ -440,17 +440,6 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
           </tbody>
         </table>
         <br>
-        <table id=informationTable>
-          <tr class=tdHead>
-            <td>
-              <h3>Information</h3>
-            </td>
-          </tr>
-          <tr>
-            <td id=information class=tdSection>
-            </td>
-          </tr>
-        </table>
         <br>
         <table id=gcodeTable>
           <tbody>
@@ -459,9 +448,13 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 <h3>G-Code</h3>
               </td>
             </tr>
+            <tr id=informationRow>
+              <td id=information class=tdSection colspan="3">
+              </td>
+            </tr>
             <tr>
               <td class=tdSection>
-                <input type=button id="button2" onclick="genGcode();render($('#gcodetextarea').val())"
+                <input type=button id="gcodeButton" onclick="genGcode();render($('#gcodetextarea').val())"
                   value="Generate G-code" /> (and update 3d preview)
               <td colspan=2 class=tdSection>
                 File Name: <input type=text id="FILENAME" value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input
@@ -469,8 +462,9 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               </td>
             </tr>
             <tr>
-              <td class=tdSection><h4>3D Preview</h4>
-                <td class="tdSection" id="gcode-viewer" colspan="2">
+              <td class=tdSection>
+                <h4>3D Preview</h4>
+              <td class="tdSection" id="gcode-viewer" colspan="2">
             </tr>
             <tr>
               <td colspan=3 class="txtareatd"><textarea id="gcodetextarea"></textarea></td>

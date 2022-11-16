@@ -1173,11 +1173,11 @@ function displayCalculatedValues(action = 'show'){
     body += `&nbsp;<strong>Print size X: </strong> ${Math.round10(FIT_WIDTH, -2)}mm<br>`;
     body += `&nbsp;<strong>Print size Y: </strong> ${Math.round10(FIT_HEIGHT, -2)}mm`;
     document.getElementById("information").innerHTML = body;
-    document.getElementById('informationTable').style.display = '';
+    document.getElementById('informationRow').style.display = '';
   } else {
     body = '';
     document.getElementById("information").innerHTML = '';
-    document.getElementById('informationTable').style.display = 'none';
+    document.getElementById('informationRow').style.display = 'none';
   }
 }
 
@@ -1313,7 +1313,7 @@ function validateInput() {
   $('#warning1').hide();
   $('#warning2').hide();
   $('#warning3').hide();
-  $('#button').prop('disabled', false);
+  $('#gcodeButton').prop('disabled', false);
 
   // Check for proper numerical values
   Object.keys(testNaN).forEach((k) => {
@@ -1322,7 +1322,7 @@ function validateInput() {
       $('#warning3').text('Some values are not proper numbers. Check highlighted Settings.');
       $('#warning3').addClass('invalidNumber');
       $('#warning3').show();
-      $('#button').prop('disabled', true);
+      $('#gcodeButton').prop('disabled', true);
     }
   });
   
@@ -1334,16 +1334,17 @@ function validateInput() {
     $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted Pattern Settings.');
     $('#warning1').addClass('invalidDiv');
     $('#warning1').show();
-    $('#button').prop('disabled', true);
+    $('#gcodeButton').prop('disabled', true);
     invalidDiv = 1;
     displayCalculatedValues('hide');
-  } else if (parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']) < 0) { // Check if pressure advance stepping is a multiple of the pressure advance Range
+  } 
+  else if (parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']) < 0) { // Check if pressure advance stepping is a multiple of the pressure advance Range
     $('label[for=PA_START]').addClass('invalidDiv');
     $('label[for=PA_END]').addClass('invalidDiv');
     $('#warning1').text('Your PA start value cannot be higher than your PA end value. Check highlighted settings.');
     $('#warning1').addClass('invalidDiv');
     $('#warning1').show();
-    $('#button').prop('disabled', true);
+    $('#gcodeButton').prop('disabled', true);
     invalidDiv = 1;
     displayCalculatedValues('hide');
   } else {
@@ -1364,6 +1365,7 @@ function validateInput() {
         $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('#gcodeButton').prop('disabled', true);
         displayCalculatedValues('hide');
       }
 
@@ -1379,6 +1381,7 @@ function validateInput() {
         $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('#gcodeButton').prop('disabled', true);
         displayCalculatedValues('hide');
       }
 
@@ -1394,6 +1397,7 @@ function validateInput() {
         $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted Pattern Settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('#gcodeButton').prop('disabled', true);
         displayCalculatedValues('hide');
       }
 
@@ -1409,6 +1413,7 @@ function validateInput() {
         $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted Pattern Settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('#gcodeButton').prop('disabled', true);
         displayCalculatedValues('hide');
       }
   }
