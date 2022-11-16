@@ -2034,3 +2034,11 @@ label {
     box-shadow: 0 0 3px var(--kf-k-invalid-border);
     outline: 0
 }
+
+
+
+#gcode-viewer canvas {
+    display: block;
+    margin-right: auto;
+    resize: both;
+}

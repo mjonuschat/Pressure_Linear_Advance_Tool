@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 
-<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
+<!--<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />-->
 
 <head>
   <title>Ellis' Pressure Advance Calibration Tool</title>
@@ -16,6 +16,7 @@
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-ui.min.js"></script>
   <script language="JavaScript" type="text/javascript" src="./FileSaver.min.js"></script>
   <script language="JavaScript" type="text/javascript" src="./pressure_advance.js"></script>
+  <script src="./gcode-viewer.js"></script>
   <div class="container" role="main">
     <div class="row">
       <div class="calibpat" id="calibpat">
@@ -459,11 +460,17 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               </td>
             </tr>
             <tr>
-              <td class=tdSection><input type=button id="button2" onclick=genGcode() value="Generate G-code" />
+              <td class=tdSection>
+                <input type=button id="button2" onclick="genGcode();render($('#gcodetextarea').val())"
+                  value="Generate G-code" /> (and update 3d preview)
               <td colspan=2 class=tdSection>
                 File Name: <input type=text id="FILENAME" value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input
                   type=button onclick=saveTextAsFile() value="Download as file" /></td>
               </td>
+            </tr>
+            <tr>
+              <td class=tdSection><h4>3D Preview</h4>
+                <td class="tdSection" id="gcode-viewer" colspan="2">
             </tr>
             <tr>
               <td colspan=3 class="txtareatd"><textarea id="gcodetextarea"></textarea></td>
