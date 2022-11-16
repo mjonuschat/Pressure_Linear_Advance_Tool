@@ -357,7 +357,7 @@ G90 ; Absolute XYZ
 M83 ; Relative E
 G92 E0 ; Reset extruder distance
 M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}; Set fan speed
-SET_VELOCITY_LIMIT ACCEL='${ACCELERATION}; Set printing acceleration
+SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
 ;
 ;  Begin printing
 ;
@@ -490,7 +490,8 @@ SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressur
 ;
 ; FINISH
 ;
-${END_GCODE}`;
+${END_GCODE}
+`;
 
   txtArea.value = pa_script;
 }
