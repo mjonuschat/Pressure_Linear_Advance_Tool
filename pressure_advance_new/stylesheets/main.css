@@ -1836,7 +1836,7 @@ label {
 }
 
 #START_GCODE {
-    min-height: 14em;
+    min-height: 15em;
     resize: vertical;
 }
 
