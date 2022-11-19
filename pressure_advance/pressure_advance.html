@@ -82,7 +82,7 @@
               <tr class="tdHead">
                 <td colspan=2>&nbsp;&nbsp;<strong> File Name: </strong><input type=text id="FILENAME"
                     value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input type=button id="downloadButton"
-                    onclick="validate(updateRender = true);saveTextAsFile()" value="Download G-code" /> <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font></td>
+                    onclick="validate(true);saveTextAsFile()" value="Download G-code" /> <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font></td>
                     <!-- <td align="right"><input type=button id="toggleGcode" onclick="toggleGcodeTxtArea();" value="Toggle Gcode Text Preview" /></td> -->
               </tr>
               <tr id=gcodetextareaRow>
@@ -199,7 +199,7 @@
               <tr>
                 <td><label for=NOZZLE_DIAMETER>Nozzle Diameter</label></td>
                 <td class=inputCell>
-                  <input type=number id="NOZZLE_DIAMETER" step=0.05 value=0.4 onblur=validate() />
+                  <input type=number id="NOZZLE_DIAMETER" step=0.05 value=0.4 onblur=validate(true) />
                   mm
                 </td>
                 <td></td>
@@ -285,7 +285,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <tr>
                 <td><label for=LINE_RATIO>Line Width</label></td>
                 <td class=inputCell>
-                  <input type=number id="LINE_RATIO" step=1 value=115 onblur="validate(updateRender = true)" /> % (of nozzle diameter)
+                  <input type=number id="LINE_RATIO" step=1 value=115 onblur="validate(true)" /> % (of nozzle diameter)
                 </td>
                 <td colspan="3" class="note">Match your thickest perimeter from your slicer settings (internal/external)</td>
               </tr>
@@ -343,11 +343,11 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 <td><label for=HEIGHT_FIRSTLAYER>First Layer Height</label></td>
                 <td class=inputCell>
                   <input type=number id="HEIGHT_FIRSTLAYER" step=0.001 value=0.25
-                    onblur="validate(updateRender = true)" /> mm
+                    onblur="validate(true)" /> mm
                 </td>
                 <td class=inputCell><label for=ANCHOR_OPTION style="font-size: 14px; vertical-align: middle;">Anchor
                     Option</label><br>&nbsp;&nbsp;&nbsp;&nbsp;<select size="3" id="ANCHOR_OPTION"
-                    onchange="validate(updateRender = true)">
+                    onchange="validate(true)">
                     <option value="anchor_frame" selected="selected">Anchor Frame</option>
                     <option value="anchor_layer">Anchor Layer</option>
                     <option value="no_anchor">No Anchor</option>
@@ -363,7 +363,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 </td>
                 <td id="anchorLayerLineRatioInputCell" class=inputCell>
                   <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140
-                    onblur="validate(updateRender = true)" /> % (of nozzle diameter)
+                    onblur="validate(true)" /> % (of nozzle diameter)
                 </td>
               </tr>
               <tr>
@@ -373,7 +373,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 </td>
                 <td id="anchorPerimetersLabelCell"><label for=ANCHOR_PERIMETERS>Anchor Frame Perimeters</label></td>
                 <td id="anchorPerimetersInputCell" class=inputCell>
-                  <input type=number id="ANCHOR_PERIMETERS" step=1 value=4 onblur="validate(updateRender = true)" />
+                  <input type=number id="ANCHOR_PERIMETERS" step=1 value=4 onblur="validate(true)" />
                 </td>
               </tr>
 
@@ -389,7 +389,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <tr>
                 <td><label for=HEIGHT_LAYER>Layer Height</label></td>
                 <td class=inputCell>
-                  <input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 onblur="validate(updateRender = true)" />
+                  <input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 onblur="validate(true)" />
                   mm
                 </td>
                 <td></td>
@@ -431,28 +431,28 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <tr>
                 <td colspan=4 class=tdSection>
                   <h4>Pattern Settings &nbsp;</input><input type=checkbox id="PATTERN_OPTIONS_ENABLE"
-                      onchange=validate() /></h4>
+                      onchange=validate(true) /></h4>
                   <i>(Unchecked will use defaults. Defaults are usually fine.)</i>
                 </td>
               </tr>
               <tr id="printHeightRow">
                 <td><label for=HEIGHT_PRINT>Print Height</label></td>
                 <td class=inputCell>
-                  <input type=number id="HEIGHT_PRINT" step=0.1 value=1 onblur="validate(updateRender = true)" /> mm
+                  <input type=number id="HEIGHT_PRINT" step=0.1 value=1 onblur="validate(true)" /> mm
                 </td>
                 <td colspan="3">Total height of the print</td>
               </tr>
               <tr id="perimetersRow">
                 <td><label for=PERIMETERS>Perimeter Count</label></td>
                 <td class=inputCell>
-                  <input type=number id="PERIMETERS" step=1 value=3 onblur="validate(updateRender = true)" />
+                  <input type=number id="PERIMETERS" step=1 value=3 onblur="validate(true)" />
                 </td>
                 <td colspan="3">Perimeter count for the test patterns. This will slightly impact print size</td>
               </tr>
               <tr id="patternSideLengthRow">
                 <td><label for=PATTERN_SIDE_LENGTH>Side Length</label></td>
                 <td class=inputCell>
-                  <input type=number id="PATTERN_SIDE_LENGTH" step=1 value=30 onblur="validate(updateRender = true)" />
+                  <input type=number id="PATTERN_SIDE_LENGTH" step=1 value=30 onblur="validate(true)" />
                   mm
                 </td>
                 <td colspan="3">Length of the pattern sides</td>
@@ -460,7 +460,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <tr id="patternSpacingRow">
                 <td><label for=PATTERN_SPACING>Spacing</label></td>
                 <td class=inputCell>
-                  <input type=number id="PATTERN_SPACING" step=1 value="3" onblur="validate(updateRender = true)" />
+                  <input type=number id="PATTERN_SPACING" step=1 value="3" onblur="validate(true)" />
                   mm
                 </td>
                 <td colspan="3">Horizontal spacing between the patterns</td>
@@ -468,12 +468,12 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <tr id="patternAngleRow">
                 <td><label for=PATTERN_ANGLE>Corner Angle</label></td>
                 <td class=inputCell colspan="3">
-                  <input type=number id="PATTERN_ANGLE" step=1 value=90 onblur="validate(updateRender = true)" /> °
+                  <input type=number id="PATTERN_ANGLE" step=1 value=90 onblur="validate(true)" /> °
                 </td>
               </tr>
               <tr id="printDirectionRow">
                 <td><label for=PRINT_DIR>Printing Direction</label></td>
-                <td class=inputCell><select id="PRINT_DIR" onchange="validate(updateRender = true)">
+                <td class=inputCell><select id="PRINT_DIR" onchange="validate(true)">
                     <option value="0" selected="selected">Left to Right (0°)</option>
                     <option value="45">45°</option>
                     <option value="90">Front to Back (90°)</option>
@@ -497,19 +497,19 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                   <!--TODO: Smooth time toggle?-->
                   <td><label for=PA_START>PA Start Value</label></td>
                   <td class=inputCell id="start_factor" colspan="3">
-                    <input type=number id="PA_START" step=0.0005 value=0 onblur="validate(updateRender = true)" />
+                    <input type=number id="PA_START" step=0.0005 value=0 onblur="validate(true)" />
                   </td>
                 </tr>
                 <tr>
                   <td><label for=PA_END>PA End Value</label></td>
                   <td class=inputCell id="end_factor" colspan="3">
-                    <input type=number id="PA_END" step=0.0005 value=0.08 onblur="validate(updateRender = true)" />
+                    <input type=number id="PA_END" step=0.0005 value=0.08 onblur="validate(true)" />
                   </td>
                 </tr>
                 <tr>
                   <td><label for=PA_STEP>PA Increment</label></td>
                   <td class=inputCell>
-                    <input type=number id="PA_STEP" step=0.0005 value=0.005 onblur="validate(updateRender = true)" />
+                    <input type=number id="PA_STEP" step=0.0005 value=0.005 onblur="validate(true)" />
                   </td>
                   <td id="step_factor" colspan="2">PA increment for each pattern. Needs to cleanly divide into pressure
                     advance
