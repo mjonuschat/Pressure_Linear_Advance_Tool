@@ -161,7 +161,10 @@ function setHtmlVars(){
 
 // set global calculated variables
 function setCalculatedVars(){
-  if (BED_SHAPE === 'Round') {BED_Y = BED_X;}
+  if (BED_SHAPE === 'Round') {
+    ORIGIN_CENTER = true;
+    BED_Y = BED_X;
+  }
 
   // if "pattern settings" checkbox isn't checked, set to defaults instead
   if (!PATTERN_OPTIONS_ENABLE){
@@ -993,15 +996,14 @@ function toggleBedShape() {
   if ($('#BED_SHAPE').val() === 'Round') {
     $('label[for=\'BED_X\']').text('Bed Diameter:');
     //$('#shape').text('Diameter of the bed');
-    document.getElementById('bedSizeYRow').style.display = 'none';
-    if (!$('#ORIGIN_CENTER').is(':checked')) {
-      $('#ORIGIN_CENTER').prop('checked', !$('#ORIGIN_CENTER').prop('checked'));
-    }
+    document.getElementById('bedSizeYLabelCell').style.display = 'none';
+    document.getElementById('bedSizeYInputCell').style.display = 'none';
     document.getElementById('originBedCenterRow').style.display = 'none';
   } else {
     $('label[for=\'BED_X\']').text('Bed Size X:');
     //$('#shape').text('Size of the bed in X');
-    document.getElementById('bedSizeYRow').style.display = '';
+    document.getElementById('bedSizeYLabelCell').style.display = '';
+    document.getElementById('bedSizeYInputCell').style.display = '';
     document.getElementById('originBedCenterRow').style.display = '';
   }
 }
@@ -1035,17 +1037,18 @@ M112                ; Reading comprehension check! (emergency stop)`
   var STANDALONE_MACRO = `\
 PRINT_START
 ; Make sure this macro name matches your own! 
-; (Some may use START_PRINT instead, for example.)`
+; (For example, some may use START_PRINT instead.)`
 
   var STANDALONE_TEMP_PASSING_MACRO = `\
 ; !!!!!!! Pass your temperatures to your start macro here !!!!!!!
 PRINT_START HOTEND=200 BED=60
 ;
-; - Replace any slicer variables with actual numbers! It should look like above, !!! NOT !!! like this:
-;     PRINT_START BED=[first_layer_bed_temperature] EXTRUDER={first_layer_temperature[initial_extruder]+extruder_temperature_offset[initial_extruder]} CHAMBER=[chamber_temperature]
+; - Make sure the macro name AND parameter names match YOUR start macro setup!
+;     (For example, some macros use EXTRUDER=X rather than HOTEND=X, or START_PRINT instead of PRINT_START)!
 ;
-; - Make sure the macro name AND parameter names match YOUR start macro setup
-;     (Example, some macros use EXTRUDER=X rather than HOTEND=X)`
+; - Replace any slicer variables with actual numbers! It should look like the top example, !!! NOT !!! like this:
+;     PRINT_START BED=[first_layer_bed_temperature](...)`
+
 
   var CANNED_GCODE_CUSTOM = "",
       STANDALONE_MACRO_CUSTOM = "",
@@ -1064,16 +1067,29 @@ PRINT_START HOTEND=200 BED=60
 
 function toggleStartGcodeTypeDescriptions(){
     if ($('#START_GCODE_TYPE').val() == "custom"){
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `<p>Use custom start g-code (below). The defaults have a lot of redundancies and are intended to be revised.</p>
-You should generally be able to copy your usual start g-code from your slicer.`;
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
+<br><strong>This option is for if you are NOT using a standalone start macro.</strong><br><br>
+It will use traditional (custom / manual) start g-code (below).<br>
+<strong>The defaults have a lot of redundancies and are <font color=\"red\">intended to be revised.</font></strong><br><br>
+You should generally be able to copy your usual start g-code from your slicer,<br>
+making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>real numbers!</strong><br><br>`;
     document.getElementById('tempRow').style.display = '';
   } else if ($('#START_GCODE_TYPE').val() == "standalone") {
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = "<p>Only use this option if your start macro contains <font color=\"red\"><strong>all necessary start g-codes!</strong></font> (homing, quad gantry leveling, z offset, bed leveling, etc).</p>";
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
+<br><strong>This option is for if you use a <u>standalone</u> start macro.<br><br>
+It must contain <font color=\"red\">all necessary preparatory g-codes!</strong></font><br>
+(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>
+You should generally be able to copy your usual start g-code from your slicer,<br>
+making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>real numbers!</strong><br><br>`;
     document.getElementById('tempRow').style.display = '';
   } else {
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `<p>Only use if your start macro contains <font color=\"red\"><strong>all necessary start g-codes</font> and</strong> is \
-<a href=\"https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/passing_slicer_variables.md\"><u>set up to receive variables</u></a>!</p>
-<p><strong>This option will prevent temperature gcodes from being added automatically.</strong> You will have to place temperatures in the start g-code yourself below.</p>`;
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
+<br><strong>This option is for if you use a <u>standalone</u> start macro <strong><font color=\"red\">AND</font> </strong><a href=\"https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/passing_slicer_variables.md\"><u>have set up temperature variable passing!</u></a></p>
+Your start macro must contain <font color=\"red\">all necessary preparatory g-codes!</strong></font><br>
+(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>
+<p><strong>This option will prevent temperature gcodes from being added automatically.</strong> You will have to place temperatures in the start g-code yourself below.<br><br>
+You should generally be able to copy your usual start g-code from your slicer,<br>
+making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>real numbers!</strong><br><br>`;
     document.getElementById('tempRow').style.display = 'none';
   }
 }

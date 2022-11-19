@@ -1728,21 +1728,29 @@ tr:last-child td {
 }
 
 td:first-child {
-    width: 25%;
+    min-width: 25%;
     border-left: 1px solid var(--kf-k-table-border);
+    border-right: none;
+    padding-left: 1em;
 }
 
 td:nth-child(2) {
     width: 25%;
+    border-left: none;
+    border-right: none;
 }
 
 td:nth-child(3) {
     width: 25%;
+    border-left: none;
+    border-right: none;
+    padding-left: 1em;
 }
 
 td:last-child {
     width: 25%;
     border-right: 1px solid var(--kf-k-table-border);
+    border-left: none;
 }
 
 .tdHead {
@@ -1782,7 +1790,6 @@ label {
     display: block;
     padding-top: 0.25em;
     padding-bottom: 0.25em;
-    padding-left: 1em;
     vertical-align: middle;
     font-size: 14px;
 }
@@ -1806,7 +1813,7 @@ label {
 }
 
 #gcodeTable #FILENAME {
-    width: 30%;
+    width: 25%;
 }
 
 #gcodeTable td {
@@ -1919,4 +1926,19 @@ label {
 
 .note {
     font-size: 12px;
+}
+
+#startGcodeWarningHeader {
+    text-align: center;
+    color: red;
+    font-weight: bold;
+    font-size: larger;
+    border-bottom: none;
+}
+
+#startGcodeWarningSubHeader {
+    text-align: center;
+    font-size: larger;
+    border-top: none;
+    font-size: 90%;
 }

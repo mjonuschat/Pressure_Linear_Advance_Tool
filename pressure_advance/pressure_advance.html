@@ -8,14 +8,14 @@
   <meta charset="UTF-8">
   <meta content="Create G-code to calibrate Pressure Advance setting">
   <link rel="stylesheet" href="./stylesheets/main.css?v2" />
-  <link rel="stylesheet" href="./stylesheets/font-awesome.min.css?v1" />
+  <link rel="stylesheet" href="./stylesheets/font-awesome.min.css?v2" />
 </head>
 
 <body>
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-2.2.1.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-ui.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./FileSaver.min.js?v1"></script>
-  <script language="JavaScript" type="text/javascript" src="./pressure_advance.js?v1"></script>
+  <script language="JavaScript" type="text/javascript" src="./pressure_advance.js?v2"></script>
   <script src="./gcode-viewer.js?v1"></script>
   <div class="container" role="main">
     <div class="row">
@@ -28,29 +28,11 @@
           href="https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/pressure_advance.md">pressure
           advance page!</a><br><br>
         The old "lines" (Marlin) version of this tool has been <strong>deprecated.</strong><br>
-          <sup><i>This version was created specifically to address the shortcomings of the old Marlin tool.<br>
-          The old version is still available <a
-            href="https://andrewellis93.github.io/pressure_advance_lines_method_deprecated/pressure_advance.html">here</a>
-          if you prefer it.</i></sup><br><br>
+        <sup><i>This version was created specifically to address the shortcomings of the old Marlin tool.<br>
+            The old version is still available <a
+              href="https://andrewellis93.github.io/pressure_advance_lines_method_deprecated/pressure_advance.html">here</a>
+            if you prefer it.</i></sup><br><br>
       </div>
-      <!--
-        <div class="alert-info custom-alert">
-          <div class="custom-alert-icon"> <i class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
-          <div class="custom-alert-text">
-            <p><em>Caution!</em><br />
-              If Start G-code is incorrect, it could damage your printer. Anything which could damage your printer could
-              cause other damage. Be <em>absolutely sure</em> your Start G-code is correct before printing the generated
-              G-code</p>
-          </div>
-        </div>
-        -->
-      <!--
-        <div class="row">
-          <div class="col-sm-12">
-            <h3>Example</h3>
-            <img src="./images/example.png" alt="Example" />
-          </div>
-        -->
       <table id=gcodeTable>
         <tbody>
           <thead>
@@ -60,26 +42,17 @@
               </td>
               </td>
             </tr>
-
-            <!--
-                            <tr>
-                              <td class=tdSection>
-                                
-                                <input type=button id="gcodeButton" onclick="()"
-                                  value="Generate G-code" /> (and update 3d preview)
-                              <td colspan=3 class=tdSection>
-                              </td>
-                            </tr>
-                          -->
             <tr id="gcode-viewer-row">
               <td class=gcodeTableLeftHeading>
                 <h4>3D Preview</h4> &nbsp;&nbsp;<a href="https://github.com/aligator/gcode-viewer">Source</a><br>
                 <i>Line widths are approximations only.</i><br><br>
                 In contrast to the old test, I have found the best results in real prints by
                 erring on the <i>higher</i> side of the results.<br><br>
-                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex of the corner. (I know that sounds wrong!)<br><br>
-                I would recommend tuning down to 0.002-0.001 on direct drive, or 0.02-0.01 on bowden.
-                
+                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex
+                of the corner. (I know that sounds wrong!)<br><br>
+                I would recommend tuning down to 0.002-0.001 PA intervals on direct drive, or 0.02-0.01 PA intervals on
+                bowden.
+
               <td class="tdSection" id="gcode-viewer" colspan="2">
             </tr>
             <tr id=informationRow>
@@ -161,27 +134,20 @@
               </tr>
               <tr>
                 <td><label for=BED_SHAPE>Bed Shape</label></td>
-                <td class=inputCell><select id="BED_SHAPE" onchange=validate()>
+                <td class=inputCell colspan="3"><select id="BED_SHAPE" onchange=validate()>
                     <option value="Rect">Rectangular</option>
                     <option value="Round">Round</option>
                   </select></td>
-                <td colspan="2">Round beds will activate Origin Bed Center</td>
               </tr>
               <tr>
                 <td><label for=BED_X>Bed Size X</label></td>
                 <td class=inputCell>
                   <input type=number id="BED_X" step=1 value=200 onblur=validate() /> mm
                 </td>
-                <td></td>
-                <td></td>
-              </tr>
-              <tr id="bedSizeYRow">
-                <td><label for=BED_Y>Bed Size Y</label></td>
-                <td class=inputCell>
+                <td id="bedSizeYLabelCell"><label for=BED_Y>Bed Size Y</label></td>
+                <td id="bedSizeYInputCell" class=inputCell>
                   <input type=number id="BED_Y" step=1 value=200 onblur=validate() /> mm
                 </td>
-                <td></td>
-                <td></td>
               </tr>
               <tr id="originBedCenterRow">
                 <td><label for=ORIGIN_CENTER>Origin Bed Center</label></td>
@@ -223,6 +189,21 @@
                 </td>
               </tr>
               <tr>
+                <td colspan="4" id="startGcodeWarningHeader">
+                  <br>
+                  This section is the SINGLE most frequent cause of problems.<br><br>
+                    Please don't fly through it.<br>
+                    Please don't "just" read it.<br><br>
+                    UNDERSTAND IT FULLY.<br><br>          
+                </td>
+              </tr>
+              <tr>
+                <td colspan="4" id="startGcodeWarningSubHeader">
+                  If done incorrectly, your print may not start properly, your temperatures may not set,<br>
+                  you may get errors, or in the worst cases, <strong>you can potentially cause <font style="color: red;"> crashes and damage.</font></strong> <br><i>(for example, if you neglect a QUAD_GANTRY_LEVEL with a "flying gantry" printer like a Voron V2).</i><br><br>
+                </td>
+              </tr>
+              <tr>
                 <td><label for=START_GCODE_TYPE>Start G-code Option</label></td>
                 <td class=inputCell><select size="3" id="START_GCODE_TYPE" onchange="validate()">
                     <option value="custom" selected="selected">Manual Start G-code</option>
@@ -248,11 +229,6 @@
 
                 <td><label for=START_GCODE>Start G-code</label></td>
                 <td colspan=3>
-                  <p><strong>
-                      <font color="red">Thoroughly check this before printing. Incorrect start G-code can potentially
-                        cause crashes and
-                        damage.
-                    </strong></font>
                   </p><textarea id="START_GCODE" onblur=validate()>G28                 ; Home all axes
 ;G32                ; Tramming macro (uncomment if used)
 ;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
@@ -512,9 +488,10 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 </tr>
                 <tr>
                   <td><label for=PA_END>PA End Value</label></td>
-                  <td class=inputCell id="end_factor" colspan="3">
+                  <td class=inputCell id="end_factor" colspan="1">
                     <input type=number id="PA_END" step=0.0005 value=0.08 onblur="validate(true)" />
                   </td>
+                  <td colspan="2">Smaller nozzles = higher PA<br>Larger nozzles = lower PA</td>
                 </tr>
                 <tr>
                   <td><label for=PA_STEP>PA Increment</label></td>
