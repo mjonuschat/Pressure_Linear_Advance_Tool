@@ -1193,7 +1193,6 @@ function displayCalculatedValues(action = 'show'){
 
   if (action == 'show'){
     body += `\
-Line widths are approximations only.<br><br>
 <strong>Print size X: </strong> ${Math.round10(FIT_WIDTH, -1)}mm<br>
 <strong>Print size Y: </strong> ${Math.round10(FIT_HEIGHT, -1)}mm<br>
 <strong>Pattern count: </strong> ${NUM_PATTERNS}<br>
@@ -1204,7 +1203,7 @@ Line widths are approximations only.<br><br>
         body += ', '; 
       }
       else {
-         //body += '<br>';
+         body += '<br><br>';
       }
     }
 

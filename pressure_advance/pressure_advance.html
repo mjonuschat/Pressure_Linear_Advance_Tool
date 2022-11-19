@@ -7,7 +7,7 @@
   <title>Ellis' Pressure Advance Calibration Tool</title>
   <meta charset="UTF-8">
   <meta content="Create G-code to calibrate Pressure Advance setting">
-  <link rel="stylesheet" href="./stylesheets/main.css?v1" />
+  <link rel="stylesheet" href="./stylesheets/main.css?v2" />
   <link rel="stylesheet" href="./stylesheets/font-awesome.min.css?v1" />
 </head>
 
@@ -24,13 +24,16 @@
         Original <a href="https://marlinfw.org/tools/lin_advance/k-factor.html">Marlin calibration tool</a> by <a
           href="https://github.com/Sineos/k-factorjs">Sineos</a><br>
         Heavily modified/rewritten by <a href="https://github.com/AndrewEllis93">Andrew Ellis</a><br>
-        Also see my <a href="https://github.com/AndrewEllis93/Print-Tuning-Guide">print tuning guide</a> and its <a href="https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/pressure_advance.md">pressure advance page!</a><br><br>
-        <i>The original version of this tool has been <strong>deprecated.</strong><br>
-        This version was created specifically to address the shortcomings of the old Marlin tool.<br>
-        The old version is still available <a href="https://andrewellis93.github.io/pressure_advance_lines_method_deprecated/pressure_advance.html">here</a> if you prefer it.</i><br><br>
-        <strong>If having issues, click "Restore Defaults"</strong><br><br>
+        Also see my <a href="https://github.com/AndrewEllis93/Print-Tuning-Guide">print tuning guide</a> and its <a
+          href="https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/pressure_advance.md">pressure
+          advance page!</a><br><br>
+        The old "lines" (Marlin) version of this tool has been <strong>deprecated.</strong><br>
+          <sup><i>This version was created specifically to address the shortcomings of the old Marlin tool.<br>
+          The old version is still available <a
+            href="https://andrewellis93.github.io/pressure_advance_lines_method_deprecated/pressure_advance.html">here</a>
+          if you prefer it.</i></sup><br><br>
       </div>
-        <!--
+      <!--
         <div class="alert-info custom-alert">
           <div class="custom-alert-icon"> <i class="fa fa-info-circle fa-4x" aria-hidden="true"></i> </div>
           <div class="custom-alert-text">
@@ -41,24 +44,24 @@
           </div>
         </div>
         -->
-        <!--
+      <!--
         <div class="row">
           <div class="col-sm-12">
             <h3>Example</h3>
             <img src="./images/example.png" alt="Example" />
           </div>
         -->
-        <table id=gcodeTable>
-          <tbody>
-            <thead>
-              <tr>
-                <td colspan=3 class=tdHead>
-                  <h3>G-code</h3>
-                </td>
-                </td>
-              </tr>
+      <table id=gcodeTable>
+        <tbody>
+          <thead>
+            <tr>
+              <td colspan=2 class=tdHead style="text-align: center;">
+                <h3>G-code</h3>
+              </td>
+              </td>
+            </tr>
 
-              <!--
+            <!--
                             <tr>
                               <td class=tdSection>
                                 
@@ -68,43 +71,49 @@
                               </td>
                             </tr>
                           -->
-              <tr id="gcode-viewer-row">
-                <td class=tdSection style="text-align: right;">
-                  <h4>3D Preview</h4> &nbsp;&nbsp;<a
-                    href="https://github.com/aligator/gcode-viewer">Source</a>
-                <td class="tdSection" id="gcode-viewer" colspan="2">
-              </tr>
-              <tr id=informationRow>
-                <td class=tdSection></td>
-                <td id=information class=tdSection colspan=3>
-                </td>
-              </tr>
-              <tr class="tdHead">
-                <td colspan=2>&nbsp;&nbsp;<strong> File Name: </strong><input type=text id="FILENAME"
-                    value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input type=button id="downloadButton"
-                    onclick="validate(true);saveTextAsFile()" value="Download G-code" /> <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font></td>
-                    <!-- <td align="right"><input type=button id="toggleGcode" onclick="toggleGcodeTxtArea();" value="Toggle Gcode Text Preview" /></td> -->
-              </tr>
-              <tr id=gcodetextareaRow>
-                <td colspan=3 class="txtareatd"><textarea id="gcodetextarea" readonly></textarea></td>
-              </tr>
-            </thead>
-          </tbody>
-        </table>
-
+            <tr id="gcode-viewer-row">
+              <td class=gcodeTableLeftHeading>
+                <h4>3D Preview</h4> &nbsp;&nbsp;<a href="https://github.com/aligator/gcode-viewer">Source</a><br>
+                <i>Line widths are approximations only.</i><br><br>
+                In contrast to the old test, I have found the best results in real prints by
+                erring on the <i>higher</i> side of the results.<br><br>
+                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex of the corner. (I know that sounds wrong!)<br><br>
+                I would recommend tuning down to 0.002-0.001 on direct drive, or 0.02-0.01 on bowden.
+                
+              <td class="tdSection" id="gcode-viewer" colspan="2">
+            </tr>
+            <tr id=informationRow>
+              <td class=tdSection></td>
+              <td id=information class=tdSection colspan=2>
+              </td>
+            </tr>
+            <tr class="tdHead">
+              <td colspan=2>&nbsp;&nbsp;<strong> File Name: </strong><input type=text id="FILENAME"
+                  value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input type=button id="downloadButton"
+                  onclick="validate(true);saveTextAsFile()" value="Download G-code" />
+                <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font>
+              </td>
+              <!-- <td align="right"><input type=button id="toggleGcode" onclick="toggleGcodeTxtArea();" value="Toggle Gcode Text Preview" /></td> -->
+            </tr>
+            <tr id=gcodetextareaRow>
+              <td colspan=3 class="txtareatd"><textarea id="gcodetextarea" readonly></textarea></td>
+            </tr>
+          </thead>
+        </tbody>
+      </table>
+      <br>
+      <p style="text-align: center"><strong>If having issues, click "Restore Defaults"</strong></p>
       <table>
-        <br>
         <tbody>
           <thead>
             <tr>
               <td colspan=4 class=tdHead>
                 <h3>Settings</h3>
-                &nbsp;&nbsp;&nbsp;<input type=button onclick=setLocalStorage() value="Save Settings to Browser"
+                <input type=button onclick=setLocalStorage() value="Save Settings to Browser"
                   title="Save settings in a cookie." />
                 &nbsp;&nbsp;&nbsp;<input type=button
                   onclick="window.localStorage.clear('PA_SETTINGS');location.reload();" value="Restore Defaults"
                   title="Remove settings cookie and reload page." />
-
                 <p id=warning1 style="display: none;">warning</p>
                 <p id=warning2 style="display: none;">warning</p>
                 <p id=warning3 style="display: none;">warning</p>
@@ -179,7 +188,8 @@
                 <td class=inputCell>
                   <input type=checkbox id="ORIGIN_CENTER" onchange=validate() />
                 </td>
-                <td colspan="2">Uncommon on rectangular beds.<br><i>(Sets X0, Y0 to the center instead of the corner)</i></td>
+                <td colspan="2">Uncommon on rectangular beds.<br><i>(Sets X0, Y0 to the center instead of the
+                    corner)</i></td>
               </tr>
               <tr>
                 <td><label for=EXTRUDER_NAME>Extruder Name</label></th>
@@ -287,7 +297,8 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 <td class=inputCell>
                   <input type=number id="LINE_RATIO" step=1 value=115 onblur="validate(true)" /> % (of nozzle diameter)
                 </td>
-                <td colspan="3" class="note">Match your thickest perimeter from your slicer settings (internal/external)</td>
+                <td colspan="3" class="note">Match your thickest perimeter from your slicer settings (internal/external)
+                </td>
               </tr>
 
             </thead>
@@ -342,8 +353,7 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <tr>
                 <td><label for=HEIGHT_FIRSTLAYER>First Layer Height</label></td>
                 <td class=inputCell>
-                  <input type=number id="HEIGHT_FIRSTLAYER" step=0.001 value=0.25
-                    onblur="validate(true)" /> mm
+                  <input type=number id="HEIGHT_FIRSTLAYER" step=0.001 value=0.25 onblur="validate(true)" /> mm
                 </td>
                 <td class=inputCell><label for=ANCHOR_OPTION style="font-size: 14px; vertical-align: middle;">Anchor
                     Option</label><br>&nbsp;&nbsp;&nbsp;&nbsp;<select size="3" id="ANCHOR_OPTION"
@@ -362,8 +372,8 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
                 <td id="anchorLayerLineRatioLabelCell"><label for=ANCHOR_LAYER_LINE_RATIO>Anchor Line Width</label>
                 </td>
                 <td id="anchorLayerLineRatioInputCell" class=inputCell>
-                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140
-                    onblur="validate(true)" /> % (of nozzle diameter)
+                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140 onblur="validate(true)" /> % (of
+                  nozzle diameter)
                 </td>
               </tr>
               <tr>

@@ -281,8 +281,7 @@ h6 {
 h1,
 h2,
 h3 {
-    margin-top: 20px;
-    margin-bottom: 10px
+
 }
 
 .h4,
@@ -1499,7 +1498,8 @@ h1+h2 {
 .container td h6 {
     background: 0 0 !important;
     padding: 4px;
-    margin-top: .25em
+    margin-top: .15em;
+    margin-bottom: .15em
 }
 
 .custom-alert {
@@ -1748,12 +1748,14 @@ td:last-child {
 .tdHead {
     background-color: var(--kf-k-td-head-bg);
     border: 1px solid var(--kf-k-table-border);
+    text-align: center;
 }
 
 .tdSection {
     background-color: var(--kf-k-td-section-bg);
     border-bottom: 1px solid var(--kf-k-table-border);
     border-top: 1px solid var(--kf-k-table-border);
+    text-align: center;
 }
 
 textarea {
@@ -1800,39 +1802,75 @@ label {
 }
 
 #gcodeTable {
-    height: 200px;
-}
-
-#gcodeTable td {
-    border: none;
+    max-width: 60%;
 }
 
 #gcodeTable #FILENAME {
     width: 30%;
 }
 
-#gcodeTable .tdSection {
-    border: 1px solid var(--kf-k-);
-    padding: 10px;
-    text-align: center;
+#gcodeTable td {
+    border: none;
+    max-height: 370px;
 }
 
-#gcodeTable td:nth-child(1) {
-    width: 33;
+#gcodeTable td:first-child {
+    width: 100%;
 }
 
+#gcodeTable .gcodeTableLeftHeading { /*text to left of 3d preview*/
+    text-align: right;
+    vertical-align: top;
+    font-size: min(1vw, 12px);
+    background-color: var(--kf-k-td-section-bg);
+    padding-left: 2em;
+    padding-top: 1.5em;
+    padding-right: 1.5em;
+}
+
+/*
 #gcodeTable td:nth-child(2) {
     width: 33%;
 }
+*/
 
+/*
 #gcodeTable td:nth-child(3) {
     min-width: 33%;
 }
+*/
 
 #gcodetextarea {
     resize: vertical;
     height: 250px;
     background-color: #fff
+}
+
+#gcodeTable td:nth-child(2) {
+    width: 480px;
+    max-width: 480px; 
+}
+
+#gcode-viewer { /*3d preview cell*/
+    height: 370px;
+}
+
+#gcode-viewer canvas { /*canvas in 3d preview cell*/
+    margin: auto;
+    margin-bottom: auto;
+}
+
+#gcodeBanner {
+    padding-left: 1em;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+#downloadButton {
+    background: var(--kf-k-btn-bg);
+    font-weight: bold;
+    border-width: 1px;
+    font-size: 14px;
 }
 
 #START_GCODE {
@@ -1866,24 +1904,6 @@ label {
 :invalid {
     box-shadow: 0 0 3px var(--kf-k-invalid-border);
     outline: 0
-}
-
-#gcode-viewer canvas {
-    display: block;
-    resize: both;
-    margin: auto;
-}
-
-#gcodeBanner{
-    padding-left: 1em;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
-}
-
-#downloadButton {
-    background: var(--kf-k-btn-bg);
-    font-weight: bold;
-    border-width: 1px;
 }
 
 .inputCell {
