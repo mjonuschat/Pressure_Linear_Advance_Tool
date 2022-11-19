@@ -408,6 +408,10 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
     TO_Y = PAT_START_Y;
     TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
 
+    if (i == 1){ // set new fan speed after first layer
+      pa_script += 'M106 S' + Math.round(FAN_SPEED * 2.55) + '; Set fan speed\n';
+    }
+
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
       var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1)) / Math.sin(toRadians(PATTERN_ANGLE) / 2);
       var SIDE_LENGTH = PATTERN_SIDE_LENGTH - SHRINK; 
@@ -428,10 +432,6 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
 
       // increment pressure advance
       pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + (PA_START + (j * PA_STEP)) + ' EXTRUDER=' + EXTRUDER_NAME + ' ; set pressure advance\n';
-
-      if (i > 0){
-        pa_script += 'M106 S' + Math.round(FAN_SPEED * 2.55) + '; Set fan speed\n';
-      }
                    
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
