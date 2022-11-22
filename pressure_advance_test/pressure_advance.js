@@ -224,7 +224,7 @@ ${START_GCODE.replace(/^/gm, ';      ')}
 ;  - End G-code = 
 ${END_GCODE.replace(/^/gm, ';      ')}
 */
-`\
+`
 ;
 ; Filament / Flow:
 ;  - Filament Diameter: ${FILAMENT_DIAMETER} mm
