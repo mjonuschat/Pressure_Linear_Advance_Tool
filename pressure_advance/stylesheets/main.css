@@ -1881,12 +1881,12 @@ label {
 }
 
 #START_GCODE {
-    min-height: 15em;
+    min-height: 20em;
     resize: vertical;
 }
 
 #END_GCODE {
-    min-height: 2em;
+    min-height: 15em;
     resize: vertical;
 }
 
@@ -1903,6 +1903,12 @@ label {
 }
 
 .invalidNumber {
+    background-color: var(--kf-k-invalid-bg);
+    font-weight: bold;
+    display: block;
+}
+
+.invalidStartGcode {
     background-color: var(--kf-k-invalid-bg);
     font-weight: bold;
     display: block;

@@ -18,9 +18,8 @@
  */
 'use strict';
 
-// Settings version of localStorage
-// Increase if default settings are changed / amended
-const SETTINGS_VERSION = '1.41';
+// increment to invalidate saved settings
+const SETTINGS_VERSION = '1';
 
 const PA_round = -4; // Was previously -3
 const Z_round = -3;
@@ -32,135 +31,64 @@ var CUR_X = 0, // Globally track current coordinates
     CUR_Z = 0,
     RETRACTED = false; // Globally keep track of current retract state to prevent retracting/unretracting twice
 
-// declare HTML form inputs globally
-var ACCELERATION,
-    ANCHOR_LAYER_LINE_RATIO,
-    ANCHOR_OPTION,
-    ANCHOR_PERIMETERS,
-    BED_SHAPE,
-    BED_TEMP,
-    BED_X,
-    BED_Y,
-    END_GCODE,
-    EXT_MULT,
-    EXT_MULT_PRIME,
-    EXTRUDER_NAME,
-    FAN_SPEED,
-    FAN_SPEED_FIRSTLAYER,
-    FILAMENT,
-    FILAMENT_DIAMETER,
-    FILENAME,
-    HEIGHT_FIRSTLAYER,
-    HEIGHT_LAYER,
-    HEIGHT_PRINT,
-    HOTEND_TEMP,
-    LINE_RATIO,
-    NOTES_ENABLE,
-    NOZZLE_DIAMETER,
-    ORIGIN_CENTER,
-    PA_END,
-    PA_START,
-    PA_STEP,
-    PATTERN_ANGLE,
-    PATTERN_OPTIONS_ENABLE,
-    PATTERN_SIDE_LENGTH,
-    PATTERN_SPACING,
-    PERIMETERS,
-    PRINT_DIR,
-    PRINTER,
-    RETRACT_DIST,
-    SPEED_FIRSTLAYER,
-    SPEED_TRAVEL,
-    SPEED_PERIMETER,
-    SPEED_RETRACT,
-    SPEED_UNRETRACT,
-    START_GCODE,
-    START_GCODE_TYPE,
-    //USE_FWR,
-    //USE_MMS,
-    ZHOP_ENABLE,
-    ZHOP_HEIGHT;
-    //SPEED_PRIME
-    //USE_LINENO
-    //USE_PRIME
-
-// declare calculated variables globally
-var ANCHOR_LAYER_EXTRUSION_RATIO,
-    ANCHOR_LAYER_LINE_SPACING,
-    ANCHOR_LAYER_LINE_WIDTH,
-    CENTER_X,
-    CENTER_Y,
-    EXTRUSION_RATIO,
-    FIT_HEIGHT,
-    FIT_WIDTH,
-    LINE_SPACING,
-    LINE_SPACING_ANGLE,
-    LINE_WIDTH,
-    NUM_LAYERS,
-    NUM_PATTERNS,
-    PAT_START_X,
-    PAT_START_Y,
-    PRINT_SIZE_X,
-    PRINT_SIZE_Y,
-    pa_script,
-    txtArea;
-
 // set global HTML vars from form inputs
-function setHtmlVars(){
-  ACCELERATION = parseInt($('#PRINT_ACCL').val());
-  ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val());
-  ANCHOR_OPTION = $('#ANCHOR_OPTION').val();
-  ANCHOR_PERIMETERS = parseFloat($('#ANCHOR_PERIMETERS').val());
-  BED_SHAPE = $('#BED_SHAPE').val();
-  BED_TEMP = parseInt($('#BED_TEMP').val());
-  BED_X = parseInt($('#BED_X').val());
-  BED_Y = parseInt($('#BED_Y').val());
-  END_GCODE = $('#END_GCODE').val();
-  EXTRUDER_NAME = $('#EXTRUDER_NAME').val();
-  EXT_MULT = parseFloat($('#EXT_MULT').val());
-  EXT_MULT_PRIME = parseFloat($('#ENT_MULT_PRIME').val());
-  FAN_SPEED = parseFloat($('#FAN_SPEED').val());
-  FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val());
-  FILAMENT = $('#FILAMENT').val();
-  FILAMENT_DIAMETER = parseFloat($('#FILAMENT_DIAMETER').val());
-  FILENAME = $('#FILENAME').val();
-  HEIGHT_FIRSTLAYER = parseFloat($('#HEIGHT_FIRSTLAYER').val());
-  HEIGHT_LAYER = parseFloat($('#HEIGHT_LAYER').val());
-  HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').val());
-  HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val());
-  LINE_RATIO = parseFloat($('#LINE_RATIO').val());
-  NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked');
-  NOZZLE_DIAMETER = parseFloat($('#NOZZLE_DIAMETER').val());
-  ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked');
-  PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val());
-  PATTERN_OPTIONS_ENABLE = $('#PATTERN_OPTIONS_ENABLE').prop('checked');
-  PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val());
-  PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').val());
-  PA_END = parseFloat($('#PA_END').val());
-  PA_START = parseFloat($('#PA_START').val());
-  PA_STEP = parseFloat($('#PA_STEP').val());
-  PERIMETERS = parseInt($('#PERIMETERS').val());
-  PRINTER = $('#PRINTER').val();
-  PRINT_DIR = $('#PRINT_DIR').val();
-  RETRACT_DIST = parseFloat($('#RETRACT_DIST').val());
-  SPEED_FIRSTLAYER = parseInt($('#SPEED_FIRSTLAYER').val());
-  SPEED_TRAVEL = parseInt($('#SPEED_TRAVEL').val());
-  SPEED_PERIMETER = parseInt($('#SPEED_PERIMETER').val());
-  SPEED_RETRACT = parseInt($('#SPEED_RETRACT').val());
-  SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val());
-  START_GCODE = $('#START_GCODE').val();
-  START_GCODE_TYPE = $('#START_GCODE_TYPE').val();
+// -------------------------------------
+function setVars(){
+  window.ACCELERATION = parseInt($('#PRINT_ACCL').val());
+  window.ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val());
+  window.ANCHOR_OPTION = $('#ANCHOR_OPTION').val();
+  window.ANCHOR_PERIMETERS = parseFloat($('#ANCHOR_PERIMETERS').val());
+  window.BED_SHAPE = $('#BED_SHAPE').val();
+  window.BED_TEMP = parseInt($('#BED_TEMP').val());
+  window.BED_X = parseInt($('#BED_X').val());
+  window.BED_Y = parseInt($('#BED_Y').val());
+  window.END_GCODE = $('#END_GCODE').val();
+  window.TOOL_INDEX = $('#TOOL_INDEX').val();
+  window.EXTRUDER_NAME = $('#EXTRUDER_NAME').val();
+  window.EXT_MULT = parseFloat($('#EXT_MULT').val());
+  window.EXT_MULT_PRIME = parseFloat($('#ENT_MULT_PRIME').val());
+  window.FAN_SPEED = parseFloat($('#FAN_SPEED').val());
+  window.FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val());
+  window.FIRMWARE = $('#FIRMWARE').val();
+  window.FILAMENT = $('#FILAMENT').val();
+  window.FILAMENT_DIAMETER = parseFloat($('#FILAMENT_DIAMETER').val());
+  window.FILENAME = $('#FILENAME').val();
+  window.HEIGHT_FIRSTLAYER = parseFloat($('#HEIGHT_FIRSTLAYER').val());
+  window.HEIGHT_LAYER = parseFloat($('#HEIGHT_LAYER').val());
+  window.HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').val());
+  window.HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val());
+  window.LINE_RATIO = parseFloat($('#LINE_RATIO').val());
+  window.NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked');
+  window.NOZZLE_DIAMETER = parseFloat($('#NOZZLE_DIAMETER').val());
+  window.ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked');
+  window.PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val());
+  window.PATTERN_OPTIONS_ENABLE = $('#PATTERN_OPTIONS_ENABLE').prop('checked');
+  window.PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').val());
+  window.PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').val());
+  window.PA_END = parseFloat($('#PA_END').val());
+  window.PA_START = parseFloat($('#PA_START').val());
+  window.PA_STEP = parseFloat($('#PA_STEP').val());
+  window.PERIMETERS = parseInt($('#PERIMETERS').val());
+  window.PRINTER = $('#PRINTER').val();
+  window.PRINT_DIR = $('#PRINT_DIR').val();
+  window.RETRACT_DIST = parseFloat($('#RETRACT_DIST').val());
+  window.SPEED_FIRSTLAYER = parseInt($('#SPEED_FIRSTLAYER').val());
+  window.SPEED_TRAVEL = parseInt($('#SPEED_TRAVEL').val());
+  window.SPEED_PERIMETER = parseInt($('#SPEED_PERIMETER').val());
+  window.SPEED_RETRACT = parseInt($('#SPEED_RETRACT').val());
+  window.SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val());
+  window.START_GCODE = $('#START_GCODE').val();
+  window.START_GCODE_TYPE = $('#START_GCODE_TYPE').val();
+  window.ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
+  window.ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
   //USE_FWR = $('#USE_FWR').prop('checked');
   //USE_MMS = $('#USE_MMS').prop('checked');
-  ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
-  ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
   //SPEED_PRIME = parseInt($('#PRIME_SPEED').val());
   //USE_LINENO = $('#LINE_NO').prop('checked');
   //USE_PRIME = $('#PRIME').prop('checked');
-}
 
-// set global calculated variables
-function setCalculatedVars(){
+  // adjust settings
+  // ---------------
   if (BED_SHAPE === 'Round') {
     ORIGIN_CENTER = true;
     BED_Y = BED_X;
@@ -176,43 +104,6 @@ function setCalculatedVars(){
     PRINT_DIR = 0;
   }
 
-  NUM_PATTERNS = Math.round((PA_END - PA_START) / PA_STEP + 1);
-  NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1);
-
-  // line widths and extrusion ratios
-  LINE_WIDTH = NOZZLE_DIAMETER * (LINE_RATIO / 100); // this has to be rounded or it causes issues
-  ANCHOR_LAYER_LINE_WIDTH = NOZZLE_DIAMETER * (ANCHOR_LAYER_LINE_RATIO / 100);
-  EXTRUSION_RATIO = LINE_WIDTH * HEIGHT_LAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI);
-  ANCHOR_LAYER_EXTRUSION_RATIO = ANCHOR_LAYER_LINE_WIDTH * HEIGHT_FIRSTLAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI);
-
-  // line spacings
-  LINE_SPACING = LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4); // from slic3r documentation: spacing = extrusion_width - layer_height * (1 - PI/4)
-  ANCHOR_LAYER_LINE_SPACING = ANCHOR_LAYER_LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4);
-  LINE_SPACING_ANGLE = LINE_SPACING / Math.sin(toRadians(PATTERN_ANGLE)/2);
-
-  // calculate end dimensions so we can center the print properly & know where to start/end
-  CENTER_X = (ORIGIN_CENTER ? 0 : BED_X / 2);
-  CENTER_Y = (ORIGIN_CENTER ? 0 : BED_Y / 2);
-  PRINT_SIZE_X = Math.round10((NUM_PATTERNS * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)) + 
-                 ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) + 
-                 (Math.cos(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round);
-  PRINT_SIZE_Y = Math.round10(2 * (Math.sin(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round); // hypotenuse of given angle
-  if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out (frame thickness - 1 perim) so last pattern's tip doesn't run over it on the first layer
-    PRINT_SIZE_X += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
-  }
-  PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
-  PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
-
-  // real world print size, accounting for rotation and line widths.
-  // this is just used to ensure it will fit on the print bed during input validation
-  // actual gcode rotation is done during gcode generation
-  FIT_WIDTH = PRINT_SIZE_X + LINE_WIDTH; // actual size is technically + one line width in each direction, as it squishes outwards.... this is probably being excessively anal
-  FIT_HEIGHT = PRINT_SIZE_Y + LINE_WIDTH;
-  FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.sin(toRadians(PRINT_DIR))); // rotate by PRINT_DIR
-  FIT_HEIGHT = Math.abs(PRINT_SIZE_X * Math.sin(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.cos(toRadians(PRINT_DIR)));
-
-  txtArea = document.getElementById('gcodetextarea');
-
   //if (USE_MMS) {
     SPEED_FIRSTLAYER *= 60;
     SPEED_PERIMETER *= 60;
@@ -221,11 +112,68 @@ function setCalculatedVars(){
     SPEED_RETRACT *= 60;
     SPEED_UNRETRACT *= 60;
   //}
+
+  // replace variables with actual numbers in start g-code
+  START_GCODE = START_GCODE.replace(/\[HOTEND_TEMP\]/g, HOTEND_TEMP)
+  START_GCODE = START_GCODE.replace(/\[BED_TEMP\]/g, BED_TEMP)
+  START_GCODE = START_GCODE.replace(/\[EXTRUDER_NAME\]/g, EXTRUDER_NAME)
+  START_GCODE = START_GCODE.replace(/\[TOOL_INDEX\]/g, TOOL_INDEX)
+
+  /*
+  // add homing & temp gcodes to beginning of start gcode if user neglected to do so
+  if (!START_GCODE.includes('M109') && !(START_GCODE_TYPE == 'standalone_temp_passing')){ // unless they're using temp passing
+    START_GCODE = `M109 S${HOTEND_TEMP} ; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
+  }
+  if (!START_GCODE.includes('M190') && !(START_GCODE_TYPE == 'standalone_temp_passing')){ // unless they're using temp passing
+    START_GCODE = `M190 S${BED_TEMP}; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
+  }
+  if (!START_GCODE.includes('G28') && !START_GCODE_TYPE.includes('standalone')){ // don't add home if standalone macro is used
+    START_GCODE = `G28; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
+  }
+  */
+
+  // set global calculated variables
+  // -------------------------------
+  window.NUM_PATTERNS = Math.round((PA_END - PA_START) / PA_STEP + 1);
+  window.NUM_LAYERS = Math.round((HEIGHT_PRINT - HEIGHT_FIRSTLAYER) / HEIGHT_LAYER + 1);
+
+  // line widths and extrusion ratios
+  window.LINE_WIDTH = NOZZLE_DIAMETER * (LINE_RATIO / 100); // this has to be rounded or it causes issues
+  window.ANCHOR_LAYER_LINE_WIDTH = NOZZLE_DIAMETER * (ANCHOR_LAYER_LINE_RATIO / 100);
+  window.EXTRUSION_RATIO = LINE_WIDTH * HEIGHT_LAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI);
+  window.ANCHOR_LAYER_EXTRUSION_RATIO = ANCHOR_LAYER_LINE_WIDTH * HEIGHT_FIRSTLAYER / (Math.pow(FILAMENT_DIAMETER / 2, 2) * Math.PI);
+
+  // line spacings
+  window.LINE_SPACING = LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4); // from slic3r documentation: spacing = extrusion_width - layer_height * (1 - PI/4)
+  window.ANCHOR_LAYER_LINE_SPACING = ANCHOR_LAYER_LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4);
+  window.LINE_SPACING_ANGLE = LINE_SPACING / Math.sin(toRadians(PATTERN_ANGLE)/2);
+
+  // calculate end dimensions so we can center the print properly & know where to start/end
+  window.CENTER_X = (ORIGIN_CENTER ? 0 : BED_X / 2);
+  window.CENTER_Y = (ORIGIN_CENTER ? 0 : BED_Y / 2);
+  window.PRINT_SIZE_X = Math.round10((NUM_PATTERNS * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)) + 
+                 ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) + 
+                 (Math.cos(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round);
+  window.PRINT_SIZE_Y = Math.round10(2 * (Math.sin(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round); // hypotenuse of given angle
+  if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out (frame thickness - 1 perim) so last pattern's tip doesn't run over it on the first layer
+    PRINT_SIZE_X += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
+  }
+  window.PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
+  window.PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
+
+  // real world print size, accounting for rotation and line widths.
+  // this is just used to ensure it will fit on the print bed during input validation
+  // actual gcode rotation is done during gcode generation
+  window.FIT_WIDTH = PRINT_SIZE_X + LINE_WIDTH; // actual size is technically + one line width in each direction, as it squishes outwards.... this is probably being excessively anal
+  window.FIT_HEIGHT = PRINT_SIZE_Y + LINE_WIDTH;
+  FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.sin(toRadians(PRINT_DIR))); // rotate by PRINT_DIR
+  FIT_HEIGHT = Math.abs(PRINT_SIZE_X * Math.sin(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.cos(toRadians(PRINT_DIR)));
+
+  window.txtArea = document.getElementById('gcodetextarea');
 }
 
 function genGcode() {
-  setHtmlVars();
-  setCalculatedVars();
+  setVars();
 
   var basicSettings = {
     'firstLayerSpeed': SPEED_FIRSTLAYER,
@@ -254,7 +202,7 @@ function genGcode() {
   };
 
   // Start G-code for pattern
-  pa_script = `\
+  window.pa_script = `\
 ; ### Klipper Pressure Advance Calibration Pattern ###
 ;
 ; Original Marlin linear advance calibration tool by Sineos [https://github.com/Sineos]
@@ -273,25 +221,26 @@ ${( FILAMENT && NOTES_ENABLE ? `;  - Filament Name: ${FILAMENT}\n` : '')}\
 `\
 ;
 ; Printer:
+;  - Firmware: ${FIRMWARE}
 ;  - Bed Shape: ${BED_SHAPE}
 ${(BED_SHAPE === 'Round' ? `;  - Bed Diameter: ${BED_X} mm\n`: `;  - Bed Size X: ${BED_X} mm\n`)}\
 ${(BED_SHAPE === 'Round' ? '': `;  - Bed Size Y: ${BED_Y} mm\n`)}\
 ;  - Origin Bed Center: ${(ORIGIN_CENTER ? 'true': 'false')}
-;  - Extruder Name: ${EXTRUDER_NAME} 
+${(FIRMWARE == 'klipper' ? `;  - Extruder Name: ${EXTRUDER_NAME}\n`: `;  - Extruder Index: ${TOOL_INDEX}\n`)}\
 ;  - Travel Speed: ${SPEED_TRAVEL / 60} mm/s
 ;  - Nozzle Diameter: ${NOZZLE_DIAMETER} mm
 ;
 ; Start / End G-code:
 ;  - Start G-code Type: ${START_GCODE_TYPE}
-${(START_GCODE_TYPE != 'standalone_temp_passing' ? `;  - Hotend Temp: ${HOTEND_TEMP}C\n`: '')}\
-${(START_GCODE_TYPE != 'standalone_temp_passing' ? `;  - Bed Temp: ${BED_TEMP}C\n`: '')}` +
+;  - Hotend Temp: ${HOTEND_TEMP}C
+;  - Bed Temp: ${BED_TEMP}C` +
 /*
-;  - Start G-code = 
+;  - Start G-code: 
 ${START_GCODE.replace(/^/gm, ';      ')}
-;  - End G-code = 
+;  - End G-code: 
 ${END_GCODE.replace(/^/gm, ';      ')}
 */
-`\
+`
 ;
 ; Filament / Flow:
 ;  - Filament Diameter: ${FILAMENT_DIAMETER} mm
@@ -330,13 +279,13 @@ ${(PATTERN_OPTIONS_ENABLE ? `; (Customized)\n`: '')}\
 ;  - Printing Direction: ${PRINT_DIR} degree
 ;
 ; Pressure Advance Stepping:
-;  - PA Start Value: ${PA_START}
-;  - PA End Value: ${PA_END}
-;  - PA Increment: ${PA_STEP}
+;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Start Value: ${PA_START}
+;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} End Value: ${PA_END}
+;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Increment: ${PA_STEP}
 ;
 ; Calculated Values:
 ;  - Number of Patterns to Print: ${NUM_PATTERNS}
-;  - PA Values: `;
+;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Values: `;
  
 for (let i = 0; i < NUM_PATTERNS; i++){
   pa_script += Math.round10((PA_START + i * PA_STEP),PA_round);
@@ -355,25 +304,16 @@ pa_script += `\
 ;
 ; Prepare printing
 ; 
-ACTIVATE_EXTRUDER EXTRUDER=${EXTRUDER_NAME}
-${(START_GCODE_TYPE != 'standalone_temp_passing' ? `M190 S${BED_TEMP} ; set and wait for bed temp\n` : '')}\
-${(START_GCODE_TYPE != 'standalone_temp_passing' ? `M109 S${HOTEND_TEMP} ; set and wait for hotend temp\n` : '')}\
-;
-; Start G-code
-; 
 ${START_GCODE}
-;
-; Prepare printing
-; 
 G21 ; Millimeter units
 G90 ; Absolute XYZ
 M83 ; Relative E
 G92 E0 ; Reset extruder distance
-M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}; Set fan speed
-SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
 ;
 ;  Begin printing
 ;
+M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed
+${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P${ACCELERATION}` )} ; Set printing acceleration
 `;
 
 // Number Lines: ${(USE_LINENO ? 'true': 'false')}\n             
@@ -388,9 +328,11 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
   CUR_Z = HEIGHT_FIRSTLAYER; // set initial Z coordinate, otherwise z hop will go back to 0 at first
 7
   //Move to layer height then start position, set initial PA
-  pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start position\n'}) + 
-               moveToZ(TO_Z, basicSettings, {comment: ' ; move to start layer height\n'}) +
-               `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance\n`;
+  pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start position\n'}) + 
+               moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
+  
+  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;}
+  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;}
     
   if (ANCHOR_OPTION == 'anchor_frame'){
     pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, ANCHOR_PERIMETERS, basicSettings);
@@ -412,7 +354,7 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
     TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
 
     if (i == 1){ // set new fan speed after first layer
-      pa_script += 'M106 S' + Math.round(FAN_SPEED * 2.55) + '; Set fan speed\n';
+      pa_script += `M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed\n`
     }
 
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
@@ -428,36 +370,37 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
         INITIAL_Y = TO_Y;
 
     // move to start xy then layer height
-    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start\n'}) +
-                 moveToZ(TO_Z, basicSettings, {comment: ' ; move to layer height\n'});
+    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start\n'}) +
+                 moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
 
     for (let j = 0; j < NUM_PATTERNS; j++){
 
       // increment pressure advance
-      pa_script += 'SET_PRESSURE_ADVANCE ADVANCE=' + (PA_START + (j * PA_STEP)) + ' EXTRUDER=' + EXTRUDER_NAME + ' ; set pressure advance\n';
+      if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START + (j * PA_STEP)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;}
+      else {pa_script += `M900 K${PA_START + (j * PA_STEP)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;}
                    
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; Print pattern perimeter\n'});
 
         TO_X -= Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
         TO_Y += Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; Print pattern perimeter\n'});
 
         TO_Y = INITIAL_Y;
         switch (true){
           case k != PERIMETERS - 1:  // perims not done yet. move to next perim
             TO_X += LINE_SPACING_ANGLE;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start next pattern perimeter\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start next pattern perimeter\n'});
             break;
           case j != NUM_PATTERNS - 1: // patterns not done yet. move to next pattern
             TO_X += (PATTERN_SPACING + LINE_WIDTH);
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to next pattern\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to next pattern\n'});
             break;
           case i != NUM_LAYERS - 1: // layers not done yet. move back to start
             TO_X = INITIAL_X;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move back to start position\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move back to start position\n'});
             break;
           default:  // everything done. break
             break;
@@ -505,9 +448,10 @@ SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}; Set printing acceleration
     }
   }
   */
-
-  pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance to start value\n` +
-                doEfeed('-', basicSettings) +`\
+  
+  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;}
+  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor back to start value\n`;}
+  pa_script += doEfeed('-', basicSettings) +`\
 ;
 ; End G-code
 ;
@@ -624,7 +568,7 @@ function createLine(to_x, to_y, basicSettings, optional) {
     extMult: basicSettings['extMult'],
     extRatio: basicSettings['extRatio'],
     speed: basicSettings['firstLayerSpeed'],
-    comment: ' ; print line\n'
+    comment: ' ; Print line\n'
   };
   var optArgs = $.extend({}, defaults, optional);
 
@@ -654,7 +598,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
       distance = getDistance(CUR_X, CUR_Y, to_x, to_y);
 
   var defaults = {
-    comment: ' ; move\n'
+    comment: ' ; Move\n'
   };
   var optArgs = $.extend({}, defaults, optional);
 
@@ -678,7 +622,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
 
 function moveToZ(to_z, basicSettings){
   var gcode = '';
-  gcode += 'G1 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; move to z height\n';
+  gcode += 'G1 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Move to z height\n';
   CUR_Z = to_z; // update global position var
   return gcode;
 }
@@ -689,21 +633,21 @@ function doEfeed(dir, basicSettings) {
 
     switch (true) {
       case (dir === '+' && RETRACTED && !basicSettings['zhopEnable']):
-        gcode += 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
+        gcode += 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; Un-retract\n';
         RETRACTED = false;
         break;
       case (dir === '-' && !RETRACTED && !basicSettings['zhopEnable']):
-        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; retract\n';
+        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; Retract\n';
         RETRACTED = true;
         break;
       case (dir === '+' && RETRACTED && basicSettings['zhopEnable']):
-        gcode += 'G1 Z' + Math.round10(CUR_Z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; z hop return\n' +
-                 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
+        gcode += 'G1 Z' + Math.round10(CUR_Z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Z hop return\n' +
+                 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; Un-retract\n';
         RETRACTED = false;
         break;
       case (dir === '-' && !RETRACTED && basicSettings['zhopEnable']):
-        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; retract\n' +
-                 'G1 Z' + Math.round10((CUR_Z + basicSettings['zhopHeight']), Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; z hop\n';
+        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; Retract\n' +
+                 'G1 Z' + Math.round10((CUR_Z + basicSettings['zhopHeight']), Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Z hop\n';
         RETRACTED = true;
         break;
     }
@@ -722,7 +666,7 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
     spacing: basicSettings['anchorLineSpacing'],
     extRatio: basicSettings['anchorExtRatio'],
     speed: basicSettings['firstLayerSpeed'],
-    comment: ' ; print line\n'
+    comment: ' ; Print line\n'
   };
 
   var optArgs = $.extend({}, defaults, optional);
@@ -732,23 +676,23 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
     if (i != 0){ // after first perimeter, step inwards to start next perimeter
       to_x += optArgs['spacing'];
       to_y += optArgs['spacing'];
-      gcode += moveTo(to_x, to_y, basicSettings, {comment: ' ; step inwards to print next anchor perimeter\n'})
+      gcode += moveTo(to_x, to_y, basicSettings, {comment: ' ; Step inwards to print next anchor perimeter\n'})
     }
     // draw line up
     to_y += max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (up)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (up)\n'});
 
     // draw line right
     to_x += max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (right)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (right)\n'});
 
     // draw line down
     to_y -= max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (down)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (down)\n'});
 
     // draw line left
     to_x -= max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (left)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (left)\n'});
   }
   return gcode;
 }
@@ -852,100 +796,56 @@ function rotateY(x, xm, y, ym, a) {
 
 // save current settings as localStorage object
 function setLocalStorage() {
-var   NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked'),
-      PATTERN_OPTIONS_ENABLE = $('#PATTERN_OPTIONS_ENABLE').prop('checked'),
-      HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val()),
-      BED_TEMP = parseInt($('#BED_TEMP').val()),
-      START_GCODE_TYPE = $('#START_GCODE_TYPE').val(),
-      ANCHOR_OPTION = $('#ANCHOR_OPTION').val(),
-      FILAMENT_DIAMETER = parseFloat($('#FILAMENT_DIAMETER').val()),
-      NOZZLE_DIAMETER = parseFloat($('#NOZZLE_DIAMETER').val()),
-      LINE_RATIO = parseFloat($('#LINE_RATIO').val()),
-      ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
-      START_GCODE = $('#START_GCODE').val(),
-      END_GCODE = $('#END_GCODE').val(),
-      SPEED_FIRSTLAYER = parseInt($('#SPEED_FIRSTLAYER').val()),
-      SPEED_PERIMETER = parseInt($('#SPEED_PERIMETER').val()),
-      SPEED_TRAVEL = parseInt($('#SPEED_TRAVEL').val()),
-      SPEED_RETRACT = parseInt($('#SPEED_RETRACT').val()),
-      SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val()),
-      ACCELERATION = parseInt($('#PRINT_ACCL').val()),
-      RETRACT_DIST = parseFloat($('#RETRACT_DIST').val()),
-      ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked'),
-      ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val()),
-      BED_SHAPE = $('#BED_SHAPE').val(),
-      BED_X = parseInt($('#BED_X').val()),
-      BED_Y = parseInt($('#BED_Y').val()),
-      ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked'),
-      HEIGHT_FIRSTLAYER = parseFloat($('#HEIGHT_FIRSTLAYER').val()),
-      HEIGHT_LAYER = parseFloat($('#HEIGHT_LAYER').val()),
-      HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').val()),
-      EXTRUDER_NAME = $('#EXTRUDER_NAME').val(),
-      FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
-      FAN_SPEED = parseFloat($('#FAN_SPEED').val()),
-      EXT_MULT = parseFloat($('#EXT_MULT').val()),
-      PA_START = parseFloat($('#PA_START').val()),
-      PA_END = parseFloat($('#PA_END').val()),
-      PA_STEP = parseFloat($('#PA_STEP').val()),
-      PRINT_DIR = $('#PRINT_DIR').val(),
-      PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').val()),
-      PATTERN_ANGLE = parseFloat($('#PATTERN_ANGLE').val()),
-      PERIMETERS = parseFloat($('#PERIMETERS').val()),
-      //USE_PRIME = $('#PRIME').prop('checked'),
-      //EXT_MULT_PRIME = parseFloat($('#ENT_MULT_PRIME').val()),
-      //SPEED_PRIME = parseFloat($('#PRIME_SPEED').val()),
-      PATTERN_SIDE_LENGTH = parseFloat($('#PATTERN_SIDE_LENGTH').val());
-      //USE_FWR = $('#USE_FWR').prop('checked'),
-      //USE_MMS = $('#USE_MMS').prop('checked');
-      //USE_LINENO = $('#LINE_NO').prop('checked');
-
   var settings = {
-    'NOTES_ENABLE': NOTES_ENABLE,
-    'PATTERN_OPTIONS_ENABLE': PATTERN_OPTIONS_ENABLE,
-    'HOTEND_TEMP': HOTEND_TEMP,
-    'BED_TEMP': BED_TEMP,
-    'FILAMENT_DIAMETER': FILAMENT_DIAMETER,
-    'NOZZLE_DIAMETER': NOZZLE_DIAMETER,
-    'LINE_RATIO': LINE_RATIO,
-    'ANCHOR_OPTION': ANCHOR_OPTION,
-    'ANCHOR_LAYER_LINE_RATIO': ANCHOR_LAYER_LINE_RATIO,
-    'START_GCODE_TYPE': START_GCODE_TYPE,
-    'START_GCODE': START_GCODE,
-    'END_GCODE': END_GCODE,
-    'SPEED_FIRSTLAYER': SPEED_FIRSTLAYER,
-    'SPEED_PERIMETER': SPEED_PERIMETER,
-    'SPEED_TRAVEL': SPEED_TRAVEL,
-    'SPEED_RETRACT': SPEED_RETRACT,
-    'SPEED_UNRETRACT': SPEED_UNRETRACT,
-    'ACCELERATION': ACCELERATION,
-    'RETRACT_DIST': RETRACT_DIST,
-    'ZHOP_ENABLE': ZHOP_ENABLE,
-    'ZHOP_HEIGHT': ZHOP_HEIGHT,
-    'BED_SHAPE': BED_SHAPE,
-    'BED_X': BED_X,
-    'BED_Y': BED_Y,
-    'ORIGIN_CENTER': ORIGIN_CENTER,
-    'HEIGHT_FIRSTLAYER': HEIGHT_FIRSTLAYER,
-    'HEIGHT_LAYER': HEIGHT_LAYER,
-    'HEIGHT_PRINT': HEIGHT_PRINT,
-    'EXTRUDER_NAME': EXTRUDER_NAME,
-    'FAN_SPEED_FIRSTLAYER' : FAN_SPEED_FIRSTLAYER,
-    'FAN_SPEED' : FAN_SPEED,
-    'EXT_MULT': EXT_MULT,
-    'PA_START': PA_START,
-    'PA_END': PA_END,
-    'PA_STEP': PA_STEP,
-    'PRINT_DIR': PRINT_DIR,
-    'PATTERN_SPACING': PATTERN_SPACING,
-    'PATTERN_ANGLE': PATTERN_ANGLE,
-    'PERIMETERS': PERIMETERS,
-    //'USE_PRIME': USE_PRIME,
-    //'EXT_MULT_PRIME': EXT_MULT_PRIME,
-    //'SPEED_PRIME' : SPEED_PRIME,
-    'PATTERN_SIDE_LENGTH': PATTERN_SIDE_LENGTH,
-    //'USE_FWR': USE_FWR,
-    //'USE_MMS': USE_MMS
-    //'USE_LINENO': USE_LINENO
+    'SETTINGS_VERSION': SETTINGS_VERSION,
+    'ACCELERATION' : parseInt($('#PRINT_ACCL').val()),
+    'ANCHOR_LAYER_LINE_RATIO' : parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
+    'ANCHOR_OPTION' : $('#ANCHOR_OPTION').val(),
+    'BED_SHAPE' : $('#BED_SHAPE').val(),
+    'BED_TEMP' : parseInt($('#BED_TEMP').val()),
+    'BED_X' : parseInt($('#BED_X').val()),
+    'BED_Y' : parseInt($('#BED_Y').val()),
+    'END_GCODE' : $('#END_GCODE').val(),
+    'TOOL_INDEX' : parseInt($('#TOOL_INDEX').val()),
+    'EXTRUDER_NAME' : $('#EXTRUDER_NAME').val(),
+    'EXT_MULT' : parseFloat($('#EXT_MULT').val()),
+    'FAN_SPEED' : parseFloat($('#FAN_SPEED').val()),
+    'FAN_SPEED_FIRSTLAYER' : parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
+    'FILAMENT_DIAMETER' : parseFloat($('#FILAMENT_DIAMETER').val()),
+    'FIRMWARE' : $('#FIRMWARE').val(),
+    'HEIGHT_FIRSTLAYER' : parseFloat($('#HEIGHT_FIRSTLAYER').val()),
+    'HEIGHT_LAYER' : parseFloat($('#HEIGHT_LAYER').val()),
+    'HEIGHT_PRINT' : parseFloat($('#HEIGHT_PRINT').val()),
+    'HOTEND_TEMP' : parseInt($('#HOTEND_TEMP').val()),
+    'LINE_RATIO' : parseFloat($('#LINE_RATIO').val()),
+    'NOZZLE_DIAMETER' : parseFloat($('#NOZZLE_DIAMETER').val()),
+    'ORIGIN_CENTER' : $('#ORIGIN_CENTER').prop('checked'),
+    'PATTERN_ANGLE' : parseFloat($('#PATTERN_ANGLE').val()),
+    'PATTERN_OPTIONS_ENABLE' : $('#PATTERN_OPTIONS_ENABLE').prop('checked'),
+    'PATTERN_SIDE_LENGTH' : parseFloat($('#PATTERN_SIDE_LENGTH').val()),
+    'PATTERN_SPACING' : parseFloat($('#PATTERN_SPACING').val()),
+    'PA_END' : parseFloat($('#PA_END').val()),
+    'PA_START' : parseFloat($('#PA_START').val()),
+    'PA_STEP' : parseFloat($('#PA_STEP').val()),
+    'PERIMETERS' : parseFloat($('#PERIMETERS').val()),
+    'PRINT_DIR' : $('#PRINT_DIR').val(),
+    'RETRACT_DIST' : parseFloat($('#RETRACT_DIST').val()),
+    'SPEED_FIRSTLAYER' : parseInt($('#SPEED_FIRSTLAYER').val()),
+    'SPEED_PERIMETER' : parseInt($('#SPEED_PERIMETER').val()),
+    'SPEED_RETRACT' : parseInt($('#SPEED_RETRACT').val()),
+    'SPEED_TRAVEL' : parseInt($('#SPEED_TRAVEL').val()),
+    'SPEED_UNRETRACT' : parseInt($('#SPEED_UNRETRACT').val()),
+    'START_GCODE' : $('#START_GCODE').val(),
+    'START_GCODE_TYPE' : $('#START_GCODE_TYPE').val(),
+    'ZHOP_ENABLE' : $('#ZHOP_ENABLE').prop('checked'),
+    'ZHOP_HEIGHT' : parseFloat($('#ZHOP_HEIGHT').val()),
+    'NOTES_ENABLE' : $('#NOTES_ENABLE').prop('checked')
+    //'EXT_MULT_PRIME' : parseFloat($('#ENT_MULT_PRIME').val()),
+    //'SPEED_PRIME' : parseFloat($('#PRIME_SPEED').val()),
+    //'USE_FWR' : $('#USE_FWR').prop('checked'),
+    //'USE_LINENO' : $('#LINE_NO').prop('checked');
+    //'USE_MMS' : $('#USE_MMS').prop('checked'),
+    //'USE_PRIME' : $('#PRIME').prop('checked'),
   };
 
   const lsSettings = JSON.stringify(settings);
@@ -1022,79 +922,110 @@ function togglePrime() {
 */
 
 
-function toggleStartGcode(){
+function toggleStartEndGcode(){
   var CANNED_GCODE = `\
-G28 ; Home all axes
-;G32                ; Tramming macro (uncomment if used)
-;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
-;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
-G28 Z               ; Home Z
-G90                 ; Use absolute positioning
-G1 Z10 F100         ; Z raise
-;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
-M112                ; Reading comprehension check! (emergency stop)`
+ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME] ; Activate extruder
+G28                                        ; Home all axes
+G90                                        ; Use absolute positioning
+G1 Z5 F100                                 ; Z raise
+M190 S[BED_TEMP]                           ; Set and wait for bed temp
+M109 S[HOTEND_TEMP]                        ; Set and wait for hotend temp
+;G32                                       ; Tramming macro (uncomment if used)
+;QUAD_GANTRY_LEVEL                         ; Level flying gantry (uncomment if used)
+;Z_TILT_ADJUST                             ; Tilt level bed (uncomment if used)
+G28 Z                                      ; Home Z
+;BED_MESH_CALIBRATE                        ; Generate bed mesh (uncomment if used)
+M112                                       ; Reading comprehension check! (emergency stop)`
 
   var STANDALONE_MACRO = `\
-PRINT_START
+ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME] ; Activate extruder
+M190 S[BED_TEMP]                           ; Set and wait for bed temp
+M109 S[HOTEND_TEMP]                        ; Set and wait for hotend temp
+PRINT_START                                ; Start macro
+;
 ; Make sure this macro name matches your own! 
-; (For example, some may use START_PRINT instead.)`
+; (For example, some may use START_PRINT instead.)
+;
+M112                                       ; Reading comprehension check! (emergency stop)`
 
   var STANDALONE_TEMP_PASSING_MACRO = `\
-; !!!!!!! Pass your temperatures to your start macro here !!!!!!!
-PRINT_START HOTEND=200 BED=60
+ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME]      ; Activate extruder
+PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] ; Start macro w/ temp params
 ;
 ; - Make sure the macro name AND parameter names match YOUR start macro setup!
 ;     (For example, some macros use EXTRUDER=X rather than HOTEND=X, or START_PRINT instead of PRINT_START)!
+; - Replace any slicer variables with those listed above! It should look like the top example, !!! NOT !!! like this:
+;     PRINT_START BED=[first_layer_bed_temperature](...)
 ;
-; - Replace any slicer variables with actual numbers! It should look like the top example, !!! NOT !!! like this:
-;     PRINT_START BED=[first_layer_bed_temperature](...)`
+M112                                            ; Reading comprehension check! (emergency stop)`
 
+  var KLIPPER_END_GCODE = 'PRINT_END'
 
-  var CANNED_GCODE_CUSTOM = "",
-      STANDALONE_MACRO_CUSTOM = "",
-      STANDALONE_TEMP_PASSING_MACRO_CUSTOM = "";
+  var MARLIN_GCODE = `\
+G28                  ; Home all axes
+T[TOOL_INDEX]        ; Select tool
+G90                  ; Absolute XYZ
+G1 Z5 F100           ; Z raise
+M190 S[BED_TEMP]     ; Set and wait for bed temp
+M109 S[HOTEND_TEMP]  ; Set and wait for hotend temp
+;G29                 ; Auto bed leveling
+M112                 ; Reading comprehension check! (emergency stop)`
 
-  //$('#START_GCODE').val()
+  var MARLIN_END_GCODE = `\
+M107     ; Turn off fan
+M400     ; Finish moving
+M104 S0  ; Turn off hotend
+M140 S0  ; Turn off bed
+G91      ; Relative XYZ
+G0 Z5    ; Move up 5mm
+G90      ; Absolute XYZ
+M84      ; Disable motors
+M501     ; Load settings from EEPROM (to restore previous values)`
 
-  if ($('#START_GCODE_TYPE').val() == "custom"){
-    $('#START_GCODE').val(CANNED_GCODE);
-  } else if ($('#START_GCODE_TYPE').val() == "standalone") {
-    $('#START_GCODE').val(STANDALONE_MACRO);
-  } else {
-    $('#START_GCODE').val(STANDALONE_TEMP_PASSING_MACRO);
+  switch (true){
+    case $('#START_GCODE_TYPE').val() == "custom" :
+      $('#START_GCODE').val(CANNED_GCODE);
+      $('#END_GCODE').val(KLIPPER_END_GCODE);
+      break;
+    case $('#START_GCODE_TYPE').val() == "custom-marlin" :
+      $('#START_GCODE').val(MARLIN_GCODE);
+      $('#END_GCODE').val(MARLIN_END_GCODE);
+      break;
+    case $('#START_GCODE_TYPE').val() == "standalone" :
+      $('#START_GCODE').val(STANDALONE_MACRO);
+      $('#END_GCODE').val(KLIPPER_END_GCODE);
+      break;
+    case $('#START_GCODE_TYPE').val() == 'standalone_temp_passing' :
+      $('#START_GCODE').val(STANDALONE_TEMP_PASSING_MACRO);
+      $('#END_GCODE').val(KLIPPER_END_GCODE);
+      break;
   }
+  validate();
 }
 
-function toggleStartGcodeTypeDescriptions(){
+function toggleStartEndGcodeTypeDescriptions(){
     if ($('#START_GCODE_TYPE').val() == "custom"){
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
-<br><strong>This option is for if you are NOT using a standalone start macro.</strong><br><br>
-It will use traditional (custom / manual) start g-code (below).<br>
-<strong>The defaults have a lot of redundancies and are <font color=\"red\">intended to be revised.</font></strong><br><br>
-You should generally be able to copy your usual start g-code from your slicer,<br>
-making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>real numbers!</strong><br><br>`;
-    document.getElementById('tempRow').style.display = '';
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = '';
+    //document.getElementById('tempRow').style.display = '';
   } else if ($('#START_GCODE_TYPE').val() == "standalone") {
     document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
-<br><strong>This option is for if you use a <u>standalone</u> start macro.<br><br>
-It must contain <font color=\"red\">all necessary preparatory g-codes!</strong></font><br>
-(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>
-You should generally be able to copy your usual start g-code from your slicer,<br>
-making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>real numbers!</strong><br><br>`;
-    document.getElementById('tempRow').style.display = '';
-  } else {
+<br>This option is for if you use a <u>standalone</u> start macro.<br><br>
+It must contain <strong>all necessary preparatory g-codes!</strong><br>
+(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>`;
+    //document.getElementById('tempRow').style.display = '';
+  } else if ($('#START_GCODE_TYPE').val() == "standalone_temp_passing") {
     document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
-<br><strong>This option is for if you use a <u>standalone</u> start macro <strong><font color=\"red\">AND</font> </strong><a href=\"https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/passing_slicer_variables.md\"><u>have set up temperature variable passing!</u></a></p>
-Your start macro must contain <font color=\"red\">all necessary preparatory g-codes!</strong></font><br>
-(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>
-<p><strong>This option will prevent temperature gcodes from being added automatically.</strong> You will have to place temperatures in the start g-code yourself below.<br><br>
-You should generally be able to copy your usual start g-code from your slicer,<br>
-making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>real numbers!</strong><br><br>`;
-    document.getElementById('tempRow').style.display = 'none';
+<br>This option is for if you use a <u>standalone</u> start macro <strong>AND</strong> <a href=\"https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/passing_slicer_variables.md\"><u>have set up temperature variable passing!</u></a></p>
+It must contain <strong>all necessary preparatory g-codes!</strong><br>
+(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>`;
+    //document.getElementById('tempRow').style.display = 'none';
+  } else {
+    document.getElementById("START_GCODE_TYPE_Description").innerHTML = '';
+    //document.getElementById('tempRow').style.display = '';
   }
 }
 
-
+/*
 function toggleTemps(){
   if ($('#START_GCODE_TYPE').val() == "custom"){
     document.getElementById('tempRow').style.display = '';
@@ -1104,6 +1035,7 @@ function toggleTemps(){
     document.getElementById('tempRow').style.display = 'none';
   }
 }
+*/
 
 /*
 function toggleNotes(){
@@ -1116,6 +1048,75 @@ function toggleNotes(){
   }
 }
 */
+
+function toggleFirmwareOptions(){
+  switch(true){
+    case $('#FIRMWARE').val().includes('marlin') :
+      document.getElementById('TOOL_INDEX_ROW').style.display = ''
+      document.getElementById('EXTRUDER_NAME_ROW').style.display = 'none'
+      document.getElementById("STEPPING_HEADER").innerHTML = 'Linear Advance Stepping'
+      document.getElementById("STEPPING_HEADER_BODY").innerHTML = ''
+      document.getElementById("STEPPING_START_LABEL").innerHTML = 'Start K Value'
+      document.getElementById("STEPPING_END_LABEL").innerHTML = 'End K Value'
+      document.getElementById("STEPPING_INCREMENT_LABEL").innerHTML = 'K Value Increment'
+      document.getElementById("START_GCODE_SELECT_ROW").style.display = 'none'
+      /*
+      document.getElementById("custom-marlin").removeAttribute("hidden")
+      document.getElementById("custom").setAttribute("hidden","hidden")
+      document.getElementById("standalone").setAttribute("hidden","hidden")
+      document.getElementById("standalone_temp_passing").setAttribute("hidden","hidden")
+      document.getElementById("START_GCODE_TYPE").setAttribute("size",2)
+      */
+      /*document.getElementById("KFACTOR_DESRIPTION").innerHTML = `\
+Marlin 1.1.9 and later uses Linear Advance <strong>1.5</strong>.<br>
+Marlin 1.1.8 and earlier uses Linear Advance <strong>1.0</strong>.<br>
+They use different k values.`*/
+      break;
+    default :
+      document.getElementById('TOOL_INDEX_ROW').style.display = 'none'
+      document.getElementById('EXTRUDER_NAME_ROW').style.display = ''
+      document.getElementById("STEPPING_HEADER").innerHTML = 'Pressure Advance Stepping'
+      document.getElementById("STEPPING_HEADER_BODY").innerHTML = `\
+<i>(Start with ~0 to ~0.<font color="red">
+<strong><u>0</u></strong></font>8 for direct drive or ~0 to ~0.8 for bowden.)</i>`
+      document.getElementById("STEPPING_START_LABEL").innerHTML = 'PA Start Value'
+      document.getElementById("STEPPING_END_LABEL").innerHTML = 'PA End Value'
+      document.getElementById("STEPPING_INCREMENT_LABEL").innerHTML = 'PA Increment'
+      document.getElementById("START_GCODE_SELECT_ROW").style.display = ''
+      /*
+      document.getElementById("custom-marlin").setAttribute("hidden","hidden")
+      document.getElementById("custom").removeAttribute("hidden")
+      document.getElementById("standalone").removeAttribute("hidden")
+      document.getElementById("standalone_temp_passing").removeAttribute("hidden")
+      document.getElementById("START_GCODE_TYPE").setAttribute("size",3)
+      */
+      //document.getElementById("KFACTOR_DESRIPTION").innerHTML = ''
+  }
+}
+
+function toggleFirmwareValues(){
+    switch(true){
+    case $('#FIRMWARE').val() === 'marlin-1.1.9' :
+      document.getElementById("PA_START").value = 0
+      document.getElementById("PA_END").value = 0.08
+      document.getElementById("PA_STEP").value = 0.005
+      document.getElementById('START_GCODE_TYPE').value = 'custom-marlin'
+      break;
+    case $('#FIRMWARE').val() === 'marlin-1.1.8' :
+      document.getElementById("PA_START").value = 0
+      document.getElementById("PA_END").value = 4
+      document.getElementById("PA_STEP").value = 0.2
+      document.getElementById('START_GCODE_TYPE').value = 'custom-marlin'
+      break;
+    case $('#FIRMWARE').val() === 'klipper' :
+      document.getElementById('START_GCODE_TYPE').value = 'custom';
+      document.getElementById("PA_START").value = 0
+      document.getElementById("PA_END").value = 0.08
+      document.getElementById("PA_STEP").value = 0.005
+      break;
+  }
+  validate(true);
+}
 
 function togglePatternOptions(){
   var children = document.getElementById('patternSettingsHead').children;
@@ -1212,7 +1213,7 @@ function displayCalculatedValues(action = 'show'){
 <strong>Print size X: </strong> ${Math.round10(FIT_WIDTH, -1)}mm<br>
 <strong>Print size Y: </strong> ${Math.round10(FIT_HEIGHT, -1)}mm<br>
 <strong>Pattern count: </strong> ${NUM_PATTERNS}<br>
-<strong>PA values: </strong>`
+<strong>${(FIRMWARE === 'klipper') ? 'PA' : 'LA'} values: </strong>`
     for (let i = 0; i < NUM_PATTERNS; i++){
       body += `${Math.round10((PA_START + i * PA_STEP),PA_round)}`;
       if (i != NUM_PATTERNS - 1){ // add comma separator if not last item in list
@@ -1273,7 +1274,7 @@ function render(gcode) {
         }
         */
         
-        if (line.includes("draw anchor perimeter")) {
+        if (line.includes("Draw anchor perimeter")) {
           color = ANCHOR_COLOR
         } else {
           color = DEFAULT_COLOR
@@ -1319,54 +1320,53 @@ function removeRender(){ // remove the 3d preview, called if validations checks 
 
 // sanity checks for pattern / bed size
 function validate(updateRender = false) {
-  setHtmlVars();
-  setCalculatedVars();
+  setVars();
 
   var testNaN = {
-      // do not use parseInt or parseFloat for validating, since both
-      // functions will have special parsing characteristics leading to
-      // false numeric validation
-      BED_X: $('#BED_X').val(),
-      BED_Y: $('#BED_Y').val(),
-      PA_START: $('#PA_START').val(),
-      PA_END: $('#PA_END').val(),
-      PA_STEP: $('#PA_STEP').val(),
-      PATTERN_SPACING: $('#PATTERN_SPACING').val(),
-      PATTERN_ANGLE: $('#PATTERN_ANGLE').val(),
-      SPEED_FIRSTLAYER: $('#SPEED_FIRSTLAYER').val(),
-      SPEED_PERIMETER: $('#SPEED_PERIMETER').val(),
-      PATTERN_SIDE_LENGTH: $('#PATTERN_SIDE_LENGTH').val(),
-      HOTEND_TEMP: $('#HOTEND_TEMP').val(),
-      BED_TEMP: $('#BED_TEMP').val(),
-      FILAMENT_DIAMETER: $('#FILAMENT_DIAMETER').val(),
-      NOZZLE_DIAMETER: $('#NOZZLE_DIAMETER').val(),
-      LINE_RATIO: $('#LINE_RATIO').val(),
-      ANCHOR_LAYER_LINE_RATIO: $('#ANCHOR_LAYER_LINE_RATIO').val(),
-      ANCHOR_PERIMETERS : $('#ANCHOR_PERIMETERS').val(),
-      HEIGHT_LAYER: $('#HEIGHT_LAYER').val(),
-      HEIGHT_FIRSTLAYER: $('#HEIGHT_FIRSTLAYER').val(),
-      FAN_SPEED_FIRSTLAYER: $('#FAN_SPEED_FIRSTLAYER').val(),
-      FAN_SPEED: $('#FAN_SPEED').val(),
-      EXT_MULT: $('#EXT_MULT').val(),
-      //PRIME_EXT: $('#ENT_MULT_PRIME').val(),
-      SPEED_TRAVEL: $('#SPEED_TRAVEL').val(),
-      SPEED_RETRACT: $('#SPEED_RETRACT').val(),
-      SPEED_UNRETRACT: $('#SPEED_UNRETRACT').val(),
-      PRINT_ACCL: $('#PRINT_ACCL').val(),
-      ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val(),
-      HEIGHT_PRINT: $('#HEIGHT_PRINT').val(),
-      PERIMETERS: $('#PERIMETERS').val(),
-      //PRIME_SPEED: $('#PRIME_SPEED').val(),
-      RETRACT_DIST: $('#RETRACT_DIST').val()
-    }
+    // do not use parseInt or parseFloat for validating, since both
+    // functions will have special parsing characteristics leading to
+    // false numeric validation
+    ANCHOR_LAYER_LINE_RATIO: $('#ANCHOR_LAYER_LINE_RATIO').val(),
+    ANCHOR_PERIMETERS : $('#ANCHOR_PERIMETERS').val(),
+    BED_TEMP: $('#BED_TEMP').val(),
+    BED_X: $('#BED_X').val(),
+    BED_Y: $('#BED_Y').val(),
+    TOOL_INDEX: $('#TOOL_INDEX').val(),
+    EXT_MULT: $('#EXT_MULT').val(),
+    FAN_SPEED: $('#FAN_SPEED').val(),
+    FAN_SPEED_FIRSTLAYER: $('#FAN_SPEED_FIRSTLAYER').val(),
+    FILAMENT_DIAMETER: $('#FILAMENT_DIAMETER').val(),
+    HEIGHT_FIRSTLAYER: $('#HEIGHT_FIRSTLAYER').val(),
+    HEIGHT_LAYER: $('#HEIGHT_LAYER').val(),
+    HEIGHT_PRINT: $('#HEIGHT_PRINT').val(),
+    HOTEND_TEMP: $('#HOTEND_TEMP').val(),
+    LINE_RATIO: $('#LINE_RATIO').val(),
+    NOZZLE_DIAMETER: $('#NOZZLE_DIAMETER').val(),
+    PATTERN_ANGLE: $('#PATTERN_ANGLE').val(),
+    PATTERN_SIDE_LENGTH: $('#PATTERN_SIDE_LENGTH').val(),
+    PATTERN_SPACING: $('#PATTERN_SPACING').val(),
+    PA_END: $('#PA_END').val(),
+    PA_START: $('#PA_START').val(),
+    PA_STEP: $('#PA_STEP').val(),
+    PERIMETERS: $('#PERIMETERS').val(),
+    PRINT_ACCL: $('#PRINT_ACCL').val(),
+    RETRACT_DIST: $('#RETRACT_DIST').val(),
+    SPEED_FIRSTLAYER: $('#SPEED_FIRSTLAYER').val(),
+    SPEED_PERIMETER: $('#SPEED_PERIMETER').val(),
+    SPEED_RETRACT: $('#SPEED_RETRACT').val(),
+    SPEED_TRAVEL: $('#SPEED_TRAVEL').val(),
+    SPEED_UNRETRACT: $('#SPEED_UNRETRACT').val(),
+    ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val()
+    //PRIME_EXT: $('#ENT_MULT_PRIME').val(),
+    //PRIME_SPEED: $('#PRIME_SPEED').val(),
+  }
 
   var decimals = getDecimals(parseFloat(testNaN['PA_STEP']));
   var invalidDiv = 0;
   var validationFail = false;
   
   // Reset all warnings before re-check
-  $('BED_X,#START_GCODE_TYPE,#START_GCODE,#END_GCODE,#BED_Y,#EXT_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#HOTEND_TEMP,#BED_TEMP,#SPEED_FIRSTLAYER,#LAYER_HEIGHT,#HEIGHT_FIRSTLAYER,#LINE_RATIO,#ANCHOR_LAYER_LINE_RATIO,#SPEED_TRAVEL,#NOZZLE_DIAMETER,#PA_END,'
-      + '#PA_START,#PA_STEP,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#SPEED_PERIMETER,#PERIMETERS,#PRINT_ACCL,#HEIGHT_PRINT,#SPEED_RETRACT,#RETRACT_DIST,#SPEED_UNRETRACT,#ZHOP_HEIGHT').each((i,t) => {
+  $('ANCHOR_LAYER_LINE_RATIO,#BED_TEMP,#BED_X,#BED_Y,#TOOL_INDEX,#END_GCODE,#EXT_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#HEIGHT_FIRSTLAYER,#HEIGHT_PRINT,#HOTEND_TEMP,#LAYER_HEIGHT,#LINE_RATIO,#NOZZLE_DIAMETER,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#PA_END,#PA_START,#PA_STEP,#PERIMETERS,#PRINT_ACCL,#RETRACT_DIST,#SPEED_FIRSTLAYER,#SPEED_PERIMETER,#SPEED_RETRACT,#SPEED_TRAVEL,#SPEED_UNRETRACT,#START_GCODE,#START_GCODE_TYPE,#ZHOP_HEIGHT').each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
     $(`label[for=${tid}]`).removeClass();
@@ -1374,6 +1374,8 @@ function validate(updateRender = false) {
   $('#warning1').hide();
   $('#warning2').hide();
   $('#warning3').hide();
+  $('#warning4').hide();
+  $('#startGcodeWarning').hide();
   $('#downloadButton').prop('disabled', false);
   //$('#gcodeButton').prop('disabled', false);
 
@@ -1387,13 +1389,47 @@ function validate(updateRender = false) {
       validationFail = true;
     }
   });
+
+  // check start g-code
+  var message = '';
+  $('#startGcodeWarning').hide();
+  $('#startGcodeWarning').removeClass('invalidStartGcode');
+  $('#startGcodeWarning').html('');
+
+  if ($('#START_GCODE').val().match(/G28(?! Z)/gm) == null && !$('#START_GCODE_TYPE').val().includes('standalone')){
+    message += "- <tt>G28</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('M190 S[BED_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>M190 S[BED_TEMP]</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('M109 S[HOTEND_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>M109 S[HOTEND_TEMP]</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('[BED_TEMP]') && ($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>[BED_TEMP]</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('[HOTEND_TEMP]') && ($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>[HOTEND_TEMP]</tt><br>"
+  }
+
+  if (!(message == '')){
+    message = "Your start g-code does not contain:<br>" + message + "Please check your start g-code."
+    $('#startGcodeWarning').html(message);
+    $('#startGcodeWarning').addClass('invalidStartGcode');
+    $('#startGcodeWarning').show();
+    $('label[for=START_GCODE]').addClass('invalidStartGcode');
+    $('#warning4').text('Problems were found in your start g-code. Check highlighted setting.');
+    $('#warning4').addClass('invalidStartGcode');
+    $('#warning4').show();
+    validationFail = true;
+  }
   
-    // Check if pressure advance stepping is a multiple of the pressure advance Range
+  // Check if pressure advance stepping is a multiple of the pressure advance Range
   if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
     $('label[for=PA_START]').addClass('invalidDiv');
     $('label[for=PA_END]').addClass('invalidDiv');
     $('label[for=PA_STEP]').addClass('invalidDiv');
-    $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted Pattern Settings.');
+    $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted sttings.');
     $('#warning1').addClass('invalidDiv');
     $('#warning1').show();
     invalidDiv = 1;
@@ -1418,7 +1454,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1433,7 +1469,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1448,7 +1484,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1463,7 +1499,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1496,69 +1532,76 @@ $(window).load(() => {
     $(this).attr('tabindex', i + 1);
   });
 
+  toggleStartEndGcode();
+
   // Get localStorage data
   var lsSettings = window.localStorage.getItem('PA_SETTINGS');
 
   if (lsSettings) {
     var settings = jQuery.parseJSON(lsSettings);
-    $('#NOTES_ENABLE').prop('checked', settings['NOTES_ENABLE']);
-    $('#PATTERN_OPTIONS_ENABLE').prop('checked', settings['PATTERN_OPTIONS_ENABLE']);
-    $('#BED_TEMP').val(settings['BED_TEMP']);
-    $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
-    $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
-    $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
-    $('#FILAMENT_DIAMETER').val(settings['FILAMENT_DIAMETER']);
-    $('#NOZZLE_DIAMETER').val(settings['NOZZLE_DIAMETER']);
-    $('#LINE_RATIO').val(settings['LINE_RATIO']);
-    $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
-    $('#START_GCODE').val(settings['START_GCODE']);
-    $('#END_GCODE').val(settings['END_GCODE']);
-    $('#SPEED_FIRSTLAYER').val(settings['SPEED_FIRSTLAYER']);
-    $('#SPEED_PERIMETER').val(settings['SPEED_PERIMETER']);
-    $('#SPEED_TRAVEL').val(settings['SPEED_TRAVEL']);
-    $('#SPEED_RETRACT').val(settings['SPEED_RETRACT']);
-    $('#SPEED_UNRETRACT').val(settings['SPEED_UNRETRACT']);
-    $('#PRINT_ACCL').val(settings['ACCELERATION']);
-    $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
-    $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
-    $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
-    $('#BED_SHAPE').val(settings['BED_SHAPE']);
-    $('#BED_X').val(settings['BED_X']);
-    $('#BED_Y').val(settings['BED_Y']);
-    $('#ORIGIN_CENTER').prop('checked', settings['ORIGIN_CENTER']);
-    $('#HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
-    $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
-    $('#HEIGHT_PRINT').val(settings['HEIGHT_PRINT']);
-    $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
-    $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
-    $('#FAN_SPEED').val(settings['FAN_SPEED']);
-    $('#EXT_MULT').val(settings['EXT_MULT']);
-    $('#PA_START').val(settings['PA_START']);
-    $('#PA_END').val(settings['PA_END']);
-    $('#PA_STEP').val(settings['PA_STEP']);
-    $('#PRINT_DIR').val(settings['PRINT_DIR']);
-    $('#PATTERN_SPACING').val(settings['PATTERN_SPACING']);
-    $('#PATTERN_ANGLE').val(settings['PATTERN_ANGLE']);
-    $('#PERIMETERS').val(settings['PERIMETERS']);
-    $('#PRIME').prop('checked', settings['USE_PRIME']);
-    $('#ENT_MULT_PRIME').val(settings['EXT_MULT_PRIME']);
-    $('#PRIME_SPEED').val(settings['SPEED_PRIME']);
-    $('#PATTERN_SIDE_LENGTH').val(settings['PATTERN_SIDE_LENGTH']);
-    //$('#USE_FWR').prop('checked', settings['USE_FWR']);
-    //$('#USE_MMS').prop('checked', settings['USE_MMS']);
-    $('#LINE_NO').prop('checked', settings['USE_LINENO']);
+    if (settings['SETTINGS_VERSION'] == SETTINGS_VERSION){ // only populate form with saved settings if version matches current
+      $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
+      $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
+      $('#BED_SHAPE').val(settings['BED_SHAPE']);
+      $('#BED_TEMP').val(settings['BED_TEMP']);
+      $('#BED_X').val(settings['BED_X']);
+      $('#BED_Y').val(settings['BED_Y']);
+      $('#END_GCODE').val(settings['END_GCODE']);
+      $('#ENT_MULT_PRIME').val(settings['EXT_MULT_PRIME']);
+      $('#TOOL_INDEX').val(settings['TOOL_INDEX']);
+      $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
+      $('#EXT_MULT').val(settings['EXT_MULT']);
+      $('#FAN_SPEED').val(settings['FAN_SPEED']);
+      $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
+      $('#FILAMENT_DIAMETER').val(settings['FILAMENT_DIAMETER']);
+      $('#FIRMWARE').val(settings['FIRMWARE']);
+      $('#HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
+      $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
+      $('#HEIGHT_PRINT').val(settings['HEIGHT_PRINT']);
+      $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
+      $('#LINE_NO').prop('checked', settings['USE_LINENO']);
+      $('#LINE_RATIO').val(settings['LINE_RATIO']);
+      $('#NOTES_ENABLE').prop('checked', settings['NOTES_ENABLE']);
+      $('#NOZZLE_DIAMETER').val(settings['NOZZLE_DIAMETER']);
+      $('#ORIGIN_CENTER').prop('checked', settings['ORIGIN_CENTER']);
+      $('#PATTERN_ANGLE').val(settings['PATTERN_ANGLE']);
+      $('#PATTERN_OPTIONS_ENABLE').prop('checked', settings['PATTERN_OPTIONS_ENABLE']);
+      $('#PATTERN_SIDE_LENGTH').val(settings['PATTERN_SIDE_LENGTH']);
+      $('#PATTERN_SPACING').val(settings['PATTERN_SPACING']);
+      $('#PA_END').val(settings['PA_END']);
+      $('#PA_START').val(settings['PA_START']);
+      $('#PA_STEP').val(settings['PA_STEP']);
+      $('#PERIMETERS').val(settings['PERIMETERS']);
+      $('#PRIME').prop('checked', settings['USE_PRIME']);
+      $('#PRIME_SPEED').val(settings['SPEED_PRIME']);
+      $('#PRINT_ACCL').val(settings['ACCELERATION']);
+      $('#PRINT_DIR').val(settings['PRINT_DIR']);
+      $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
+      $('#SPEED_FIRSTLAYER').val(settings['SPEED_FIRSTLAYER']);
+      $('#SPEED_PERIMETER').val(settings['SPEED_PERIMETER']);
+      $('#SPEED_RETRACT').val(settings['SPEED_RETRACT']);
+      $('#SPEED_TRAVEL').val(settings['SPEED_TRAVEL']);
+      $('#SPEED_UNRETRACT').val(settings['SPEED_UNRETRACT']);
+      $('#START_GCODE').val(settings['START_GCODE']);
+      $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
+      $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
+      $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
+      //$('#USE_FWR').prop('checked', settings['USE_FWR']);
+      //$('#USE_MMS').prop('checked', settings['USE_MMS']);
+    }
   }
 
   // run all toggles on initial page load
   toggleBedShape();
+  toggleFirmwareOptions();
   //togglePrime();
   //toggleRetract();
   toggleZHop();
   //toggleNotes();
   togglePatternOptions();
   toggleAnchorOptions();
-  toggleTemps();
-  toggleStartGcodeTypeDescriptions();
+  //toggleTemps();
+  toggleStartEndGcodeTypeDescriptions();
   toggleGcodeTxtArea();
 
   // validate input on page load
@@ -1574,16 +1617,22 @@ $(window).load(() => {
     toggleBedShape();
     validate();
   });
-
+  
   // toggle prime relevant html elements
   //$('#PRIME').change(togglePrime);
 
   // Toggle notes fields with toggle checkbox
   //$('#NOTES_ENABLE').change(toggleNotes);
 
+  // toggles for when changing firmware
+  $('#FIRMWARE').change(toggleFirmwareOptions);
+  $('#FIRMWARE').change(toggleFirmwareValues);
+  $('#FIRMWARE').change(toggleStartEndGcode);
+  $('#FIRMWARE').change(toggleStartEndGcodeTypeDescriptions);
+
   // Toggle start gcode and hotend/bed temp visibility when choosing start g-code option
-  $('#START_GCODE_TYPE').change(toggleStartGcode);
-  $('#START_GCODE_TYPE').change(toggleStartGcodeTypeDescriptions);
+  $('#START_GCODE_TYPE').change(toggleStartEndGcode);
+  $('#START_GCODE_TYPE').change(toggleStartEndGcodeTypeDescriptions);
 
   // Toggle visibility of anchor options depending on anchor selection
   $('#ANCHOR_OPTION').change(toggleAnchorOptions);

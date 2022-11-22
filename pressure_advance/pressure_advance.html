@@ -4,10 +4,10 @@
 <!--<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />-->
 
 <head>
-  <title>Ellis' Pressure Advance Calibration Tool</title>
+  <title>Ellis' Pressure Advance / Linear Advance Calibration Tool</title>
   <meta charset="UTF-8">
   <meta content="Create G-code to calibrate Pressure Advance setting">
-  <link rel="stylesheet" href="./stylesheets/main.css?v2" />
+  <link rel="stylesheet" href="./stylesheets/main.css?v3" />
   <link rel="stylesheet" href="./stylesheets/font-awesome.min.css?v2" />
 </head>
 
@@ -15,12 +15,12 @@
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-2.2.1.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-ui.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./FileSaver.min.js?v1"></script>
-  <script language="JavaScript" type="text/javascript" src="./pressure_advance.js?v2"></script>
+  <script language="JavaScript" type="text/javascript" src="./pressure_advance.js?v3"></script>
   <script src="./gcode-viewer.js?v1"></script>
   <div class="container" role="main">
     <div class="row">
       <div class="pageTitle" id="pageTitle">
-        <h1>Ellis' Pressure Advance Calibration Tool</h1>
+        <h1>Ellis' Pressure Advance / Linear Advance Calibration Tool</h1>
         Original <a href="https://marlinfw.org/tools/lin_advance/k-factor.html">Marlin calibration tool</a> by <a
           href="https://github.com/Sineos/k-factorjs">Sineos</a><br>
         Heavily modified/rewritten by <a href="https://github.com/AndrewEllis93">Andrew Ellis</a><br>
@@ -46,13 +46,13 @@
               <td class=gcodeTableLeftHeading>
                 <h4>3D Preview</h4> &nbsp;&nbsp;<a href="https://github.com/aligator/gcode-viewer">Source</a><br>
                 <i>Line widths are approximations only.</i><br><br>
-                In contrast to the old test, I have found the best results in real prints by
-                erring on the <i>higher</i> side of the results.<br><br>
-                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex
-                of the corner. (I know that sounds wrong!)<br><br>
-                I would recommend tuning down to 0.002-0.001 PA intervals on direct drive, or 0.02-0.01 PA intervals on
-                bowden.
-
+                I have found the best results in real prints by
+                erring on the higher side of the results.<br><br>
+                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex.
+                (I know that sounds wrong!)<br><br>
+                Tune down to 0.002-0.001 intervals on direct drive, or 0.02-0.01
+                intervals on bowden* <br><br>
+                <sup>* (Marlin 1.1.8 & older use different values)</sup>
               <td class="tdSection" id="gcode-viewer" colspan="2">
             </tr>
             <tr id=informationRow>
@@ -65,6 +65,11 @@
                   value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input type=button id="downloadButton"
                   onclick="validate(true);saveTextAsFile()" value="Download G-code" />
                 <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font>
+                <br><br>
+                <p id=warning1 style="display: none;">warning</p>
+                <p id=warning2 style="display: none;">warning</p>
+                <p id=warning3 style="display: none;">warning</p>
+                <p id=warning4 style="display: none;">warning</p>
               </td>
               <!-- <td align="right"><input type=button id="toggleGcode" onclick="toggleGcodeTxtArea();" value="Toggle Gcode Text Preview" /></td> -->
             </tr>
@@ -76,21 +81,17 @@
       </table>
       <br>
       <p style="text-align: center"><strong>If having issues, click "Restore Defaults"</strong></p>
+      <br>
       <table>
         <tbody>
           <thead>
-            <tr>
-              <td colspan=4 class=tdHead>
-                <h3>Settings</h3>
-                <input type=button onclick=setLocalStorage() value="Save Settings to Browser"
-                  title="Save settings in a cookie." />
-                &nbsp;&nbsp;&nbsp;<input type=button
-                  onclick="window.localStorage.clear('PA_SETTINGS');location.reload();" value="Restore Defaults"
-                  title="Remove settings cookie and reload page." />
-                <p id=warning1 style="display: none;">warning</p>
-                <p id=warning2 style="display: none;">warning</p>
-                <p id=warning3 style="display: none;">warning</p>
-              </td>
+            <td colspan=4 class=tdHead>
+              <h3>Settings</h3>
+              <input type=button onclick=setLocalStorage() value="Save Settings to Browser"
+                title="Save settings in a cookie." />
+              &nbsp;&nbsp;&nbsp;<input type=button onclick="window.localStorage.clear('PA_SETTINGS');location.reload();"
+                value="Restore Defaults" title="Remove settings cookie and reload page." />
+            </td>
             </tr>
             <!--
             <tr>
@@ -133,11 +134,21 @@
                 </td>
               </tr>
               <tr>
+                <td><label for="FIRMWARE">Firmware</td>
+                <td class=inputCell>
+                  <select id="FIRMWARE">
+                    <option value="klipper">Klipper</option>
+                    <option value="marlin-1.1.9">Marlin 1.1.9+</option>
+                    <option value="marlin-1.1.8">Marlin 1.1.8 & Older</option>
+                  </select>
+                  <p id="KFACTOR_DESRIPTION"></p>
+                </td>
                 <td><label for=BED_SHAPE>Bed Shape</label></td>
-                <td class=inputCell colspan="3"><select id="BED_SHAPE" onchange=validate()>
+                <td class=inputCell><select id="BED_SHAPE" onchange=validate()>
                     <option value="Rect">Rectangular</option>
                     <option value="Round">Round</option>
-                  </select></td>
+                  </select>
+                </td>
               </tr>
               <tr>
                 <td><label for=BED_X>Bed Size X</label></td>
@@ -157,12 +168,19 @@
                 <td colspan="2">Uncommon on rectangular beds.<br><i>(Sets X0, Y0 to the center instead of the
                     corner)</i></td>
               </tr>
-              <tr>
+              <tr id="EXTRUDER_NAME_ROW">
                 <td><label for=EXTRUDER_NAME>Extruder Name</label></th>
                 <td class=inputCell>
                   <input type=text id="EXTRUDER_NAME" value="extruder" onblur=validate() />
                 </td>
                 <td colspan="2">Usually "extruder" if only one extruder. Allows choosing extruder if more than one</td>
+              </tr>
+              <tr id="TOOL_INDEX_ROW">
+                <td><label for=TOOL_INDEX>Extruder Index</label></th>
+                <td class=inputCell>
+                  <input type=number id="TOOL_INDEX" value=0 step="1" value="0" onblur=validate() />
+                </td>
+                <td colspan="2">Usually 0 if only one extruder. Allows choosing extruder if more than one</td>
               </tr>
               <tr>
                 <td><label for=SPEED_TRAVEL>Travel Speed</label></td>
@@ -192,28 +210,29 @@
                 <td colspan="4" id="startGcodeWarningHeader">
                   <br>
                   This section is the SINGLE most frequent cause of problems.<br><br>
-                    Please don't fly through it.<br>
-                    Please don't "just" read it.<br><br>
-                    UNDERSTAND IT FULLY.<br><br>          
+                  Please don't fly through it.<br><br>
+                  UNDERSTAND IT FULLY.<br><br>
                 </td>
               </tr>
               <tr>
                 <td colspan="4" id="startGcodeWarningSubHeader">
                   If done incorrectly, your print may not start properly, your temperatures may not set,<br>
-                  you may get errors, or in the worst cases, <strong>you can potentially cause <font style="color: red;"> crashes and damage.</font></strong> <br><i>(for example, if you neglect a QUAD_GANTRY_LEVEL with a "flying gantry" printer like a Voron V2).</i><br><br>
+                  you may get errors, or in the worst cases, <strong>you can potentially cause <font
+                      style="color: red;"> crashes and damage.</font></strong> <br><i>(for example, if you neglect a
+                    QUAD_GANTRY_LEVEL with a "flying gantry" printer like a Voron V2).</i><br><br>
                 </td>
               </tr>
-              <tr>
+              <tr id="START_GCODE_SELECT_ROW">
                 <td><label for=START_GCODE_TYPE>Start G-code Option</label></td>
                 <td class=inputCell><select size="3" id="START_GCODE_TYPE" onchange="validate()">
-                    <option value="custom" selected="selected">Manual Start G-code</option>
-                    <option value="standalone">Standalone Macro</option>
-                    <option value="standalone_temp_passing">Standalone Macro w/ Temp Params</option>
+                    <option id="custom" value="custom" selected="selected">Manual Start G-code</option>
+                    <option id="custom-marlin" value="custom-marlin" hidden>Manual Start G-code (Marlin)
+                    </option>
+                    <option id="standalone" value="standalone">Standalone Macro</option>
+                    <option id="standalone_temp_passing" value="standalone_temp_passing">Standalone Macro w/ Temp Params
+                    </option>
                   </select></td>
                 <td id="START_GCODE_TYPE_Description" colspan="3">
-                  <p>Use custom start g-code (below). The defaults have a lot of redundancies and are intended to be
-                    revised</p>
-                  </p>You should generally be able to copy your usual start g-code from your slicer</p>
                 </td>
               </tr>
               <tr id="tempRow">
@@ -226,19 +245,30 @@
                 </td>
               </tr>
               <tr>
-
                 <td><label for=START_GCODE>Start G-code</label></td>
-                <td colspan=3>
-                  </p><textarea id="START_GCODE" onblur=validate()>G28                 ; Home all axes
-;G32                ; Tramming macro (uncomment if used)
-;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
-;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
-G28 Z               ; Home Z
-G90                 ; Use absolute positioning
-G1 Z10 F100         ; Z raise
-;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
-M112                ; Reading comprehension check! (emergency stop)</textarea>
-
+                <td colspan=3><br>
+                  <strong>The below start g-code is only a starting point and is <font color="red">intended to be
+                      revised.</font></strong><br><br>
+                  The following variables will be replaced by inputs from this form:<br>
+                  <font color="blue"><strong><tt>[BED_TEMP]</tt></strong></font>, <font color="blue">
+                    <strong><tt>[HOTEND_TEMP]</tt></strong>
+                  </font>, <font color="blue">
+                    <strong><tt>[EXTRUDER_NAME]</tt></strong>
+                  </font> <i>(Klipper)</i>, <font color="blue">
+                    <strong><tt>[TOOL_INDEX]</tt></strong>
+                  </font> <i>(Marlin)</i><br><br>
+                  You should <i>generally</i> be able to copy your usual start g-code from your slicer,<br>
+                  making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>
+                    <font color="blue">those listed
+                      above</font>
+                  </strong> or real values.<br><br>
+                  <p id=startGcodeWarning style="display: none;">warning</p>
+                  </p><textarea id="START_GCODE" onblur=validate()></textarea>
+                  +<br>
+                  <tt>G21 ; Millimeter units<br>
+                    G90 ; Absolute XYZ<br>
+                    M83 ; Relative E<br>
+                    G92 E0 ; Reset extruder distance<br></tt>
                 </td>
               </tr>
               <tr>
@@ -474,34 +504,30 @@ M112                ; Reading comprehension check! (emergency stop)</textarea>
               <thead>
                 <tr>
                   <td colspan=4 class=tdSection>
-                    <h4>Pressure Advance Stepping</h4> <i>(Start with ~0 to ~0.<font color="red">
-                        <strong><u>0</u></strong>
-                      </font>8 for direct drive or ~0 to ~0.8 for bowden.)</i>
+                    <h4 id="STEPPING_HEADER">Pressure Advance Stepping</h4>
+                    <p id='STEPPING_HEADER_BODY'></p>
                   </td>
                 </tr>
                 <tr>
                   <!--TODO: Smooth time toggle?-->
-                  <td><label for=PA_START>PA Start Value</label></td>
+                  <td><label for=PA_START id="STEPPING_START_LABEL">PA Start Value</label></td>
                   <td class=inputCell id="start_factor" colspan="3">
                     <input type=number id="PA_START" step=0.0005 value=0 onblur="validate(true)" />
                   </td>
                 </tr>
                 <tr>
-                  <td><label for=PA_END>PA End Value</label></td>
-                  <td class=inputCell id="end_factor" colspan="1">
+                  <td><label for=PA_END id="STEPPING_END_LABEL">PA End Value</label></td>
+                  <td class=inputCell id="end_factor" colspan="3">
                     <input type=number id="PA_END" step=0.0005 value=0.08 onblur="validate(true)" />
                   </td>
-                  <td colspan="2">Smaller nozzles = higher PA<br>Larger nozzles = lower PA</td>
                 </tr>
                 <tr>
-                  <td><label for=PA_STEP>PA Increment</label></td>
+                  <td><label for=PA_STEP id="STEPPING_INCREMENT_LABEL">PA Increment</label></td>
                   <td class=inputCell>
                     <input type=number id="PA_STEP" step=0.0005 value=0.005 onblur="validate(true)" />
                   </td>
-                  <td id="step_factor" colspan="2">PA increment for each pattern. Needs to cleanly divide into pressure
-                    advance
-                    range
-                    (End - Start)</td>
+                  <td id="step_factor" colspan="2">Increment for each pattern. Needs to cleanly divide into range (End -
+                    Start)</td>
                 </tr>
               </thead>
               <!--

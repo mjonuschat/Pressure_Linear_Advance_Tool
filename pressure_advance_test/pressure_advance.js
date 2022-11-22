@@ -312,7 +312,7 @@ G92 E0 ; Reset extruder distance
 ;
 ;  Begin printing
 ;
-M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; set fan speed
+M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed
 ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P${ACCELERATION}` )} ; Set printing acceleration
 `;
 
@@ -328,11 +328,11 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   CUR_Z = HEIGHT_FIRSTLAYER; // set initial Z coordinate, otherwise z hop will go back to 0 at first
 7
   //Move to layer height then start position, set initial PA
-  pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start position\n'}) + 
-               moveToZ(TO_Z, basicSettings, {comment: ' ; move to start layer height\n'})
+  pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start position\n'}) + 
+               moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
   
-  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance\n`;}
-  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; set linear advance k factor\n`;}
+  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;}
+  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;}
     
   if (ANCHOR_OPTION == 'anchor_frame'){
     pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, ANCHOR_PERIMETERS, basicSettings);
@@ -354,7 +354,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
 
     if (i == 1){ // set new fan speed after first layer
-      pa_script += `M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; set fan speed\n`
+      pa_script += `M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed\n`
     }
 
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
@@ -370,37 +370,37 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
         INITIAL_Y = TO_Y;
 
     // move to start xy then layer height
-    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start\n'}) +
-                 moveToZ(TO_Z, basicSettings, {comment: ' ; move to layer height\n'});
+    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start\n'}) +
+                 moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
 
     for (let j = 0; j < NUM_PATTERNS; j++){
 
       // increment pressure advance
-      if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START + (j * PA_STEP)} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance\n`;}
-      else {pa_script += `M900 K${PA_START + (j * PA_STEP)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; set linear advance k factor\n`;}
+      if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START + (j * PA_STEP)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;}
+      else {pa_script += `M900 K${PA_START + (j * PA_STEP)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;}
                    
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; Print pattern perimeter\n'});
 
         TO_X -= Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
         TO_Y += Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; print pattern perimeter\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; Print pattern perimeter\n'});
 
         TO_Y = INITIAL_Y;
         switch (true){
           case k != PERIMETERS - 1:  // perims not done yet. move to next perim
             TO_X += LINE_SPACING_ANGLE;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to start next pattern perimeter\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start next pattern perimeter\n'});
             break;
           case j != NUM_PATTERNS - 1: // patterns not done yet. move to next pattern
             TO_X += (PATTERN_SPACING + LINE_WIDTH);
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move to next pattern\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to next pattern\n'});
             break;
           case i != NUM_LAYERS - 1: // layers not done yet. move back to start
             TO_X = INITIAL_X;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; move back to start position\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move back to start position\n'});
             break;
           default:  // everything done. break
             break;
@@ -449,8 +449,8 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   }
   */
   
-  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; set pressure advance back to start value\n`;}
-  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; set linear advance k factor back to start value\n`;}
+  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;}
+  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor back to start value\n`;}
   pa_script += doEfeed('-', basicSettings) +`\
 ;
 ; End G-code
@@ -568,7 +568,7 @@ function createLine(to_x, to_y, basicSettings, optional) {
     extMult: basicSettings['extMult'],
     extRatio: basicSettings['extRatio'],
     speed: basicSettings['firstLayerSpeed'],
-    comment: ' ; print line\n'
+    comment: ' ; Print line\n'
   };
   var optArgs = $.extend({}, defaults, optional);
 
@@ -598,7 +598,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
       distance = getDistance(CUR_X, CUR_Y, to_x, to_y);
 
   var defaults = {
-    comment: ' ; move\n'
+    comment: ' ; Move\n'
   };
   var optArgs = $.extend({}, defaults, optional);
 
@@ -622,7 +622,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
 
 function moveToZ(to_z, basicSettings){
   var gcode = '';
-  gcode += 'G1 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; move to z height\n';
+  gcode += 'G1 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Move to z height\n';
   CUR_Z = to_z; // update global position var
   return gcode;
 }
@@ -633,21 +633,21 @@ function doEfeed(dir, basicSettings) {
 
     switch (true) {
       case (dir === '+' && RETRACTED && !basicSettings['zhopEnable']):
-        gcode += 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
+        gcode += 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; Un-retract\n';
         RETRACTED = false;
         break;
       case (dir === '-' && !RETRACTED && !basicSettings['zhopEnable']):
-        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; retract\n';
+        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; Retract\n';
         RETRACTED = true;
         break;
       case (dir === '+' && RETRACTED && basicSettings['zhopEnable']):
-        gcode += 'G1 Z' + Math.round10(CUR_Z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; z hop return\n' +
-                 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; un-retract\n';
+        gcode += 'G1 Z' + Math.round10(CUR_Z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Z hop return\n' +
+                 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; Un-retract\n';
         RETRACTED = false;
         break;
       case (dir === '-' && !RETRACTED && basicSettings['zhopEnable']):
-        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; retract\n' +
-                 'G1 Z' + Math.round10((CUR_Z + basicSettings['zhopHeight']), Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; z hop\n';
+        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; Retract\n' +
+                 'G1 Z' + Math.round10((CUR_Z + basicSettings['zhopHeight']), Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Z hop\n';
         RETRACTED = true;
         break;
     }
@@ -666,7 +666,7 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
     spacing: basicSettings['anchorLineSpacing'],
     extRatio: basicSettings['anchorExtRatio'],
     speed: basicSettings['firstLayerSpeed'],
-    comment: ' ; print line\n'
+    comment: ' ; Print line\n'
   };
 
   var optArgs = $.extend({}, defaults, optional);
@@ -676,23 +676,23 @@ function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSet
     if (i != 0){ // after first perimeter, step inwards to start next perimeter
       to_x += optArgs['spacing'];
       to_y += optArgs['spacing'];
-      gcode += moveTo(to_x, to_y, basicSettings, {comment: ' ; step inwards to print next anchor perimeter\n'})
+      gcode += moveTo(to_x, to_y, basicSettings, {comment: ' ; Step inwards to print next anchor perimeter\n'})
     }
     // draw line up
     to_y += max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (up)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (up)\n'});
 
     // draw line right
     to_x += max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (right)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (right)\n'});
 
     // draw line down
     to_y -= max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (down)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (down)\n'});
 
     // draw line left
     to_x -= max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; draw anchor perimeter (left)\n'});
+    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (left)\n'});
   }
   return gcode;
 }
@@ -927,7 +927,7 @@ function toggleStartEndGcode(){
 ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME] ; Activate extruder
 G28                                        ; Home all axes
 G90                                        ; Use absolute positioning
-G1 Z10 F100                                ; Z raise
+G1 Z5 F100                                 ; Z raise
 M190 S[BED_TEMP]                           ; Set and wait for bed temp
 M109 S[HOTEND_TEMP]                        ; Set and wait for hotend temp
 ;G32                                       ; Tramming macro (uncomment if used)
@@ -942,23 +942,21 @@ ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME] ; Activate extruder
 M190 S[BED_TEMP]                           ; Set and wait for bed temp
 M109 S[HOTEND_TEMP]                        ; Set and wait for hotend temp
 PRINT_START                                ; Start macro
-
+;
 ; Make sure this macro name matches your own! 
 ; (For example, some may use START_PRINT instead.)
-
-M112                ; Reading comprehension check! (emergency stop)`
+;
+M112                                       ; Reading comprehension check! (emergency stop)`
 
   var STANDALONE_TEMP_PASSING_MACRO = `\
 ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME]      ; Activate extruder
 PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] ; Start macro w/ temp params
-
 ;
 ; - Make sure the macro name AND parameter names match YOUR start macro setup!
 ;     (For example, some macros use EXTRUDER=X rather than HOTEND=X, or START_PRINT instead of PRINT_START)!
-;
 ; - Replace any slicer variables with those listed above! It should look like the top example, !!! NOT !!! like this:
 ;     PRINT_START BED=[first_layer_bed_temperature](...)
-
+;
 M112                                            ; Reading comprehension check! (emergency stop)`
 
   var KLIPPER_END_GCODE = 'PRINT_END'
@@ -967,7 +965,7 @@ M112                                            ; Reading comprehension check! (
 G28                  ; Home all axes
 T[TOOL_INDEX]        ; Select tool
 G90                  ; Absolute XYZ
-G1 Z10 F100          ; Z raise
+G1 Z5 F100           ; Z raise
 M190 S[BED_TEMP]     ; Set and wait for bed temp
 M109 S[HOTEND_TEMP]  ; Set and wait for hotend temp
 ;G29                 ; Auto bed leveling
@@ -1002,6 +1000,7 @@ M501     ; Load settings from EEPROM (to restore previous values)`
       $('#END_GCODE').val(KLIPPER_END_GCODE);
       break;
   }
+  validate();
 }
 
 function toggleStartEndGcodeTypeDescriptions(){
@@ -1275,7 +1274,7 @@ function render(gcode) {
         }
         */
         
-        if (line.includes("draw anchor perimeter")) {
+        if (line.includes("Draw anchor perimeter")) {
           color = ANCHOR_COLOR
         } else {
           color = DEFAULT_COLOR
@@ -1397,7 +1396,7 @@ function validate(updateRender = false) {
   $('#startGcodeWarning').removeClass('invalidStartGcode');
   $('#startGcodeWarning').html('');
 
-  if (!$('#START_GCODE').val().includes('G28') && !$('#START_GCODE_TYPE').val().includes('standalone')){
+  if ($('#START_GCODE').val().match(/G28(?! Z)/gm) == null && !$('#START_GCODE_TYPE').val().includes('standalone')){
     message += "- <tt>G28</tt><br>"
   }
   if (!$('#START_GCODE').val().includes('M190 S[BED_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
