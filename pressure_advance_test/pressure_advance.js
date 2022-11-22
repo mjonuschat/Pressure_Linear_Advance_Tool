@@ -58,7 +58,6 @@ function setVars(){
   window.HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').val());
   window.HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val());
   window.LINE_RATIO = parseFloat($('#LINE_RATIO').val());
-  window.NOTES_ENABLE = $('#NOTES_ENABLE').prop('checked');
   window.NOZZLE_DIAMETER = parseFloat($('#NOZZLE_DIAMETER').val());
   window.ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked');
   window.PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val());
@@ -81,8 +80,6 @@ function setVars(){
   window.START_GCODE_TYPE = $('#START_GCODE_TYPE').val();
   window.ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
   window.ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
-  //USE_FWR = $('#USE_FWR').prop('checked');
-  //USE_MMS = $('#USE_MMS').prop('checked');
   //SPEED_PRIME = parseInt($('#PRIME_SPEED').val());
   //USE_LINENO = $('#LINE_NO').prop('checked');
   //USE_PRIME = $('#PRIME').prop('checked');
@@ -96,41 +93,26 @@ function setVars(){
 
   // if "pattern settings" checkbox isn't checked, set to defaults instead
   if (!PATTERN_OPTIONS_ENABLE){
-    HEIGHT_PRINT = parseFloat(document.getElementById("HEIGHT_PRINT").defaultValue);
-    PERIMETERS = parseInt(document.getElementById("PERIMETERS").defaultValue);
-    PATTERN_SIDE_LENGTH = parseInt(document.getElementById("PATTERN_SIDE_LENGTH").defaultValue);
-    PATTERN_SPACING = parseFloat(document.getElementById("PATTERN_SPACING").defaultValue);
-    PATTERN_ANGLE = parseInt(document.getElementById("PATTERN_ANGLE").defaultValue);
+    HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').prop("defaultValue"));
+    PERIMETERS = parseInt($('#PERIMETERS').prop("defaultValue"));
+    PATTERN_SIDE_LENGTH = parseInt($('#PATTERN_SIDE_LENGTH').prop("defaultValue"));
+    PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').prop("defaultValue"));
+    PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').prop("defaultValue"));
     PRINT_DIR = 0;
   }
 
-  //if (USE_MMS) {
-    SPEED_FIRSTLAYER *= 60;
-    SPEED_PERIMETER *= 60;
-    SPEED_TRAVEL *= 60;
-    //SPEED_PRIME *= 60;
-    SPEED_RETRACT *= 60;
-    SPEED_UNRETRACT *= 60;
-  //}
+  SPEED_FIRSTLAYER *= 60;
+  SPEED_PERIMETER *= 60;
+  SPEED_TRAVEL *= 60;
+  //SPEED_PRIME *= 60;
+  SPEED_RETRACT *= 60;
+  SPEED_UNRETRACT *= 60;
 
   // replace variables with actual numbers in start g-code
   START_GCODE = START_GCODE.replace(/\[HOTEND_TEMP\]/g, HOTEND_TEMP)
   START_GCODE = START_GCODE.replace(/\[BED_TEMP\]/g, BED_TEMP)
   START_GCODE = START_GCODE.replace(/\[EXTRUDER_NAME\]/g, EXTRUDER_NAME)
   START_GCODE = START_GCODE.replace(/\[TOOL_INDEX\]/g, TOOL_INDEX)
-
-  /*
-  // add homing & temp gcodes to beginning of start gcode if user neglected to do so
-  if (!START_GCODE.includes('M109') && !(START_GCODE_TYPE == 'standalone_temp_passing')){ // unless they're using temp passing
-    START_GCODE = `M109 S${HOTEND_TEMP} ; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
-  }
-  if (!START_GCODE.includes('M190') && !(START_GCODE_TYPE == 'standalone_temp_passing')){ // unless they're using temp passing
-    START_GCODE = `M190 S${BED_TEMP}; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
-  }
-  if (!START_GCODE.includes('G28') && !START_GCODE_TYPE.includes('standalone')){ // don't add home if standalone macro is used
-    START_GCODE = `G28; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
-  }
-  */
 
   // set global calculated variables
   // -------------------------------
@@ -168,8 +150,6 @@ function setVars(){
   window.FIT_HEIGHT = PRINT_SIZE_Y + LINE_WIDTH;
   FIT_WIDTH = Math.abs(PRINT_SIZE_X * Math.cos(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.sin(toRadians(PRINT_DIR))); // rotate by PRINT_DIR
   FIT_HEIGHT = Math.abs(PRINT_SIZE_X * Math.sin(toRadians(PRINT_DIR))) + Math.abs(PRINT_SIZE_Y * Math.cos(toRadians(PRINT_DIR)));
-
-  window.txtArea = document.getElementById('gcodetextarea');
 }
 
 function genGcode() {
@@ -195,7 +175,6 @@ function genGcode() {
     'retractDist': RETRACT_DIST,
     'retractSpeed': SPEED_RETRACT,
     'unretractSpeed': SPEED_UNRETRACT,
-    //'fwRetract': USE_FWR,
     'extruderName': EXTRUDER_NAME,
     'zhopEnable': ZHOP_ENABLE,
     'zhopHeight': ZHOP_HEIGHT
@@ -211,14 +190,6 @@ function genGcode() {
 ; -------------------------------------------
 ; Generated: ${new Date()}
 ; -------------------------------------------
-` +
-/*; General:
-${( NOTES_ENABLE ? '\n': '')}\
-${( NOTES_ENABLE ?  '; Notes:\n' : '')}\
-${( PRINTER && NOTES_ENABLE ? `;  - Printer Name: ${PRINTER}\n` : '')}\
-${( FILAMENT && NOTES_ENABLE ? `;  - Filament Name: ${FILAMENT}\n` : '')}\
-*/
-`\
 ;
 ; Printer:
 ;  - Firmware: ${FIRMWARE}
@@ -233,14 +204,7 @@ ${(FIRMWARE == 'klipper' ? `;  - Extruder Name: ${EXTRUDER_NAME}\n`: `;  - Extru
 ; Start / End G-code:
 ;  - Start G-code Type: ${START_GCODE_TYPE}
 ;  - Hotend Temp: ${HOTEND_TEMP}C
-;  - Bed Temp: ${BED_TEMP}C` +
-/*
-;  - Start G-code: 
-${START_GCODE.replace(/^/gm, ';      ')}
-;  - End G-code: 
-${END_GCODE.replace(/^/gm, ';      ')}
-*/
-`
+;  - Bed Temp: ${BED_TEMP}C
 ;
 ; Filament / Flow:
 ;  - Filament Diameter: ${FILAMENT_DIAMETER} mm
@@ -461,24 +425,18 @@ ${END_GCODE}
 ;
 `;
 
-  txtArea.value = pa_script;
+  $('#gcodetextarea').val(pa_script);
 }
 
 
 // Save content of textarea to file using
 // https://github.com/eligrey/FileSaver.js
 function saveTextAsFile() {
-  var //textToWrite = document.getElementById('gcodetextarea').value,
-      textToWrite = pa_script,
-      textFileAsBlob = new Blob([textToWrite], {type: 'text/plain'}),
-      usersFilename = document.getElementById('FILENAME').value,
-      filename = usersFilename || '',
-      fileNameToSaveAs = filename + '.gcode';
-  if (textToWrite) {
-    saveAs(textFileAsBlob, fileNameToSaveAs);
+  if (pa_script) {
+    var pa_script_blob = new Blob([pa_script], {type: 'text/plain'})
+    saveAs(pa_script_blob, `${$('#FILENAME').val()}.gcode`);
   } else {
     alert('Generate G-code first');
-    return;
   }
 }
 
@@ -839,12 +797,9 @@ function setLocalStorage() {
     'START_GCODE_TYPE' : $('#START_GCODE_TYPE').val(),
     'ZHOP_ENABLE' : $('#ZHOP_ENABLE').prop('checked'),
     'ZHOP_HEIGHT' : parseFloat($('#ZHOP_HEIGHT').val()),
-    'NOTES_ENABLE' : $('#NOTES_ENABLE').prop('checked')
     //'EXT_MULT_PRIME' : parseFloat($('#ENT_MULT_PRIME').val()),
     //'SPEED_PRIME' : parseFloat($('#PRIME_SPEED').val()),
-    //'USE_FWR' : $('#USE_FWR').prop('checked'),
     //'USE_LINENO' : $('#LINE_NO').prop('checked');
-    //'USE_MMS' : $('#USE_MMS').prop('checked'),
     //'USE_PRIME' : $('#PRIME').prop('checked'),
   };
 
@@ -852,59 +807,18 @@ function setLocalStorage() {
   window.localStorage.setItem('PA_SETTINGS', lsSettings);
 }
 
-// toggle between mm/s and mm/min speed settings
-/*
-function speedToggle() {
-  var SPEED_FIRSTLAYER = $('#SPEED_FIRSTLAYER').val(),
-      SPEED_PERIMETER = $('#SPEED_PERIMETER').val(),
-      SPEED_TRAVEL = $('#SPEED_TRAVEL').val(),
-      SPEED_RETRACT = $('#SPEED_RETRACT').val(),
-      SPEED_PRIME = $('#PRIME_SPEED').val(),
-      SPEED_UNRETRACT = $('#SPEED_UNRETRACT').val();
-  if ($('#USE_MMS').is(':checked')) {
-    SPEED_FIRSTLAYER = $('#SPEED_FIRSTLAYER').val();
-    SPEED_PERIMETER = $('#SPEED_PERIMETER').val();
-    SPEED_TRAVEL = $('#SPEED_TRAVEL').val();
-    SPEED_RETRACT = $('#SPEED_RETRACT').val();
-    SPEED_UNRETRACT = $('#SPEED_UNRETRACT').val();
-    SPEED_PRIME = $('#PRIME_SPEED').val();
-    $('#SPEED_FIRSTLAYER').val(SPEED_FIRSTLAYER / 60);
-    $('#SPEED_PERIMETER').val(SPEED_PERIMETER / 60);
-    $('#SPEED_TRAVEL').val(SPEED_TRAVEL / 60);
-    $('#SPEED_RETRACT').val(SPEED_RETRACT / 60);
-    $('#SPEED_UNRETRACT').val(SPEED_UNRETRACT / 60);
-    $('#PRIME_SPEED').val(SPEED_PRIME / 60);
-  } else {
-    SPEED_FIRSTLAYER = $('#SPEED_FIRSTLAYER').val();
-    SPEED_PERIMETER = $('#SPEED_PERIMETER').val();
-    SPEED_TRAVEL = $('#SPEED_TRAVEL').val();
-    SPEED_RETRACT = $('#SPEED_RETRACT').val();
-    SPEED_UNRETRACT = $('#SPEED_UNRETRACT').val();
-    SPEED_PRIME = $('#PRIME_SPEED').val();
-    $('#SPEED_FIRSTLAYER').val(SPEED_FIRSTLAYER * 60);
-    $('#SPEED_PERIMETER').val(SPEED_PERIMETER * 60);
-    $('#SPEED_TRAVEL').val(SPEED_TRAVEL * 60);
-    $('#SPEED_RETRACT').val(SPEED_RETRACT * 60);
-    $('#SPEED_UNRETRACT').val(SPEED_UNRETRACT * 60);
-    $('#PRIME_SPEED').val(SPEED_PRIME * 60);
-  }
-}
-*/
-
 // toggle between round and rectangular bed shape
 function toggleBedShape() {
   if ($('#BED_SHAPE').val() === 'Round') {
-    $('label[for=\'BED_X\']').text('Bed Diameter:');
-    //$('#shape').text('Diameter of the bed');
-    document.getElementById('bedSizeYLabelCell').style.display = 'none';
-    document.getElementById('bedSizeYInputCell').style.display = 'none';
-    document.getElementById('originBedCenterRow').style.display = 'none';
+    $('label[for=BED_X]').text('Bed Diameter:');
+    $('label[for=BED_Y]').parent().hide();
+    $('#BED_Y').parent().hide();
+    $('#ORIGIN_CENTER').parents().eq(1).hide();
   } else {
     $('label[for=\'BED_X\']').text('Bed Size X:');
-    //$('#shape').text('Size of the bed in X');
-    document.getElementById('bedSizeYLabelCell').style.display = '';
-    document.getElementById('bedSizeYInputCell').style.display = '';
-    document.getElementById('originBedCenterRow').style.display = '';
+    $('label[for=BED_Y]').parent().show();
+    $('#BED_Y').parent().show();
+    $('#ORIGIN_CENTER').parents().eq(1).show();
   }
 }
 
@@ -920,7 +834,6 @@ function togglePrime() {
   }
 }
 */
-
 
 function toggleStartEndGcode(){
   var CANNED_GCODE = `\
@@ -1005,204 +918,111 @@ M501     ; Load settings from EEPROM (to restore previous values)`
 
 function toggleStartEndGcodeTypeDescriptions(){
     if ($('#START_GCODE_TYPE').val() == "custom"){
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = '';
-    //document.getElementById('tempRow').style.display = '';
+    $('#START_GCODE_TYPE_Description').html('');
   } else if ($('#START_GCODE_TYPE').val() == "standalone") {
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
+    $('#START_GCODE_TYPE_Description').html(`\
 <br>This option is for if you use a <u>standalone</u> start macro.<br><br>
 It must contain <strong>all necessary preparatory g-codes!</strong><br>
-(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>`;
-    //document.getElementById('tempRow').style.display = '';
+(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>`);
   } else if ($('#START_GCODE_TYPE').val() == "standalone_temp_passing") {
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = `\
+    $('#START_GCODE_TYPE_Description').html(`\
 <br>This option is for if you use a <u>standalone</u> start macro <strong>AND</strong> <a href=\"https://github.com/AndrewEllis93/Print-Tuning-Guide/blob/main/articles/passing_slicer_variables.md\"><u>have set up temperature variable passing!</u></a></p>
 It must contain <strong>all necessary preparatory g-codes!</strong><br>
-(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>`;
-    //document.getElementById('tempRow').style.display = 'none';
+(homing, quad gantry leveling, z offset, bed leveling, etc).<br><br>`);
   } else {
-    document.getElementById("START_GCODE_TYPE_Description").innerHTML = '';
-    //document.getElementById('tempRow').style.display = '';
+    $('#START_GCODE_TYPE_Description').html('');
   }
 }
-
-/*
-function toggleTemps(){
-  if ($('#START_GCODE_TYPE').val() == "custom"){
-    document.getElementById('tempRow').style.display = '';
-  } else if ($('#START_GCODE_TYPE').val() == "standalone") {
-    document.getElementById('tempRow').style.display = '';
-  } else {
-    document.getElementById('tempRow').style.display = 'none';
-  }
-}
-*/
-
-/*
-function toggleNotes(){
-  if ($('#NOTES_ENABLE').is(':checked')) {
-    document.getElementById('printerNameRow').style.display = '';
-    document.getElementById('filamentNameRow').style.display = '';
-  } else {
-    document.getElementById('printerNameRow').style.display = 'none';
-    document.getElementById('filamentNameRow').style.display = 'none';
-  }
-}
-*/
 
 function toggleFirmwareOptions(){
   switch(true){
     case $('#FIRMWARE').val().includes('marlin') :
-      document.getElementById('TOOL_INDEX_ROW').style.display = ''
-      document.getElementById('EXTRUDER_NAME_ROW').style.display = 'none'
-      document.getElementById("STEPPING_HEADER").innerHTML = 'Linear Advance Stepping'
-      document.getElementById("STEPPING_HEADER_BODY").innerHTML = ''
-      document.getElementById("STEPPING_START_LABEL").innerHTML = 'Start K Value'
-      document.getElementById("STEPPING_END_LABEL").innerHTML = 'End K Value'
-      document.getElementById("STEPPING_INCREMENT_LABEL").innerHTML = 'K Value Increment'
-      document.getElementById("START_GCODE_SELECT_ROW").style.display = 'none'
-      /*
-      document.getElementById("custom-marlin").removeAttribute("hidden")
-      document.getElementById("custom").setAttribute("hidden","hidden")
-      document.getElementById("standalone").setAttribute("hidden","hidden")
-      document.getElementById("standalone_temp_passing").setAttribute("hidden","hidden")
-      document.getElementById("START_GCODE_TYPE").setAttribute("size",2)
-      */
-      /*document.getElementById("KFACTOR_DESRIPTION").innerHTML = `\
-Marlin 1.1.9 and later uses Linear Advance <strong>1.5</strong>.<br>
-Marlin 1.1.8 and earlier uses Linear Advance <strong>1.0</strong>.<br>
-They use different k values.`*/
+      $('#TOOL_INDEX').parents().eq(1).show()
+      $('#EXTRUDER_NAME').parents().eq(1).hide()
+      $('#STEPPING_HEADER').html('Linear Advance Stepping')
+      $('#STEPPING_HEADER_BODY').html('')
+      $('label[for=PA_START]').html('Start K Value')
+      $('label[for=PA_END]').html('End K Value')
+      $('label[for=PA_STEP]').html('K Value Increment')
+      $('#START_GCODE_TYPE').parents().eq(1).hide()
       break;
     default :
-      document.getElementById('TOOL_INDEX_ROW').style.display = 'none'
-      document.getElementById('EXTRUDER_NAME_ROW').style.display = ''
-      document.getElementById("STEPPING_HEADER").innerHTML = 'Pressure Advance Stepping'
-      document.getElementById("STEPPING_HEADER_BODY").innerHTML = `\
+      $('#TOOL_INDEX').parents().eq(1).hide()
+      $('#EXTRUDER_NAME').parents().eq(1).show()
+      $('#STEPPING_HEADER').html('Pressure Advance Stepping')
+      $('#STEPPING_HEADER_BODY').html(`\
 <i>(Start with ~0 to ~0.<font color="red">
-<strong><u>0</u></strong></font>8 for direct drive or ~0 to ~0.8 for bowden.)</i>`
-      document.getElementById("STEPPING_START_LABEL").innerHTML = 'PA Start Value'
-      document.getElementById("STEPPING_END_LABEL").innerHTML = 'PA End Value'
-      document.getElementById("STEPPING_INCREMENT_LABEL").innerHTML = 'PA Increment'
-      document.getElementById("START_GCODE_SELECT_ROW").style.display = ''
-      /*
-      document.getElementById("custom-marlin").setAttribute("hidden","hidden")
-      document.getElementById("custom").removeAttribute("hidden")
-      document.getElementById("standalone").removeAttribute("hidden")
-      document.getElementById("standalone_temp_passing").removeAttribute("hidden")
-      document.getElementById("START_GCODE_TYPE").setAttribute("size",3)
-      */
-      //document.getElementById("KFACTOR_DESRIPTION").innerHTML = ''
+<strong><u>0</u></strong></font>8 for direct drive or ~0 to ~0.8 for bowden.)</i>`)
+      $('label[for=PA_START]').html('PA Start Value')
+      $('label[for=PA_END]').html('PA End Value')
+      $('label[for=PA_STEP]').html('PA Increment')
+      $('#START_GCODE_TYPE').parents().eq(1).show()
   }
 }
 
 function toggleFirmwareValues(){
     switch(true){
     case $('#FIRMWARE').val() === 'marlin-1.1.9' :
-      document.getElementById("PA_START").value = 0
-      document.getElementById("PA_END").value = 0.08
-      document.getElementById("PA_STEP").value = 0.005
-      document.getElementById('START_GCODE_TYPE').value = 'custom-marlin'
+      $('#PA_START').val(0)
+      $('#PA_END').val(0.08)
+      $('#PA_STEP').val(0.005)
+      $('#START_GCODE_TYPE').val('custom-marlin')
       break;
     case $('#FIRMWARE').val() === 'marlin-1.1.8' :
-      document.getElementById("PA_START").value = 0
-      document.getElementById("PA_END").value = 4
-      document.getElementById("PA_STEP").value = 0.2
-      document.getElementById('START_GCODE_TYPE').value = 'custom-marlin'
+      $('#PA_START').val(0)
+      $('#PA_END').val(4)
+      $('#PA_STEP').val(0.2)
+      $('#START_GCODE_TYPE').val('custom-marlin')
       break;
     case $('#FIRMWARE').val() === 'klipper' :
-      document.getElementById('START_GCODE_TYPE').value = 'custom';
-      document.getElementById("PA_START").value = 0
-      document.getElementById("PA_END").value = 0.08
-      document.getElementById("PA_STEP").value = 0.005
+      $('#START_GCODE_TYPE').val('custom');
+      $('#PA_START').val(0)
+      $('#PA_END').val(0.08)
+      $('#PA_STEP').val(0.005)
       break;
   }
   validate(true);
 }
 
 function togglePatternOptions(){
-  var children = document.getElementById('patternSettingsHead').children;
   if ($('#PATTERN_OPTIONS_ENABLE').is(':checked')) {
-    for (var i = 1; i < children.length; i++) {
-      children[i].style.display = '';
-    }
+    $('#patternSettingsHead').children().show()
   } else {
-    for (var i = 1; i < children.length; i++) {
-      children[i].style.display = 'none';
-    }
-
+    $('#patternSettingsHead').children().hide()
   }
 }
 
 function toggleAnchorOptions(){
     if ($('#ANCHOR_OPTION').val() == "anchor_frame"){
-    document.getElementById('anchorPerimetersLabelCell').style.display = '';
-    document.getElementById('anchorPerimetersInputCell').style.display = '';
-    document.getElementById('anchorLayerLineRatioLabelCell').style.display = '';
-    document.getElementById('anchorLayerLineRatioInputCell').style.display = '';
-    document.getElementById("anchorOptionDescription").innerHTML = '<img style="width: auto; max-height: 200px;" src="./images/anchor_frame.png" alt="Anchor Frame" />'
+    $('label[for=ANCHOR_PERIMETERS]').parent().show();
+    $('#ANCHOR_PERIMETERS').parent().show();
+    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
+    $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
+    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/anchor_frame.png" alt="Anchor Frame" />')
   } else if ($('#ANCHOR_OPTION').val() == "anchor_layer") {
-    document.getElementById('anchorPerimetersLabelCell').style.display = 'none';
-    document.getElementById('anchorPerimetersInputCell').style.display = 'none';
-    document.getElementById('anchorLayerLineRatioLabelCell').style.display = '';
-    document.getElementById('anchorLayerLineRatioInputCell').style.display = '';
-    document.getElementById("anchorOptionDescription").innerHTML = '<img style="width: auto; max-height: 200px;" src="./images/anchor_layer.png" alt="Anchor Layer" />'
+    $('label[for=ANCHOR_PERIMETERS]').parent().hide();
+    $('#ANCHOR_PERIMETERS').parent().hide();
+    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
+    $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
+    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/anchor_layer.png" alt="Anchor Layer" />')
   } else {
-    document.getElementById('anchorPerimetersLabelCell').style.display = 'none';
-    document.getElementById('anchorPerimetersInputCell').style.display = 'none';
-    document.getElementById('anchorLayerLineRatioLabelCell').style.display = 'none';
-    document.getElementById('anchorLayerLineRatioInputCell').style.display = 'none';
-    document.getElementById("anchorOptionDescription").innerHTML = '<img style="width: auto; max-height: 200px;" src="./images/no_anchor.png" alt="No Anchor" />'
+    $('label[for=ANCHOR_PERIMETERS]').parent().hide();
+    $('#ANCHOR_PERIMETERS').parent().hide();
+    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().hide();
+    $('#ANCHOR_LAYER_LINE_RATIO').parent().hide();
+    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/no_anchor.png" alt="No Anchor" />')
   }
 }
-
-/*
-// toggle between standard and firmware retract
-function toggleRetract() {
-  if ($('#USE_FWR').is(':checked')) {
-    document.getElementById('retractionDistanceRow').style.display = 'none';
-    document.getElementById('retractionSpeedRow').style.display = 'none';
-    document.getElementById('unretractionSpeedRow').style.display = 'none';
-  } else {
-    document.getElementById('retractionDistanceRow').style.display = '';
-    document.getElementById('retractionSpeedRow').style.display = '';
-    document.getElementById('unretractionSpeedRow').style.display = '';
-  }
-}
-*/
 
 function toggleZHop() {
   if ($('#ZHOP_ENABLE').is(':checked')) {
-    document.getElementById('zhopHeightLabelCell').style.display = '';
-    document.getElementById('zhopHeightInputCell').style.display = '';
+    $('label[for=ZHOP_HEIGHT]').parent().show();
+    $('#ZHOP_HEIGHT').parent().show();
   } else {
-    document.getElementById('zhopHeightLabelCell').style.display = 'none';
-    document.getElementById('zhopHeightInputCell').style.display = 'none';
+    $('label[for=ZHOP_HEIGHT]').parent().hide();
+    $('#ZHOP_HEIGHT').parent().hide();
   }
 }
-
-function toggleGcodeTxtArea(){
-  if (document.getElementById('gcodetextareaRow').style.display == 'none'){
-    document.getElementById('gcodetextareaRow').style.display = '';
-  }
-  else {
-    document.getElementById('gcodetextareaRow').style.display = 'none';
-  }
-}
-
-/*
-function toggleZHop(){
-  var children = document.getElementById('zhopHeightRow').children;
-  if ($('#ZHOP_ENABLE').is(':checked')) {
-    for (var i = 1; i < children.length; i++) {
-      children[i].style.display = '';
-    }
-  } else {
-    for (var i = 1; i < children.length; i++) {
-      children[i].style.display = 'none';
-    }
-
-  }
-}
-*/
 
 // show the calculated values at the bottom of the form
 function displayCalculatedValues(action = 'show'){
@@ -1224,62 +1044,30 @@ function displayCalculatedValues(action = 'show'){
       }
     }
 
-    document.getElementById("information").innerHTML = body;
-    document.getElementById('informationRow').style.display = '';
+    $('#information').html(body);
+    $('#information').parent().show();
   } else {
     body = '';
-    document.getElementById("information").innerHTML = '';
-    document.getElementById('informationRow').style.display = 'none';
+    $('#information').html('');
+    $('#information').parent().hide();
   }
 }
 
+// https://github.com/aligator/gcode-viewer
 function render(gcode) {
-    // First parse the ;TYPE: comments to build an example config for the GCodeRenderer.
-    // Note that the example gcode does not indicate travel moves easily -> just ignore that fact for simplicity.
-
     const TRANSPARENT_COLOR = new gcodeViewer.Color()
-
-    /*
-    const INNER_COLOR = new gcodeViewer.Color('#ff0000')
-    const OUTER_COLOR = new gcodeViewer.Color('#00ff00')
-    const SKIRT_COLOR = new gcodeViewer.Color('#ffff00')
-    const FILL_COLOR = new gcodeViewer.Color('#ffff00')
-    const BOTTOM_FILL_COLOR = new gcodeViewer.Color('#ffff00')
-    const INTERNAL_FILL = new gcodeViewer.Color('#00ffff')
-    const TOP_FILL = new gcodeViewer.Color('#ff00ff')
-    */
     const DEFAULT_COLOR = new gcodeViewer.Color('#0000ff')
     const ANCHOR_COLOR = new gcodeViewer.Color('#00ff00')
-    //const TRAVEL_COLOR = new gcodeViewer.Color('#ff0000')
 
     let colorConfig = []
 
     gcode.split("\n").forEach(function(line, i) {
         let color
-        /*
-        if (line.startsWith(";TYPE:WALL-INNER")) {
-            color = INNER_COLOR
-        } else if (line.startsWith(";TYPE:WALL-OUTER")) {
-            color = OUTER_COLOR
-        } else if (line.startsWith(";TYPE:SKIRT")) {
-            color = SKIRT_COLOR
-        } else if (line.startsWith(";TYPE:FILL")) {
-            color = FILL_COLOR
-        } else if (line.startsWith(";TYPE:BOTTOM-FILL")) {
-            color = BOTTOM_FILL_COLOR
-        } else if (line.startsWith(";TYPE:INTERNAL-FILL")) {
-            color = INTERNAL_FILL
-        } else if (line.startsWith(";TYPE:TOP-FILL")) {
-            color = TOP_FILL
-        }
-        */
-        
         if (line.includes("Draw anchor perimeter")) {
           color = ANCHOR_COLOR
         } else {
           color = DEFAULT_COLOR
         }
-
         if (colorConfig.length === 0 || color && colorConfig[colorConfig.length-1].color !== color) {
             colorConfig.push({toLine: i, color})
         } else {
@@ -1288,35 +1076,12 @@ function render(gcode) {
     });
 
     const renderer = new gcodeViewer.GCodeRenderer(gcode, 480, 360, new gcodeViewer.Color(0x808080))
-
-    // This is an example using the Speed colorizer.
-    // Other options are:
-    // * SimpleColorizer (default) - sets all lines to the same color
-    // * SpeedColorizer - colorizes based on the speed / feed rate
-    // * TempColorizer - colorizes based on the temperature
     renderer.colorizer = new gcodeViewer.LineColorizer(colorConfig)
     renderer.travelWidth = 0 // disable rendering travel moves
-    
-    
-    const element = document.getElementById("gcode-viewer")
-    if (element.childElementCount < 1){
-      element.appendChild(renderer.element())
-    } else {
-      element.replaceChild(renderer.element(), element.children[0])
-    }
-    //renderer.render().then(() => console.log("rendering finished"))
+    $('#gcode-viewer').empty().append(renderer.element())
     renderer.render()
     renderer.fitCamera()
 }
-
-/*
-function removeRender(){ // remove the 3d preview, called if validations checks fail
-  const element = document.getElementById("gcode-viewer")
-  if (element.childElementCount >= 1){
-    element.removeChild(element.children[0])
-  }
-}
-*/
 
 // sanity checks for pattern / bed size
 function validate(updateRender = false) {
@@ -1377,11 +1142,11 @@ function validate(updateRender = false) {
   $('#warning4').hide();
   $('#startGcodeWarning').hide();
   $('#downloadButton').prop('disabled', false);
-  //$('#gcodeButton').prop('disabled', false);
+  $('#saveSettingsButton').prop('disabled', false);
 
   // Check for proper numerical values
   Object.keys(testNaN).forEach((k) => {
-    if ((isNaN(testNaN[k]) && !isFinite(testNaN[k])) || testNaN[k].trim().length === 0) {
+    if ((isNaN(testNaN[k]) && !isFinite(testNaN[k])) || testNaN[k].trim().length === 0 || testNaN[k] < 0) {
       $('label[for=' + k + ']').addClass('invalidNumber');
       $('#warning3').text('Some values are not proper numbers. Check highlighted Settings.');
       $('#warning3').addClass('invalidNumber');
@@ -1389,61 +1154,34 @@ function validate(updateRender = false) {
       validationFail = true;
     }
   });
-
-  // check start g-code
-  var message = '';
-  $('#startGcodeWarning').hide();
-  $('#startGcodeWarning').removeClass('invalidStartGcode');
-  $('#startGcodeWarning').html('');
-
-  if ($('#START_GCODE').val().match(/G28(?! Z)/gm) == null && !$('#START_GCODE_TYPE').val().includes('standalone')){
-    message += "- <tt>G28</tt><br>"
-  }
-  if (!$('#START_GCODE').val().includes('M190 S[BED_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
-    message += "- <tt>M190 S[BED_TEMP]</tt><br>"
-  }
-  if (!$('#START_GCODE').val().includes('M109 S[HOTEND_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
-    message += "- <tt>M109 S[HOTEND_TEMP]</tt><br>"
-  }
-  if (!$('#START_GCODE').val().includes('[BED_TEMP]') && ($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
-    message += "- <tt>[BED_TEMP]</tt><br>"
-  }
-  if (!$('#START_GCODE').val().includes('[HOTEND_TEMP]') && ($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
-    message += "- <tt>[HOTEND_TEMP]</tt><br>"
+  
+  if (!validationFail){ // only check if above checks pass
+    // Check if pressure advance stepping is a multiple of the pressure advance Range
+    if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
+      $('label[for=PA_START]').addClass('invalidDiv');
+      $('label[for=PA_END]').addClass('invalidDiv');
+      $('label[for=PA_STEP]').addClass('invalidDiv');
+      $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted sttings.');
+      $('#warning1').addClass('invalidDiv');
+      $('#warning1').show();
+      invalidDiv = 1;
+      validationFail = true;
+    } 
   }
 
-  if (!(message == '')){
-    message = "Your start g-code does not contain:<br>" + message + "Please check your start g-code."
-    $('#startGcodeWarning').html(message);
-    $('#startGcodeWarning').addClass('invalidStartGcode');
-    $('#startGcodeWarning').show();
-    $('label[for=START_GCODE]').addClass('invalidStartGcode');
-    $('#warning4').text('Problems were found in your start g-code. Check highlighted setting.');
-    $('#warning4').addClass('invalidStartGcode');
-    $('#warning4').show();
-    validationFail = true;
+  if (!validationFail){ // only check if above checks pass
+    if (parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']) < 0) { // Check if pressure advance stepping is a multiple of the pressure advance Range
+      $('label[for=PA_START]').addClass('invalidDiv');
+      $('label[for=PA_END]').addClass('invalidDiv');
+      $('#warning1').text('Your PA start value cannot be higher than your PA end value. Check highlighted settings.');
+      $('#warning1').addClass('invalidDiv');
+      $('#warning1').show();
+      invalidDiv = 1;
+      validationFail = true;
+    } 
   }
   
-  // Check if pressure advance stepping is a multiple of the pressure advance Range
-  if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
-    $('label[for=PA_START]').addClass('invalidDiv');
-    $('label[for=PA_END]').addClass('invalidDiv');
-    $('label[for=PA_STEP]').addClass('invalidDiv');
-    $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted sttings.');
-    $('#warning1').addClass('invalidDiv');
-    $('#warning1').show();
-    invalidDiv = 1;
-    validationFail = true;
-  } 
-  else if (parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']) < 0) { // Check if pressure advance stepping is a multiple of the pressure advance Range
-    $('label[for=PA_START]').addClass('invalidDiv');
-    $('label[for=PA_END]').addClass('invalidDiv');
-    $('#warning1').text('Your PA start value cannot be higher than your PA end value. Check highlighted settings.');
-    $('#warning1').addClass('invalidDiv');
-    $('#warning1').show();
-    invalidDiv = 1;
-    validationFail = true;
-  } else {       // only check bed dimensions if above checks pass
+  if (!validationFail){ // only check if above checks pass
       // Check if pattern settings exceed bed size
       // too tall for round bed
       if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BED_X']) - 5)) && FIT_HEIGHT > FIT_WIDTH) {
@@ -1505,6 +1243,39 @@ function validate(updateRender = false) {
         validationFail = true;
       }
   }
+
+  // check start g-code for missing essential g-codes
+  var message = '';
+  $('#startGcodeWarning').hide();
+  $('#startGcodeWarning').removeClass('invalidStartGcode');
+  $('#startGcodeWarning').html('');
+
+  switch(true){
+    case (!$('#START_GCODE').val().includes('[BED_TEMP]') && $('#START_GCODE_TYPE').val() === 'standalone_temp_passing') :
+      message += "- <tt>[BED_TEMP]</tt><br>";
+    case (!$('#START_GCODE').val().includes('[HOTEND_TEMP]') && $('#START_GCODE_TYPE').val() === 'standalone_temp_passing') :
+      message += "- <tt>[HOTEND_TEMP]</tt><br>";
+      break;
+    case ($('#START_GCODE').val().match(/G28(?! Z)/gm) == null && !$('#START_GCODE_TYPE').val().includes('standalone')) :
+      message += "- <tt>G28</tt><br>";
+    case (!$('#START_GCODE').val().includes('M190 S[BED_TEMP]') && !($('#START_GCODE_TYPE').val() === 'standalone_temp_passing')) :
+      message += "- <tt>M190 S[BED_TEMP]</tt><br>";
+    case (!$('#START_GCODE').val().includes('M109 S[HOTEND_TEMP]') && !($('#START_GCODE_TYPE').val() === 'standalone_temp_passing')) :
+      message += "- <tt>M109 S[HOTEND_TEMP]</tt><br>";
+  }
+  message
+
+  if (!(message == '')){
+    message = "Your start g-code does not contain:<br>" + message + "Please check your start g-code."
+    $('#startGcodeWarning').html(message);
+    $('#startGcodeWarning').addClass('invalidStartGcode');
+    $('#startGcodeWarning').show();
+    $('label[for=START_GCODE]').addClass('invalidStartGcode');
+    $('#warning4').text('Problems were found in your start g-code. Check highlighted setting.');
+    $('#warning4').addClass('invalidStartGcode');
+    $('#warning4').show();
+    validationFail = true;
+  }
   
   if (!validationFail){ // actions to take if all checks pass
     displayCalculatedValues();
@@ -1512,21 +1283,14 @@ function validate(updateRender = false) {
       genGcode();
       render(pa_script);
     }
-    //document.getElementById('gcodeTable').style.display = '';
   } else { // actions to take on ANY failure
-    //document.getElementById('gcodeTable').style.display = 'none';
-    //removeRender();
     $('#downloadButton').prop('disabled', true);
+    $('#saveSettingsButton').prop('disabled', true);
     displayCalculatedValues('hide');
-    //txtArea.value = "Validation checks failed. Please check for errors above."; // clear gcode
   }
 }
 
 $(window).load(() => {
-  // Adapt textarea to cell size
-  //var TXTAREAHEIGHT = $('.txtareatd').height();
-  //$('.calibpat #gcodetextarea').css({'height': (TXTAREAHEIGHT) + 'px'});
-
   // create tab index dynamically
   $(':input:not(:hidden)').each(function(i) {
     $(this).attr('tabindex', i + 1);
@@ -1561,7 +1325,6 @@ $(window).load(() => {
       $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
       $('#LINE_NO').prop('checked', settings['USE_LINENO']);
       $('#LINE_RATIO').val(settings['LINE_RATIO']);
-      $('#NOTES_ENABLE').prop('checked', settings['NOTES_ENABLE']);
       $('#NOZZLE_DIAMETER').val(settings['NOZZLE_DIAMETER']);
       $('#ORIGIN_CENTER').prop('checked', settings['ORIGIN_CENTER']);
       $('#PATTERN_ANGLE').val(settings['PATTERN_ANGLE']);
@@ -1586,65 +1349,21 @@ $(window).load(() => {
       $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
       $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
       $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
-      //$('#USE_FWR').prop('checked', settings['USE_FWR']);
-      //$('#USE_MMS').prop('checked', settings['USE_MMS']);
     }
   }
 
-  // run all toggles on initial page load
+  // run all toggles after loading user settings
   toggleBedShape();
   toggleFirmwareOptions();
-  //togglePrime();
-  //toggleRetract();
   toggleZHop();
-  //toggleNotes();
   togglePatternOptions();
   toggleAnchorOptions();
-  //toggleTemps();
   toggleStartEndGcodeTypeDescriptions();
-  toggleGcodeTxtArea();
+  //togglePrime();
 
   // validate input on page load
-  // calculated variables if checks pass
-  // generates gcode and optionally updates 3d preview if validations pass
+  // generates gcode and updates 3d preview if validations pass
   validate(true);
-
-  // toggle between mm/s and mm/min speeds
-  //$('#USE_MMS').change(speedToggle);
-
-  // Toggle bed options when bed shape is changed
-  $('#BED_SHAPE').change(() => {
-    toggleBedShape();
-    validate();
-  });
-  
-  // toggle prime relevant html elements
-  //$('#PRIME').change(togglePrime);
-
-  // Toggle notes fields with toggle checkbox
-  //$('#NOTES_ENABLE').change(toggleNotes);
-
-  // toggles for when changing firmware
-  $('#FIRMWARE').change(toggleFirmwareOptions);
-  $('#FIRMWARE').change(toggleFirmwareValues);
-  $('#FIRMWARE').change(toggleStartEndGcode);
-  $('#FIRMWARE').change(toggleStartEndGcodeTypeDescriptions);
-
-  // Toggle start gcode and hotend/bed temp visibility when choosing start g-code option
-  $('#START_GCODE_TYPE').change(toggleStartEndGcode);
-  $('#START_GCODE_TYPE').change(toggleStartEndGcodeTypeDescriptions);
-
-  // Toggle visibility of anchor options depending on anchor selection
-  $('#ANCHOR_OPTION').change(toggleAnchorOptions);
-
-  // Toggle pattern setting fields with toggle checkbox, and sets values to default when unchecked
-  $('#PATTERN_OPTIONS_ENABLE').change(togglePatternOptions);
-
-  // Toggle retraction option visibility when firmware retract is toggled
-  //$('#USE_FWR').change(toggleRetract);
-
-  // Toggle z hop option visibility when z hop is toggled
-  $('#ZHOP_ENABLE').change(toggleZHop);
 
   // Focus the first field
   //$('#padv input:first').focus();
