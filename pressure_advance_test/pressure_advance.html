@@ -221,9 +221,9 @@
               </tr>
               <tr id="START_GCODE_SELECT_ROW">
                 <td><label for=START_GCODE_TYPE>Start G-code Option</label></td>
-                <td class=inputCell><select size="4" id="START_GCODE_TYPE" onchange="validate()">
+                <td class=inputCell><select size="3" id="START_GCODE_TYPE" onchange="validate()">
                     <option id="custom" value="custom" selected="selected">Manual Start G-code</option>
-                    <option id="custom-marlin" value="custom-marlin">Manual Start G-code (Marlin)
+                    <option id="custom-marlin" value="custom-marlin" hidden>Manual Start G-code (Marlin)
                     </option>
                     <option id="standalone" value="standalone">Standalone Macro</option>
                     <option id="standalone_temp_passing" value="standalone_temp_passing">Standalone Macro w/ Temp Params

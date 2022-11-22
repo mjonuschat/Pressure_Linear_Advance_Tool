@@ -1036,26 +1036,29 @@ function toggleNotes(){
 function toggleFirmwareOptions(){
   switch(true){
     case $('#FIRMWARE').val().includes('marlin') :
-      document.getElementById('TOOL_INDEX_ROW').style.display = '';
-      document.getElementById('EXTRUDER_NAME_ROW').style.display = 'none';
+      document.getElementById('TOOL_INDEX_ROW').style.display = ''
+      document.getElementById('EXTRUDER_NAME_ROW').style.display = 'none'
       document.getElementById("STEPPING_HEADER").innerHTML = 'Linear Advance Stepping'
       document.getElementById("STEPPING_HEADER_BODY").innerHTML = ''
       document.getElementById("STEPPING_START_LABEL").innerHTML = 'Start K Value'
       document.getElementById("STEPPING_END_LABEL").innerHTML = 'End K Value'
       document.getElementById("STEPPING_INCREMENT_LABEL").innerHTML = 'K Value Increment'
+      document.getElementById("START_GCODE_SELECT_ROW").style.display = 'none'
+      /*
       document.getElementById("custom-marlin").removeAttribute("hidden")
       document.getElementById("custom").setAttribute("hidden","hidden")
       document.getElementById("standalone").setAttribute("hidden","hidden")
       document.getElementById("standalone_temp_passing").setAttribute("hidden","hidden")
       document.getElementById("START_GCODE_TYPE").setAttribute("size",2)
+      */
       /*document.getElementById("KFACTOR_DESRIPTION").innerHTML = `\
 Marlin 1.1.9 and later uses Linear Advance <strong>1.5</strong>.<br>
 Marlin 1.1.8 and earlier uses Linear Advance <strong>1.0</strong>.<br>
 They use different k values.`*/
       break;
     default :
-      document.getElementById('TOOL_INDEX_ROW').style.display = 'none';
-      document.getElementById('EXTRUDER_NAME_ROW').style.display = '';
+      document.getElementById('TOOL_INDEX_ROW').style.display = 'none'
+      document.getElementById('EXTRUDER_NAME_ROW').style.display = ''
       document.getElementById("STEPPING_HEADER").innerHTML = 'Pressure Advance Stepping'
       document.getElementById("STEPPING_HEADER_BODY").innerHTML = `\
 <i>(Start with ~0 to ~0.<font color="red">
@@ -1063,11 +1066,14 @@ They use different k values.`*/
       document.getElementById("STEPPING_START_LABEL").innerHTML = 'PA Start Value'
       document.getElementById("STEPPING_END_LABEL").innerHTML = 'PA End Value'
       document.getElementById("STEPPING_INCREMENT_LABEL").innerHTML = 'PA Increment'
+      document.getElementById("START_GCODE_SELECT_ROW").style.display = ''
+      /*
       document.getElementById("custom-marlin").setAttribute("hidden","hidden")
       document.getElementById("custom").removeAttribute("hidden")
       document.getElementById("standalone").removeAttribute("hidden")
       document.getElementById("standalone_temp_passing").removeAttribute("hidden")
       document.getElementById("START_GCODE_TYPE").setAttribute("size",3)
+      */
       //document.getElementById("KFACTOR_DESRIPTION").innerHTML = ''
   }
 }
