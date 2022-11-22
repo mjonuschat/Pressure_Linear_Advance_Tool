@@ -48,7 +48,8 @@
                 <i>Line widths are approximations only.</i><br><br>
                 I have found the best results in real prints by
                 erring on the higher side of the results.<br><br>
-                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex. (I know that sounds wrong!)<br><br>
+                Choose a corner right before gapping starts, or even with a <i>tiny</i> bit of gapping at the very apex.
+                (I know that sounds wrong!)<br><br>
                 Tune down to 0.002-0.001 intervals on direct drive, or 0.02-0.01
                 intervals on bowden* <br><br>
                 <sup>* (Marlin 1.1.8 & older use different values)</sup>
@@ -64,6 +65,11 @@
                   value="pa_pattern" />.gcode&nbsp;&nbsp;&nbsp;<input type=button id="downloadButton"
                   onclick="validate(true);saveTextAsFile()" value="Download G-code" />
                 <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font>
+                <br><br>
+                <p id=warning1 style="display: none;">warning</p>
+                <p id=warning2 style="display: none;">warning</p>
+                <p id=warning3 style="display: none;">warning</p>
+                <p id=warning4 style="display: none;">warning</p>
               </td>
               <!-- <td align="right"><input type=button id="toggleGcode" onclick="toggleGcodeTxtArea();" value="Toggle Gcode Text Preview" /></td> -->
             </tr>
@@ -85,9 +91,6 @@
                 title="Save settings in a cookie." />
               &nbsp;&nbsp;&nbsp;<input type=button onclick="window.localStorage.clear('PA_SETTINGS');location.reload();"
                 value="Restore Defaults" title="Remove settings cookie and reload page." />
-              <p id=warning1 style="display: none;">warning</p>
-              <p id=warning2 style="display: none;">warning</p>
-              <p id=warning3 style="display: none;">warning</p>
             </td>
             </tr>
             <!--
@@ -142,8 +145,8 @@
                 </td>
                 <td><label for=BED_SHAPE>Bed Shape</label></td>
                 <td class=inputCell><select id="BED_SHAPE" onchange=validate()>
-                  <option value="Rect">Rectangular</option>
-                  <option value="Round">Round</option>
+                    <option value="Rect">Rectangular</option>
+                    <option value="Round">Round</option>
                   </select>
                 </td>
               </tr>
@@ -248,14 +251,18 @@
                       revised.</font></strong><br><br>
                   The following variables will be replaced by inputs from this form:<br>
                   <font color="blue"><strong><tt>[BED_TEMP]</tt></strong></font>, <font color="blue">
-                    <strong><tt>[HOTEND_TEMP]</tt></strong></font>, <font color="blue">
-                    <strong><tt>[EXTRUDER_NAME]</tt></strong></font> <i>(Klipper)</i>, <font color="blue">
-                    <strong><tt>[TOOL_INDEX]</tt></strong></font> <i>(Marlin)</i><br><br>
+                    <strong><tt>[HOTEND_TEMP]</tt></strong>
+                  </font>, <font color="blue">
+                    <strong><tt>[EXTRUDER_NAME]</tt></strong>
+                  </font> <i>(Klipper)</i>, <font color="blue">
+                    <strong><tt>[TOOL_INDEX]</tt></strong>
+                  </font> <i>(Marlin)</i><br><br>
                   You should <i>generally</i> be able to copy your usual start g-code from your slicer,<br>
                   making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>
                     <font color="blue">those listed
                       above</font>
-                  </strong> or real values.<br>
+                  </strong> or real values.<br><br>
+                  <p id=startGcodeWarning style="display: none;">warning</p>
                   </p><textarea id="START_GCODE" onblur=validate()></textarea>
                   +<br>
                   <tt>G21 ; Millimeter units<br>

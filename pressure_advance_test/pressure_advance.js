@@ -18,6 +18,9 @@
  */
 'use strict';
 
+// increment to invalidate saved settings
+const SETTINGS_VERSION = '1';
+
 const PA_round = -4; // Was previously -3
 const Z_round = -3;
 const XY_round = -4;
@@ -110,10 +113,24 @@ function setVars(){
     SPEED_UNRETRACT *= 60;
   //}
 
+  // replace variables with actual numbers in start g-code
   START_GCODE = START_GCODE.replace(/\[HOTEND_TEMP\]/g, HOTEND_TEMP)
   START_GCODE = START_GCODE.replace(/\[BED_TEMP\]/g, BED_TEMP)
   START_GCODE = START_GCODE.replace(/\[EXTRUDER_NAME\]/g, EXTRUDER_NAME)
   START_GCODE = START_GCODE.replace(/\[TOOL_INDEX\]/g, TOOL_INDEX)
+
+  /*
+  // add homing & temp gcodes to beginning of start gcode if user neglected to do so
+  if (!START_GCODE.includes('M109') && !(START_GCODE_TYPE == 'standalone_temp_passing')){ // unless they're using temp passing
+    START_GCODE = `M109 S${HOTEND_TEMP} ; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
+  }
+  if (!START_GCODE.includes('M190') && !(START_GCODE_TYPE == 'standalone_temp_passing')){ // unless they're using temp passing
+    START_GCODE = `M190 S${BED_TEMP}; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
+  }
+  if (!START_GCODE.includes('G28') && !START_GCODE_TYPE.includes('standalone')){ // don't add home if standalone macro is used
+    START_GCODE = `G28; ADDED BECAUSE YOU FORGOT TO!\n` + START_GCODE
+  }
+  */
 
   // set global calculated variables
   // -------------------------------
@@ -203,9 +220,8 @@ ${( FILAMENT && NOTES_ENABLE ? `;  - Filament Name: ${FILAMENT}\n` : '')}\
 */
 `\
 ;
-; Firmware: ${FIRMWARE}
-;
 ; Printer:
+;  - Firmware: ${FIRMWARE}
 ;  - Bed Shape: ${BED_SHAPE}
 ${(BED_SHAPE === 'Round' ? `;  - Bed Diameter: ${BED_X} mm\n`: `;  - Bed Size X: ${BED_X} mm\n`)}\
 ${(BED_SHAPE === 'Round' ? '': `;  - Bed Size Y: ${BED_Y} mm\n`)}\
@@ -219,9 +235,9 @@ ${(FIRMWARE == 'klipper' ? `;  - Extruder Name: ${EXTRUDER_NAME}\n`: `;  - Extru
 ;  - Hotend Temp: ${HOTEND_TEMP}C
 ;  - Bed Temp: ${BED_TEMP}C` +
 /*
-;  - Start G-code = 
+;  - Start G-code: 
 ${START_GCODE.replace(/^/gm, ';      ')}
-;  - End G-code = 
+;  - End G-code: 
 ${END_GCODE.replace(/^/gm, ';      ')}
 */
 `
@@ -781,6 +797,7 @@ function rotateY(x, xm, y, ym, a) {
 // save current settings as localStorage object
 function setLocalStorage() {
   var settings = {
+    'SETTINGS_VERSION': SETTINGS_VERSION,
     'ACCELERATION' : parseInt($('#PRINT_ACCL').val()),
     'ANCHOR_LAYER_LINE_RATIO' : parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
     'ANCHOR_OPTION' : $('#ANCHOR_OPTION').val(),
@@ -1358,6 +1375,8 @@ function validate(updateRender = false) {
   $('#warning1').hide();
   $('#warning2').hide();
   $('#warning3').hide();
+  $('#warning4').hide();
+  $('#startGcodeWarning').hide();
   $('#downloadButton').prop('disabled', false);
   //$('#gcodeButton').prop('disabled', false);
 
@@ -1371,13 +1390,47 @@ function validate(updateRender = false) {
       validationFail = true;
     }
   });
+
+  // check start g-code
+  var message = '';
+  $('#startGcodeWarning').hide();
+  $('#startGcodeWarning').removeClass('invalidStartGcode');
+  $('#startGcodeWarning').html('');
+
+  if (!$('#START_GCODE').val().includes('G28') && !$('#START_GCODE_TYPE').val().includes('standalone')){
+    message += "- <tt>G28</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('M190 S[BED_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>M190 S[BED_TEMP]</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('M109 S[HOTEND_TEMP]') && !($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>M109 S[HOTEND_TEMP]</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('[BED_TEMP]') && ($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>[BED_TEMP]</tt><br>"
+  }
+  if (!$('#START_GCODE').val().includes('[HOTEND_TEMP]') && ($('#START_GCODE_TYPE').val() == 'standalone_temp_passing')){
+    message += "- <tt>[HOTEND_TEMP]</tt><br>"
+  }
+
+  if (!(message == '')){
+    message = "Your start g-code does not contain:<br>" + message + "Please check your start g-code."
+    $('#startGcodeWarning').html(message);
+    $('#startGcodeWarning').addClass('invalidStartGcode');
+    $('#startGcodeWarning').show();
+    $('label[for=START_GCODE]').addClass('invalidStartGcode');
+    $('#warning4').text('Problems were found in your start g-code. Check highlighted setting.');
+    $('#warning4').addClass('invalidStartGcode');
+    $('#warning4').show();
+    validationFail = true;
+  }
   
-    // Check if pressure advance stepping is a multiple of the pressure advance Range
+  // Check if pressure advance stepping is a multiple of the pressure advance Range
   if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
     $('label[for=PA_START]').addClass('invalidDiv');
     $('label[for=PA_END]').addClass('invalidDiv');
     $('label[for=PA_STEP]').addClass('invalidDiv');
-    $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted Pattern Settings.');
+    $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted sttings.');
     $('#warning1').addClass('invalidDiv');
     $('#warning1').show();
     invalidDiv = 1;
@@ -1402,7 +1455,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1417,7 +1470,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1432,7 +1485,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1447,7 +1500,7 @@ function validate(updateRender = false) {
         $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
         $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
         $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted Pattern Settings.');
+        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted settings.');
         $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
         $((invalidDiv ? '#warning2' : '#warning1')).show();
         validationFail = true;
@@ -1487,54 +1540,56 @@ $(window).load(() => {
 
   if (lsSettings) {
     var settings = jQuery.parseJSON(lsSettings);
-    $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
-    $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
-    $('#BED_SHAPE').val(settings['BED_SHAPE']);
-    $('#BED_TEMP').val(settings['BED_TEMP']);
-    $('#BED_X').val(settings['BED_X']);
-    $('#BED_Y').val(settings['BED_Y']);
-    $('#END_GCODE').val(settings['END_GCODE']);
-    $('#ENT_MULT_PRIME').val(settings['EXT_MULT_PRIME']);
-    $('#TOOL_INDEX').val(settings['TOOL_INDEX']);
-    $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
-    $('#EXT_MULT').val(settings['EXT_MULT']);
-    $('#FAN_SPEED').val(settings['FAN_SPEED']);
-    $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
-    $('#FILAMENT_DIAMETER').val(settings['FILAMENT_DIAMETER']);
-    $('#FIRMWARE').val(settings['FIRMWARE']);
-    $('#HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
-    $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
-    $('#HEIGHT_PRINT').val(settings['HEIGHT_PRINT']);
-    $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
-    $('#LINE_NO').prop('checked', settings['USE_LINENO']);
-    $('#LINE_RATIO').val(settings['LINE_RATIO']);
-    $('#NOTES_ENABLE').prop('checked', settings['NOTES_ENABLE']);
-    $('#NOZZLE_DIAMETER').val(settings['NOZZLE_DIAMETER']);
-    $('#ORIGIN_CENTER').prop('checked', settings['ORIGIN_CENTER']);
-    $('#PATTERN_ANGLE').val(settings['PATTERN_ANGLE']);
-    $('#PATTERN_OPTIONS_ENABLE').prop('checked', settings['PATTERN_OPTIONS_ENABLE']);
-    $('#PATTERN_SIDE_LENGTH').val(settings['PATTERN_SIDE_LENGTH']);
-    $('#PATTERN_SPACING').val(settings['PATTERN_SPACING']);
-    $('#PA_END').val(settings['PA_END']);
-    $('#PA_START').val(settings['PA_START']);
-    $('#PA_STEP').val(settings['PA_STEP']);
-    $('#PERIMETERS').val(settings['PERIMETERS']);
-    $('#PRIME').prop('checked', settings['USE_PRIME']);
-    $('#PRIME_SPEED').val(settings['SPEED_PRIME']);
-    $('#PRINT_ACCL').val(settings['ACCELERATION']);
-    $('#PRINT_DIR').val(settings['PRINT_DIR']);
-    $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
-    $('#SPEED_FIRSTLAYER').val(settings['SPEED_FIRSTLAYER']);
-    $('#SPEED_PERIMETER').val(settings['SPEED_PERIMETER']);
-    $('#SPEED_RETRACT').val(settings['SPEED_RETRACT']);
-    $('#SPEED_TRAVEL').val(settings['SPEED_TRAVEL']);
-    $('#SPEED_UNRETRACT').val(settings['SPEED_UNRETRACT']);
-    $('#START_GCODE').val(settings['START_GCODE']);
-    $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
-    $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
-    $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
-    //$('#USE_FWR').prop('checked', settings['USE_FWR']);
-    //$('#USE_MMS').prop('checked', settings['USE_MMS']);
+    if (settings['SETTINGS_VERSION'] == SETTINGS_VERSION){ // only populate form with saved settings if version matches current
+      $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
+      $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
+      $('#BED_SHAPE').val(settings['BED_SHAPE']);
+      $('#BED_TEMP').val(settings['BED_TEMP']);
+      $('#BED_X').val(settings['BED_X']);
+      $('#BED_Y').val(settings['BED_Y']);
+      $('#END_GCODE').val(settings['END_GCODE']);
+      $('#ENT_MULT_PRIME').val(settings['EXT_MULT_PRIME']);
+      $('#TOOL_INDEX').val(settings['TOOL_INDEX']);
+      $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
+      $('#EXT_MULT').val(settings['EXT_MULT']);
+      $('#FAN_SPEED').val(settings['FAN_SPEED']);
+      $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
+      $('#FILAMENT_DIAMETER').val(settings['FILAMENT_DIAMETER']);
+      $('#FIRMWARE').val(settings['FIRMWARE']);
+      $('#HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
+      $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
+      $('#HEIGHT_PRINT').val(settings['HEIGHT_PRINT']);
+      $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
+      $('#LINE_NO').prop('checked', settings['USE_LINENO']);
+      $('#LINE_RATIO').val(settings['LINE_RATIO']);
+      $('#NOTES_ENABLE').prop('checked', settings['NOTES_ENABLE']);
+      $('#NOZZLE_DIAMETER').val(settings['NOZZLE_DIAMETER']);
+      $('#ORIGIN_CENTER').prop('checked', settings['ORIGIN_CENTER']);
+      $('#PATTERN_ANGLE').val(settings['PATTERN_ANGLE']);
+      $('#PATTERN_OPTIONS_ENABLE').prop('checked', settings['PATTERN_OPTIONS_ENABLE']);
+      $('#PATTERN_SIDE_LENGTH').val(settings['PATTERN_SIDE_LENGTH']);
+      $('#PATTERN_SPACING').val(settings['PATTERN_SPACING']);
+      $('#PA_END').val(settings['PA_END']);
+      $('#PA_START').val(settings['PA_START']);
+      $('#PA_STEP').val(settings['PA_STEP']);
+      $('#PERIMETERS').val(settings['PERIMETERS']);
+      $('#PRIME').prop('checked', settings['USE_PRIME']);
+      $('#PRIME_SPEED').val(settings['SPEED_PRIME']);
+      $('#PRINT_ACCL').val(settings['ACCELERATION']);
+      $('#PRINT_DIR').val(settings['PRINT_DIR']);
+      $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
+      $('#SPEED_FIRSTLAYER').val(settings['SPEED_FIRSTLAYER']);
+      $('#SPEED_PERIMETER').val(settings['SPEED_PERIMETER']);
+      $('#SPEED_RETRACT').val(settings['SPEED_RETRACT']);
+      $('#SPEED_TRAVEL').val(settings['SPEED_TRAVEL']);
+      $('#SPEED_UNRETRACT').val(settings['SPEED_UNRETRACT']);
+      $('#START_GCODE').val(settings['START_GCODE']);
+      $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
+      $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
+      $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
+      //$('#USE_FWR').prop('checked', settings['USE_FWR']);
+      //$('#USE_MMS').prop('checked', settings['USE_MMS']);
+    }
   }
 
   // run all toggles on initial page load

@@ -1908,6 +1908,12 @@ label {
     display: block;
 }
 
+.invalidStartGcode {
+    background-color: var(--kf-k-invalid-bg);
+    font-weight: bold;
+    display: block;
+}
+
 :invalid {
     box-shadow: 0 0 3px var(--kf-k-invalid-border);
     outline: 0
