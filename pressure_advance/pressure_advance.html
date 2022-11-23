@@ -60,10 +60,9 @@
               </td>
             </tr>
             <tr class="tdHead">
-              <td colspan=1><label for="FILENAME" style="text-align: left;">File Name:</label></strong>
-                <input type=text id="FILENAME" value="pa_pattern" required="required" onblur="validate();" />.gcode
-              </td>
-              <td colspan="1">
+              <td colspan=2><label for="FILENAME" style="text-align: left;">File Name:</label></strong>
+                <input type=text id="FILENAME" value="pa_pattern" required="required"
+                  onblur="validate();" />.gcode&nbsp;
                 <input type=button id="downloadButton" onclick="validate(true); saveTextAsFile();"
                   value="Download G-code" />
                 <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font>
