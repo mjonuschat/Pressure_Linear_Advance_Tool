@@ -139,7 +139,7 @@ textarea {
 
 td,
 th {
-    padding: 0
+    padding: 0;
 }
 
 /*! Source: https://github.com/h5bp/html5-boilerplate/blob/master/src/css/main.css */
@@ -280,9 +280,7 @@ h6 {
 .h3,
 h1,
 h2,
-h3 {
-
-}
+h3 {}
 
 .h4,
 .h5,
@@ -1685,6 +1683,7 @@ table {
     border-collapse: collapse;
     margin-left: auto;
     margin-right: auto;
+    vertical-align: middle;
 }
 
 textarea {
@@ -1787,17 +1786,9 @@ textarea {
 label {
     color: var(--kf-k-label);
     font-weight: 700;
-    display: block;
-    padding-top: 0.25em;
-    padding-bottom: 0.25em;
+    padding: 0.25em;
     vertical-align: middle;
     font-size: 14px;
-}
-
-
-:invalid {
-    box-shadow: 0 0 3px var(--kf-k-invalid-border);
-    outline: 0
 }
 
 #resultantValuesTable {
@@ -1825,7 +1816,8 @@ label {
     width: 100%;
 }
 
-#gcodeTable .gcodeTableLeftHeading { /*text to left of 3d preview*/
+#gcodeTable .gcodeTableLeftHeading {
+    /*text to left of 3d preview*/
     text-align: right;
     vertical-align: top;
     font-size: min(1vw, 12px);
@@ -1855,14 +1847,16 @@ label {
 
 #gcodeTable td:nth-child(2) {
     width: 480px;
-    max-width: 480px; 
+    max-width: 480px;
 }
 
-#gcode-viewer { /*3d preview cell*/
+#gcode-viewer {
+    /*3d preview cell*/
     height: 370px;
 }
 
-#gcode-viewer canvas { /*canvas in 3d preview cell*/
+#gcode-viewer canvas {
+    /*canvas in 3d preview cell*/
     margin: auto;
     margin-bottom: auto;
 }
@@ -1890,33 +1884,14 @@ label {
     resize: vertical;
 }
 
-.invalidDiv {
+.invalid {
     background-color: var(--kf-k-invalid-bg);
     font-weight: bold;
-    display: block;
-}
-
-.invalidSize {
-    background-color: var(--kf-k-invalid-bg);
-    font-weight: bold;
-    display: block;
-}
-
-.invalidNumber {
-    background-color: var(--kf-k-invalid-bg);
-    font-weight: bold;
-    display: block;
-}
-
-.invalidStartGcode {
-    background-color: var(--kf-k-invalid-bg);
-    font-weight: bold;
-    display: block;
 }
 
 :invalid {
-    box-shadow: 0 0 3px var(--kf-k-invalid-border);
-    outline: 0
+    background-color: var(--kf-k-invalid-bg);
+    font-weight: bold;
 }
 
 .inputCell {

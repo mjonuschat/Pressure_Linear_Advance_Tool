@@ -42,8 +42,8 @@ function setVars(){
   window.BED_TEMP = parseInt($('#BED_TEMP').val());
   window.BED_X = parseInt($('#BED_X').val());
   window.BED_Y = parseInt($('#BED_Y').val());
+  window.ECHO = $('#ECHO').prop('checked');
   window.END_GCODE = $('#END_GCODE').val();
-  window.TOOL_INDEX = $('#TOOL_INDEX').val();
   window.EXTRUDER_NAME = $('#EXTRUDER_NAME').val();
   window.EXT_MULT = parseFloat($('#EXT_MULT').val());
   window.EXT_MULT_PRIME = parseFloat($('#ENT_MULT_PRIME').val());
@@ -78,6 +78,7 @@ function setVars(){
   window.SPEED_UNRETRACT = parseInt($('#SPEED_UNRETRACT').val());
   window.START_GCODE = $('#START_GCODE').val();
   window.START_GCODE_TYPE = $('#START_GCODE_TYPE').val();
+  window.TOOL_INDEX = $('#TOOL_INDEX').val();
   window.ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
   window.ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
   //SPEED_PRIME = parseInt($('#PRIME_SPEED').val());
@@ -232,9 +233,7 @@ ${(ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width: ${ANCHOR_LAYER_LINE_R
 ;  - Acceleration: ${ACCELERATION} mm/s^2
 ;  - Fan Speed: ${FAN_SPEED}%
 ;
-; Pattern Settings:
-${(!PATTERN_OPTIONS_ENABLE ? `; (Using defaults)\n`: '')}\
-${(PATTERN_OPTIONS_ENABLE ? `; (Customized)\n`: '')}\
+; Pattern Settings ${(!PATTERN_OPTIONS_ENABLE ? `(Using defaults)`: '`(Customized)`')}:
 ;  - Print Height: ${HEIGHT_PRINT} mm
 ;  - Perimeter Count: ${PERIMETERS}
 ;  - Side Length: ${PATTERN_SIDE_LENGTH} mm
@@ -243,9 +242,10 @@ ${(PATTERN_OPTIONS_ENABLE ? `; (Customized)\n`: '')}\
 ;  - Printing Direction: ${PRINT_DIR} degree
 ;
 ; Pressure Advance Stepping:
-;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Start Value: ${PA_START}
+;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Start Value: ${Math.round10(PA_START, PA_round)}
 ;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} End Value: ${PA_END}
 ;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Increment: ${PA_STEP}
+;  - Show on LCD: ${ECHO}
 ;
 ; Calculated Values:
 ;  - Number of Patterns to Print: ${NUM_PATTERNS}
@@ -295,8 +295,14 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start position\n'}) + 
                moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
   
-  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;}
-  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;}
+  if (FIRMWARE == 'klipper'){
+    pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;
+    if (ECHO){pa_script += `M117 PA${Math.round10(PA_START, PA_round)}\n`}
+  }
+  else {
+    pa_script += `M900 K${Math.round10(PA_START, PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;
+    if (ECHO){pa_script += `M117 K${Math.round10(PA_START, PA_round)}\n`}
+  }
     
   if (ANCHOR_OPTION == 'anchor_frame'){
     pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, ANCHOR_PERIMETERS, basicSettings);
@@ -340,8 +346,14 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     for (let j = 0; j < NUM_PATTERNS; j++){
 
       // increment pressure advance
-      if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START + (j * PA_STEP)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;}
-      else {pa_script += `M900 K${PA_START + (j * PA_STEP)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;}
+      if (FIRMWARE == 'klipper'){
+        pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10((PA_START + (j * PA_STEP)), PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;
+        if (ECHO){pa_script += `M117 PA${Math.round10((PA_START + (j * PA_STEP)), PA_round)}\n`}
+      }
+      else {
+        pa_script += `M900 K${Math.round10((PA_START + (j * PA_STEP)), PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;
+        if (ECHO){pa_script += `M117 K${Math.round10((PA_START + (j * PA_STEP)), PA_round)}\n`}
+      }
                    
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
@@ -413,8 +425,14 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   }
   */
   
-  if (FIRMWARE == 'klipper'){pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${PA_START} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;}
-  else {pa_script += `M900 K${PA_START} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor back to start value\n`;}
+  if (FIRMWARE == 'klipper'){
+    pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;
+    if (ECHO){pa_script += `M117 PA${Math.round10(PA_START, PA_round)}\n`}
+  }
+  else {
+    pa_script += `M900 K${Math.round10(PA_START, PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor back to start value\n`;
+    if (ECHO){pa_script += `M117 K${Math.round10(PA_START, PA_round)}\n`}
+  }
   pa_script += doEfeed('-', basicSettings) +`\
 ;
 ; End G-code
@@ -763,13 +781,14 @@ function setLocalStorage() {
     'BED_TEMP' : parseInt($('#BED_TEMP').val()),
     'BED_X' : parseInt($('#BED_X').val()),
     'BED_Y' : parseInt($('#BED_Y').val()),
+    'ECHO' : $('#ECHO').prop('checked'),
     'END_GCODE' : $('#END_GCODE').val(),
-    'TOOL_INDEX' : parseInt($('#TOOL_INDEX').val()),
     'EXTRUDER_NAME' : $('#EXTRUDER_NAME').val(),
     'EXT_MULT' : parseFloat($('#EXT_MULT').val()),
     'FAN_SPEED' : parseFloat($('#FAN_SPEED').val()),
     'FAN_SPEED_FIRSTLAYER' : parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
     'FILAMENT_DIAMETER' : parseFloat($('#FILAMENT_DIAMETER').val()),
+    'FILENAME' : $('#FILENAME').val(),
     'FIRMWARE' : $('#FIRMWARE').val(),
     'HEIGHT_FIRSTLAYER' : parseFloat($('#HEIGHT_FIRSTLAYER').val()),
     'HEIGHT_LAYER' : parseFloat($('#HEIGHT_LAYER').val()),
@@ -795,6 +814,7 @@ function setLocalStorage() {
     'SPEED_UNRETRACT' : parseInt($('#SPEED_UNRETRACT').val()),
     'START_GCODE' : $('#START_GCODE').val(),
     'START_GCODE_TYPE' : $('#START_GCODE_TYPE').val(),
+    'TOOL_INDEX' : parseInt($('#TOOL_INDEX').val()),
     'ZHOP_ENABLE' : $('#ZHOP_ENABLE').prop('checked'),
     'ZHOP_HEIGHT' : parseFloat($('#ZHOP_HEIGHT').val()),
     //'EXT_MULT_PRIME' : parseFloat($('#ENT_MULT_PRIME').val()),
@@ -872,8 +892,6 @@ PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] ; Start macro w/ temp params
 ;
 M112                                            ; Reading comprehension check! (emergency stop)`
 
-  var KLIPPER_END_GCODE = 'PRINT_END'
-
   var MARLIN_GCODE = `\
 G28                  ; Home all axes
 T[TOOL_INDEX]        ; Select tool
@@ -884,33 +902,18 @@ M109 S[HOTEND_TEMP]  ; Set and wait for hotend temp
 ;G29                 ; Auto bed leveling
 M112                 ; Reading comprehension check! (emergency stop)`
 
-  var MARLIN_END_GCODE = `\
-M107     ; Turn off fan
-M400     ; Finish moving
-M104 S0  ; Turn off hotend
-M140 S0  ; Turn off bed
-G91      ; Relative XYZ
-G0 Z5    ; Move up 5mm
-G90      ; Absolute XYZ
-M84      ; Disable motors
-M501     ; Load settings from EEPROM (to restore previous values)`
-
   switch (true){
     case $('#START_GCODE_TYPE').val() == "custom" :
       $('#START_GCODE').val(CANNED_GCODE);
-      $('#END_GCODE').val(KLIPPER_END_GCODE);
       break;
     case $('#START_GCODE_TYPE').val() == "custom-marlin" :
       $('#START_GCODE').val(MARLIN_GCODE);
-      $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
     case $('#START_GCODE_TYPE').val() == "standalone" :
       $('#START_GCODE').val(STANDALONE_MACRO);
-      $('#END_GCODE').val(KLIPPER_END_GCODE);
       break;
     case $('#START_GCODE_TYPE').val() == 'standalone_temp_passing' :
       $('#START_GCODE').val(STANDALONE_TEMP_PASSING_MACRO);
-      $('#END_GCODE').val(KLIPPER_END_GCODE);
       break;
   }
   validate();
@@ -935,6 +938,21 @@ It must contain <strong>all necessary preparatory g-codes!</strong><br>
 }
 
 function toggleFirmwareOptions(){
+  var MARLIN_END_GCODE = `\
+M107     ; Turn off fan
+M400     ; Finish moving
+M104 S0  ; Turn off hotend
+M140 S0  ; Turn off bed
+G91      ; Relative XYZ
+G0 Z5    ; Move up 5mm
+G90      ; Absolute XYZ
+M84      ; Disable motors
+M501     ; Load settings from EEPROM (to restore previous values)`
+
+  var KLIPPER_END_GCODE = `\
+PRINT_END ; End macro
+RESTART   ; Restart Klipper to reset PA value`
+
   switch(true){
     case $('#FIRMWARE').val().includes('marlin') :
       $('#TOOL_INDEX').parents().eq(1).show()
@@ -945,6 +963,7 @@ function toggleFirmwareOptions(){
       $('label[for=PA_END]').html('End K Value')
       $('label[for=PA_STEP]').html('K Value Increment')
       $('#START_GCODE_TYPE').parents().eq(1).hide()
+      $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
     default :
       $('#TOOL_INDEX').parents().eq(1).hide()
@@ -957,6 +976,7 @@ function toggleFirmwareOptions(){
       $('label[for=PA_END]').html('PA End Value')
       $('label[for=PA_STEP]').html('PA Increment')
       $('#START_GCODE_TYPE').parents().eq(1).show()
+      $('#END_GCODE').val(KLIPPER_END_GCODE);
   }
 }
 
@@ -985,10 +1005,12 @@ function toggleFirmwareValues(){
 }
 
 function togglePatternOptions(){
-  if ($('#PATTERN_OPTIONS_ENABLE').is(':checked')) {
-    $('#patternSettingsHead').children().show()
-  } else {
-    $('#patternSettingsHead').children().hide()
+  for (var i = 1; i < $('#patternSettingsHead').children().length; i++) {
+    if ($('#PATTERN_OPTIONS_ENABLE').is(':checked')) {
+      $('#patternSettingsHead').children().eq(i).show()
+    } else {
+      $('#patternSettingsHead').children().eq(i).hide()
+    }
   }
 }
 
@@ -1096,7 +1118,6 @@ function validate(updateRender = false) {
     BED_TEMP: $('#BED_TEMP').val(),
     BED_X: $('#BED_X').val(),
     BED_Y: $('#BED_Y').val(),
-    TOOL_INDEX: $('#TOOL_INDEX').val(),
     EXT_MULT: $('#EXT_MULT').val(),
     FAN_SPEED: $('#FAN_SPEED').val(),
     FAN_SPEED_FIRSTLAYER: $('#FAN_SPEED_FIRSTLAYER').val(),
@@ -1121,17 +1142,18 @@ function validate(updateRender = false) {
     SPEED_RETRACT: $('#SPEED_RETRACT').val(),
     SPEED_TRAVEL: $('#SPEED_TRAVEL').val(),
     SPEED_UNRETRACT: $('#SPEED_UNRETRACT').val(),
+    TOOL_INDEX: $('#TOOL_INDEX').val(),
     ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val()
     //PRIME_EXT: $('#ENT_MULT_PRIME').val(),
     //PRIME_SPEED: $('#PRIME_SPEED').val(),
   }
 
   var decimals = getDecimals(parseFloat(testNaN['PA_STEP']));
-  var invalidDiv = 0;
+  var invalid = 0;
   var validationFail = false;
   
   // Reset all warnings before re-check
-  $('ANCHOR_LAYER_LINE_RATIO,#BED_TEMP,#BED_X,#BED_Y,#TOOL_INDEX,#END_GCODE,#EXT_MULT,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#HEIGHT_FIRSTLAYER,#HEIGHT_PRINT,#HOTEND_TEMP,#LAYER_HEIGHT,#LINE_RATIO,#NOZZLE_DIAMETER,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#PA_END,#PA_START,#PA_STEP,#PERIMETERS,#PRINT_ACCL,#RETRACT_DIST,#SPEED_FIRSTLAYER,#SPEED_PERIMETER,#SPEED_RETRACT,#SPEED_TRAVEL,#SPEED_UNRETRACT,#START_GCODE,#START_GCODE_TYPE,#ZHOP_HEIGHT').each((i,t) => {
+  $('ANCHOR_LAYER_LINE_RATIO,#BED_TEMP,#BED_X,#BED_Y,#TOOL_INDEX,#END_GCODE,#EXT_MULT,#EXTRUDER_NAME,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#FILENAME,#HEIGHT_FIRSTLAYER,#HEIGHT_PRINT,#HOTEND_TEMP,#LAYER_HEIGHT,#LINE_RATIO,#NOZZLE_DIAMETER,#PATTERN_ANGLE,#PATTERN_SIDE_LENGTH,#PATTERN_SPACING,#PA_END,#PA_START,#PA_STEP,#PERIMETERS,#PRINT_ACCL,#RETRACT_DIST,#SPEED_FIRSTLAYER,#SPEED_PERIMETER,#SPEED_RETRACT,#SPEED_TRAVEL,#SPEED_UNRETRACT,#START_GCODE,#START_GCODE_TYPE,#ZHOP_HEIGHT').each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
     $(`label[for=${tid}]`).removeClass();
@@ -1147,36 +1169,54 @@ function validate(updateRender = false) {
   // Check for proper numerical values
   Object.keys(testNaN).forEach((k) => {
     if ((isNaN(testNaN[k]) && !isFinite(testNaN[k])) || testNaN[k].trim().length === 0 || testNaN[k] < 0) {
-      $('label[for=' + k + ']').addClass('invalidNumber');
+      $('label[for=' + k + ']').addClass('invalid');
       $('#warning3').text('Some values are not proper numbers. Check highlighted Settings.');
-      $('#warning3').addClass('invalidNumber');
+      $('#warning3').addClass('invalid');
       $('#warning3').show();
       validationFail = true;
     }
   });
+
+  // Check text inputs
+  if ($('#FILENAME').val() == '' || $('#FILENAME').val() == null) {
+    $('label[for=FILENAME]').addClass('invalid');
+    $('#warning2').text('File name cannot be blank.');
+    $('#warning2').addClass('invalid');
+    $('#warning2').show();
+    validationFail = true;
+  }
+
+    // Check text inputs
+  if ($('#EXTRUDER_NAME').val() == '' || $('#EXTRUDER_NAME').val() == null) {
+    $('label[for=EXTRUDER_NAME]').addClass('invalid');
+    $('#warning3').text('Extruder name cannot be blank.');
+    $('#warning3').addClass('invalid');
+    $('#warning3').show();
+    validationFail = true;
+  }
   
   if (!validationFail){ // only check if above checks pass
     // Check if pressure advance stepping is a multiple of the pressure advance Range
     if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
-      $('label[for=PA_START]').addClass('invalidDiv');
-      $('label[for=PA_END]').addClass('invalidDiv');
-      $('label[for=PA_STEP]').addClass('invalidDiv');
+      $('label[for=PA_START]').addClass('invalid');
+      $('label[for=PA_END]').addClass('invalid');
+      $('label[for=PA_STEP]').addClass('invalid');
       $('#warning1').text('Your PA range cannot be cleanly divided. Check highlighted sttings.');
-      $('#warning1').addClass('invalidDiv');
+      $('#warning1').addClass('invalid');
       $('#warning1').show();
-      invalidDiv = 1;
+      invalid = 1;
       validationFail = true;
     } 
   }
 
   if (!validationFail){ // only check if above checks pass
     if (parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']) < 0) { // Check if pressure advance stepping is a multiple of the pressure advance Range
-      $('label[for=PA_START]').addClass('invalidDiv');
-      $('label[for=PA_END]').addClass('invalidDiv');
+      $('label[for=PA_START]').addClass('invalid');
+      $('label[for=PA_END]').addClass('invalid');
       $('#warning1').text('Your PA start value cannot be higher than your PA end value. Check highlighted settings.');
-      $('#warning1').addClass('invalidDiv');
+      $('#warning1').addClass('invalid');
       $('#warning1').show();
-      invalidDiv = 1;
+      invalid = 1;
       validationFail = true;
     } 
   }
@@ -1185,61 +1225,65 @@ function validate(updateRender = false) {
       // Check if pattern settings exceed bed size
       // too tall for round bed
       if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BED_X']) - 5)) && FIT_HEIGHT > FIT_WIDTH) {
-        $('label[for=PA_START]').addClass('invalidSize');
-        $('label[for=PA_END]').addClass('invalidSize');
-        $('label[for=PA_STEP]').addClass('invalidSize');
-        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-        $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
-        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('label[for=PA_START]').addClass('invalid');
+        $('label[for=PA_END]').addClass('invalid');
+        $('label[for=PA_STEP]').addClass('invalid');
+        $('label[for=PATTERN_SPACING]').addClass('invalid');
+        $('label[for=PATTERN_ANGLE]').addClass('invalid');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalid');
+        $('label[for=PERIMETERS]').addClass('invalid');
+        $('label[for=BED_X]').addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
+        $((invalid ? '#warning2' : '#warning1')).addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).show();
         validationFail = true;
       }
 
       // too wide for round bed
       if (BED_SHAPE === 'Round' && (Math.sqrt(Math.pow(FIT_WIDTH, 2) + Math.pow(FIT_HEIGHT, 2)) > (parseInt(testNaN['BED_X']) - 5)) && FIT_WIDTH > FIT_HEIGHT) {
-        $('label[for=PA_START]').addClass('invalidSize');
-        $('label[for=PA_END]').addClass('invalidSize');
-        $('label[for=PA_STEP]').addClass('invalidSize');
-        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-        $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
-        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('label[for=PA_START]').addClass('invalid');
+        $('label[for=PA_END]').addClass('invalid');
+        $('label[for=PA_STEP]').addClass('invalid');
+        $('label[for=PATTERN_SPACING]').addClass('invalid');
+        $('label[for=PATTERN_ANGLE]').addClass('invalid');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalid');
+        $('label[for=PERIMETERS]').addClass('invalid');
+        $('label[for=BED_X]').addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your bed\'s diameter. Check highlighted settings.');
+        $((invalid ? '#warning2' : '#warning1')).addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).show();
         validationFail = true;
       }
 
       // too wide
       if (BED_SHAPE === 'Rect' && FIT_WIDTH > (parseInt(testNaN['BED_X']) - 5)) {
-        $('label[for=PA_START]').addClass('invalidSize');
-        $('label[for=PA_END]').addClass('invalidSize');
-        $('label[for=PA_STEP]').addClass('invalidSize');
-        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-        $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted settings.');
-        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).show();
+        $('label[for=PA_START]').addClass('invalid');
+        $('label[for=PA_END]').addClass('invalid');
+        $('label[for=PA_STEP]').addClass('invalid');
+        $('label[for=PATTERN_SPACING]').addClass('invalid');
+        $('label[for=PATTERN_ANGLE]').addClass('invalid');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalid');
+        $('label[for=PERIMETERS]').addClass('invalid');
+        $('label[for=BED_X]').addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your X bed size. Check highlighted settings.');
+        $((invalid ? '#warning2' : '#warning1')).addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).show();
         validationFail = true;
       }
 
       // too tall
-      if (BED_SHAPE === 'Rect' && FIT_HEIGHT > (parseInt(testNaN['BEDSIZE_Y']) - 5)) {
-        $('label[for=PA_START]').addClass('invalidSize');
-        $('label[for=PA_END]').addClass('invalidSize');
-        $('label[for=PA_STEP]').addClass('invalidSize');
-        $('label[for=PATTERN_SPACING]').addClass('invalidSize');
-        $('label[for=PATTERN_ANGLE]').addClass('invalidSize');
-        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalidSize');
-        $('label[for=PERIMETERS]').addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted settings.');
-        $((invalidDiv ? '#warning2' : '#warning1')).addClass('invalidSize');
-        $((invalidDiv ? '#warning2' : '#warning1')).show();
+      if (BED_SHAPE === 'Rect' && FIT_HEIGHT > (parseInt(testNaN['BED_Y']) - 5)) {
+        $('label[for=PA_START]').addClass('invalid');
+        $('label[for=PA_END]').addClass('invalid');
+        $('label[for=PA_STEP]').addClass('invalid');
+        $('label[for=PATTERN_SPACING]').addClass('invalid');
+        $('label[for=PATTERN_ANGLE]').addClass('invalid');
+        $('label[for=PATTERN_SIDE_LENGTH]').addClass('invalid');
+        $('label[for=PERIMETERS]').addClass('invalid');
+        $('label[for=BED_Y]').addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).text('Your Pattern size (x: ' + Math.round(FIT_WIDTH) + ', y: ' + Math.round(FIT_HEIGHT) + ') exceeds your Y bed size. Check highlighted settings.');
+        $((invalid ? '#warning2' : '#warning1')).addClass('invalid');
+        $((invalid ? '#warning2' : '#warning1')).show();
         validationFail = true;
       }
   }
@@ -1247,7 +1291,7 @@ function validate(updateRender = false) {
   // check start g-code for missing essential g-codes
   var message = '';
   $('#startGcodeWarning').hide();
-  $('#startGcodeWarning').removeClass('invalidStartGcode');
+  $('#startGcodeWarning').removeClass('invalid');
   $('#startGcodeWarning').html('');
 
   switch(true){
@@ -1268,11 +1312,11 @@ function validate(updateRender = false) {
   if (!(message == '')){
     message = "Your start g-code does not contain:<br>" + message + "Please check your start g-code."
     $('#startGcodeWarning').html(message);
-    $('#startGcodeWarning').addClass('invalidStartGcode');
+    $('#startGcodeWarning').addClass('invalid');
     $('#startGcodeWarning').show();
-    $('label[for=START_GCODE]').addClass('invalidStartGcode');
+    $('label[for=START_GCODE]').addClass('invalid');
     $('#warning4').text('Problems were found in your start g-code. Check highlighted setting.');
-    $('#warning4').addClass('invalidStartGcode');
+    $('#warning4').addClass('invalid');
     $('#warning4').show();
     validationFail = true;
   }
@@ -1310,14 +1354,15 @@ $(window).load(() => {
       $('#BED_TEMP').val(settings['BED_TEMP']);
       $('#BED_X').val(settings['BED_X']);
       $('#BED_Y').val(settings['BED_Y']);
+      $('#ECHO').prop('checked', settings['ECHO']);
       $('#END_GCODE').val(settings['END_GCODE']);
       $('#ENT_MULT_PRIME').val(settings['EXT_MULT_PRIME']);
-      $('#TOOL_INDEX').val(settings['TOOL_INDEX']);
       $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
       $('#EXT_MULT').val(settings['EXT_MULT']);
       $('#FAN_SPEED').val(settings['FAN_SPEED']);
       $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
       $('#FILAMENT_DIAMETER').val(settings['FILAMENT_DIAMETER']);
+      $('#FILENAME').val(settings['FILENAME']);
       $('#FIRMWARE').val(settings['FIRMWARE']);
       $('#HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
       $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
@@ -1347,6 +1392,7 @@ $(window).load(() => {
       $('#SPEED_UNRETRACT').val(settings['SPEED_UNRETRACT']);
       $('#START_GCODE').val(settings['START_GCODE']);
       $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
+      $('#TOOL_INDEX').val(settings['TOOL_INDEX']);
       $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
       $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
     }
