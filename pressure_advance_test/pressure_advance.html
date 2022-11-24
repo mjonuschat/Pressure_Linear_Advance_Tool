@@ -61,7 +61,8 @@
             </tr>
             <tr class="tdHead">
               <td colspan=2><label for="FILENAME" style="text-align: left;">File Name:</label></strong>
-                <input type=text id="FILENAME" value="pa_pattern" required="required" onblur="validate();" />.gcode&nbsp;
+                <input type=text id="FILENAME" value="pa_pattern" required="required"
+                  onblur="validate();" />.gcode&nbsp;
                 <input type=button id="downloadButton" onclick="validate(true); saveTextAsFile();"
                   value="Download G-code" />
                 <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font>
@@ -137,9 +138,10 @@
               <tr>
                 <td><label for=EXTRUDER_NAME>Extruder Name</label></th>
                 <td class=inputCell>
-                  <input type=text id="EXTRUDER_NAME" value="extruder" required="required" onblur=validate() />
+                  <input type=text id="EXTRUDER_NAME" onblur=validate() /> (optional, case sensitive)
                 </td>
-                <td colspan="2">Usually "extruder" if only one extruder. Allows choosing extruder if more than one</td>
+                <td colspan="2">Uncommon. For printers with multiple toolheads.<br>Enter the config section name of the
+                  desired extruder (e.g. "extruder2").<br><strong>Leave blank for standard printers.</strong></td>
               </tr>
               <tr>
                 <td><label for=TOOL_INDEX>Tool Index</label></th>

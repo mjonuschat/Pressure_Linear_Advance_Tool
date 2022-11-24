@@ -109,6 +109,8 @@ function setVars(){
   SPEED_RETRACT *= 60;
   SPEED_UNRETRACT *= 60;
 
+  EXTRUDER_NAME = EXTRUDER_NAME.trim()
+
   // replace variables with actual numbers in start g-code
   START_GCODE = START_GCODE.replace(/\[HOTEND_TEMP\]/g, HOTEND_TEMP)
   START_GCODE = START_GCODE.replace(/\[BED_TEMP\]/g, BED_TEMP)
@@ -268,6 +270,7 @@ pa_script += `\
 ;
 ; Prepare printing
 ; 
+${(EXTRUDER_NAME != '' ? `ACTIVATE_EXTRUDER EXTRUDER=${EXTRUDER_NAME} ; Activate extruder\n`: '')}\
 ${START_GCODE}
 G21 ; Millimeter units
 G90 ; Absolute XYZ
@@ -296,7 +299,11 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
                moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
   
   if (FIRMWARE == 'klipper'){
-    pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;
+      if (EXTRUDER_NAME != ''){
+      pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;
+    } else {
+      pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} ; Set pressure advance\n`;
+    }
     if (ECHO){pa_script += `M117 PA${Math.round10(PA_START, PA_round)}\n`}
   }
   else {
@@ -347,7 +354,11 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
 
       // increment pressure advance
       if (FIRMWARE == 'klipper'){
-        pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10((PA_START + (j * PA_STEP)), PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;
+        if (EXTRUDER_NAME != ''){
+          pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10((PA_START + (j * PA_STEP)), PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance\n`;
+        } else {
+          pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10((PA_START + (j * PA_STEP)), PA_round)} ; Set pressure advance\n`;
+        }
         if (ECHO){pa_script += `M117 PA${Math.round10((PA_START + (j * PA_STEP)), PA_round)}\n`}
       }
       else {
@@ -426,7 +437,11 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   */
   
   if (FIRMWARE == 'klipper'){
-    pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;
+    if (EXTRUDER_NAME != ''){
+      pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;
+    } else {
+      pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} ; Set pressure advance back to start value\n`;
+    }
     if (ECHO){pa_script += `M117 PA${Math.round10(PA_START, PA_round)}\n`}
   }
   else {
@@ -857,7 +872,6 @@ function togglePrime() {
 
 function toggleStartEndGcode(){
   var CANNED_GCODE = `\
-ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME] ; Activate extruder
 G28                                        ; Home all axes
 G90                                        ; Use absolute positioning
 G1 Z5 F100                                 ; Z raise
@@ -871,7 +885,6 @@ G28 Z                                      ; Home Z
 M112                                       ; Reading comprehension check! (emergency stop)`
 
   var STANDALONE_MACRO = `\
-ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME] ; Activate extruder
 M190 S[BED_TEMP]                           ; Set and wait for bed temp
 M109 S[HOTEND_TEMP]                        ; Set and wait for hotend temp
 PRINT_START                                ; Start macro
@@ -882,8 +895,7 @@ PRINT_START                                ; Start macro
 M112                                       ; Reading comprehension check! (emergency stop)`
 
   var STANDALONE_TEMP_PASSING_MACRO = `\
-ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME]      ; Activate extruder
-PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] ; Start macro w/ temp params
+PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] CHAMBER=40 ; Start macro w/ temp params
 ;
 ; - Make sure the macro name AND parameter names match YOUR start macro setup!
 ;     (For example, some macros use EXTRUDER=X rather than HOTEND=X, or START_PRINT instead of PRINT_START)!
@@ -1186,7 +1198,8 @@ function validate(updateRender = false) {
     validationFail = true;
   }
 
-    // Check text inputs
+  // Check text inputs
+  /*
   if ($('#EXTRUDER_NAME').val() == '' || $('#EXTRUDER_NAME').val() == null) {
     $('label[for=EXTRUDER_NAME]').addClass('invalid');
     $('#warning3').text('Extruder name cannot be blank.');
@@ -1194,6 +1207,7 @@ function validate(updateRender = false) {
     $('#warning3').show();
     validationFail = true;
   }
+  */
   
   if (!validationFail){ // only check if above checks pass
     // Check if pressure advance stepping is a multiple of the pressure advance Range
