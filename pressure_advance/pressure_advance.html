@@ -15,7 +15,7 @@
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-2.2.1.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="../javascript/jquery-ui.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./FileSaver.min.js?v1"></script>
-  <script language="JavaScript" type="text/javascript" src="./pressure_advance.js?v6"></script>
+  <script language="JavaScript" type="text/javascript" src="./pressure_advance.js?v5"></script>
   <script src="./gcode-viewer.js?v1"></script>
   <div class="container" role="main">
     <div class="row">
@@ -475,13 +475,11 @@
                 <tr>
                   <!--TODO: Smooth time toggle?-->
                   <td><label for=PA_START>PA Start Value</label></td>
-                  <td class=inputCell id="start_factor" colspan=3>
+                  <td class=inputCell id="start_factor" colspan=1>
                     <input type=number id="PA_START" step=0.0005 value=0 onblur="validate(true)" />
                   </td>
-                </tr>
-                <tr>
                   <td><label for=PA_END>PA End Value</label></td>
-                  <td class=inputCell id="end_factor" colspan="3">
+                  <td class=inputCell id="end_factor" colspan="1">
                     <input type=number id="PA_END" step=0.0005 value=0.08 onblur="validate(true)" />
                   </td>
                 </tr>
@@ -494,21 +492,20 @@
                     Start)</td>
                 </tr>
                 <tr>
+                  <td><label for=USE_LINENO>Numbering</label></td>
+                  <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked onchange="toggleLeadingZero(); validate(true)" />
+                  </td>
+                  <td><label for=LINENO_NO_LEADING_ZERO>No Leading Zeroes</label></td>
+                  <td class=inputCell><input type=checkbox id="LINENO_NO_LEADING_ZERO"
+                      onchange="validate(true)" />
+                  </td>
+                </tr>
+                <tr>
                   <td><label for=ECHO>Show on LCD</label></td>
                   <td class=inputCell><input type=checkbox id="ECHO" checked=checked /></td>
-                  <td id="step_factor" colspan="2">Echo current value to the LCD using <tt>M117</tt></td>
+                  <td colspan="2">Echo current value to the LCD using <tt>M117</tt></td>
                 </tr>
               </thead>
-              <!--
-          <tr>
-            <td><label for=LINE_NO>Line Numbering</label></td>
-            <td class=inputCell><input type=checkbox id="LINE_NO" checked=checked /></td>
-            <td>Prints the pressure advance value beside every second test line</td>
-          </tr>
-          <tr>
-            <td colspan=4 class=tdSection><h4>Advanced</h4></td>
-          </tr>
-          -->
               <!--
           <tr>
             <td><label for=PRIME>Prime Line</label></td>

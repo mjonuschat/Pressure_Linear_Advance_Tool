@@ -19,12 +19,15 @@
 'use strict';
 
 // increment to invalidate saved settings
-const SETTINGS_VERSION = '1';
+const SETTINGS_VERSION = '2';
 
 const PA_round = -4; // Was previously -3
 const Z_round = -3;
 const XY_round = -4;
 const EXT_round = -5; // Was previously -4
+
+const GLYPH_PADDING_HORIZONTAL = 1;
+const GLYPH_PADDING_VERTICAL = 1;
 
 var CUR_X = 0, // Globally track current coordinates
     CUR_Y = 0,
@@ -58,6 +61,7 @@ function setVars(){
   window.HEIGHT_PRINT = parseFloat($('#HEIGHT_PRINT').val());
   window.HOTEND_TEMP = parseInt($('#HOTEND_TEMP').val());
   window.LINE_RATIO = parseFloat($('#LINE_RATIO').val());
+  window.LINENO_NO_LEADING_ZERO = $('#LINENO_NO_LEADING_ZERO').prop('checked');
   window.NOZZLE_DIAMETER = parseFloat($('#NOZZLE_DIAMETER').val());
   window.ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked');
   window.PATTERN_ANGLE = parseInt($('#PATTERN_ANGLE').val());
@@ -79,10 +83,10 @@ function setVars(){
   window.START_GCODE = $('#START_GCODE').val();
   window.START_GCODE_TYPE = $('#START_GCODE_TYPE').val();
   window.TOOL_INDEX = $('#TOOL_INDEX').val();
+  window.USE_LINENO = $('#USE_LINENO').prop('checked');
   window.ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
   window.ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
   //SPEED_PRIME = parseInt($('#PRIME_SPEED').val());
-  //USE_LINENO = $('#LINE_NO').prop('checked');
   //USE_PRIME = $('#PRIME').prop('checked');
 
   // adjust settings
@@ -143,8 +147,30 @@ function setVars(){
   if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out (frame thickness - 1 perim) so last pattern's tip doesn't run over it on the first layer
     PRINT_SIZE_X += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
   }
+  window.FRAME_SIZE_Y = (Math.sin(toRadians(PATTERN_ANGLE / 2)) * PATTERN_SIDE_LENGTH) * 2
+
   window.PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
   window.PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
+
+  if (USE_LINENO){
+    window.GLYPH_START_X = PAT_START_X + ((((PERIMETERS - 1) / 2) * LINE_SPACING_ANGLE) -2);
+    window.GLYPH_END_X = PAT_START_X +
+                  ((NUM_PATTERNS - 1) * (PATTERN_SPACING + LINE_WIDTH)) + 
+                  ((NUM_PATTERNS - 1) * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)) + 4;
+
+    window.GLYPH_TAB_MAX_X = GLYPH_END_X + GLYPH_PADDING_HORIZONTAL
+    if (PAT_START_X - GLYPH_START_X + GLYPH_PADDING_HORIZONTAL > 0){
+      window.PATTERNSHIFT = PAT_START_X - GLYPH_START_X + GLYPH_PADDING_HORIZONTAL
+    } else (window.PATTERNSHIFT = 0)
+
+    // adjust final dimensions again
+    PRINT_SIZE_X += PATTERNSHIFT
+    PRINT_SIZE_Y += calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + GLYPH_PADDING_VERTICAL * 2
+    window.PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
+    window.PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
+  } else {
+    window.PATTERNSHIFT = 0;
+  }
 
   // real world print size, accounting for rotation and line widths.
   // this is just used to ensure it will fit on the print bed during input validation
@@ -161,6 +187,7 @@ function genGcode() {
   var basicSettings = {
     'firstLayerSpeed': SPEED_FIRSTLAYER,
     'moveSpeed': SPEED_TRAVEL,
+    'numPatterns': NUM_PATTERNS,
     'perimSpeed': SPEED_PERIMETER,
     'centerX': CENTER_X,
     'centerY': CENTER_Y,
@@ -175,12 +202,16 @@ function genGcode() {
     'anchorExtRatio': ANCHOR_LAYER_EXTRUSION_RATIO,
     'anchorLineWidth': ANCHOR_LAYER_LINE_WIDTH,
     'anchorLineSpacing': ANCHOR_LAYER_LINE_SPACING,
+    'anchorPerimeters': ANCHOR_PERIMETERS,
     'retractDist': RETRACT_DIST,
     'retractSpeed': SPEED_RETRACT,
     'unretractSpeed': SPEED_UNRETRACT,
     'extruderName': EXTRUDER_NAME,
     'zhopEnable': ZHOP_ENABLE,
-    'zhopHeight': ZHOP_HEIGHT
+    'zhopHeight': ZHOP_HEIGHT,
+    'paStart': PA_START,
+    'paEnd': PA_END,
+    'paStep': PA_STEP
   };
 
   // Start G-code for pattern
@@ -219,7 +250,7 @@ ${(FIRMWARE == 'klipper' ? `;  - Extruder Name: ${EXTRUDER_NAME}\n`: `;  - Extru
 ;  - Retract Speed: ${SPEED_RETRACT / 60} mm/s
 ;  - Unretract Speed: ${SPEED_UNRETRACT / 60} mm/s
 ;  - Z Hop Enable: ${ZHOP_ENABLE}
-${(ZHOP_ENABLE ? `;  - Z Hop Height: ${ZHOP_HEIGHT}mm`: '')} 
+${(ZHOP_ENABLE ? `;  - Z Hop Height: ${ZHOP_HEIGHT}mm\n`: '')}\
 ;
 ; First Layer Settings:
 ;  - First Layer Height: ${HEIGHT_FIRSTLAYER} mm
@@ -247,6 +278,8 @@ ${(ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width: ${ANCHOR_LAYER_LINE_R
 ;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Start Value: ${Math.round10(PA_START, PA_round)}
 ;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} End Value: ${PA_END}
 ;  - ${(FIRMWARE == 'klipper' ? 'PA' : 'LA')} Increment: ${PA_STEP}
+;  - Numbering: ${USE_LINENO}
+${(USE_LINENO ? `;  - No Leading Zeroes: ${LINENO_NO_LEADING_ZERO}\n`: '')}\
 ;  - Show on LCD: ${ECHO}
 ;
 ; Calculated Values:
@@ -293,10 +326,9 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
       TO_Z = HEIGHT_FIRSTLAYER;
 
   CUR_Z = HEIGHT_FIRSTLAYER; // set initial Z coordinate, otherwise z hop will go back to 0 at first
-7
-  //Move to layer height then start position, set initial PA
-  pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start position\n'}) + 
-               moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
+
+  // Move to layer height, set initial PA
+  pa_script += moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
   
   if (FIRMWARE == 'klipper'){
       if (EXTRUDER_NAME != ''){
@@ -310,29 +342,45 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     pa_script += `M900 K${Math.round10(PA_START, PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;
     if (ECHO){pa_script += `M117 K${Math.round10(PA_START, PA_round)}\n`}
   }
-    
+
   if (ANCHOR_OPTION == 'anchor_frame'){
-    pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, ANCHOR_PERIMETERS, basicSettings);
+    pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings);
   }
   else if (ANCHOR_OPTION == 'anchor_layer'){
-    // create enough perims to reach center (concentric fill)
-    
-    var NUM_CONCENTRIC = Math.min(
-                                  Math.floor((PRINT_SIZE_Y * Math.sin(toRadians(45))) / (ANCHOR_LAYER_LINE_SPACING / Math.sin(toRadians(45)))),
-                                  Math.floor((PRINT_SIZE_X * Math.sin(toRadians(45))) / (ANCHOR_LAYER_LINE_SPACING / Math.sin(toRadians(45))))
-                                 );
-    pa_script += createAnchorPerimeters(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, PRINT_SIZE_Y, NUM_CONCENTRIC, basicSettings);
+    pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings, {fill: true});
+  }
+
+  if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
+    pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.75)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
   }
 
   // draw PA pattern
   for (let i = (ANCHOR_OPTION == 'anchor_layer' ? 1 : 0); i < NUM_LAYERS ; i++){ // skip first layer if using full anchor layer
-    TO_X = PAT_START_X;
-    TO_Y = PAT_START_Y;
-    TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
-
     if (i == 1){ // set new fan speed after first layer
-      pa_script += `M106 S${Math.round(FAN_SPEED * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed\n`
+      pa_script += `M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed\n`
     }
+
+    TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
+    moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
+
+    if (USE_LINENO){ // draw line numbering
+      if (i == 1){ // if second layer
+        for (let j = 0; j < NUM_PATTERNS; j++){
+          if (j % 2 == 0){ // glyph on every other line
+            var THIS_GLYPH_START_X = PAT_START_X + 
+                (j * (PATTERN_SPACING + LINE_WIDTH)) + 
+                (j * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)); // this aligns glyph starts with first pattern perim
+            THIS_GLYPH_START_X += (((PERIMETERS - 1) / 2) * LINE_SPACING_ANGLE) -2; // shift glyph center to middle of pattern perimeters. 2 = half of glyph
+            THIS_GLYPH_START_X += PATTERNSHIFT // adjust for pattern shift
+
+            pa_script += createGlyphs(THIS_GLYPH_START_X, (PAT_START_Y + FRAME_SIZE_Y + GLYPH_PADDING_VERTICAL + ANCHOR_LAYER_LINE_WIDTH), basicSettings, Math.round10((PA_START + (j * PA_STEP)), PA_round), LINENO_NO_LEADING_ZERO);
+          }
+        }  
+      }
+    }
+
+    TO_X = PAT_START_X + PATTERNSHIFT;
+    TO_Y = PAT_START_Y;
 
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
       var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1)) / Math.sin(toRadians(PATTERN_ANGLE) / 2);
@@ -347,11 +395,9 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
         INITIAL_Y = TO_Y;
 
     // move to start xy then layer height
-    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start\n'}) +
-                 moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
+    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to pattern start\n'})
 
     for (let j = 0; j < NUM_PATTERNS; j++){
-
       // increment pressure advance
       if (FIRMWARE == 'klipper'){
         if (EXTRUDER_NAME != ''){
@@ -365,7 +411,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
         pa_script += `M900 K${Math.round10((PA_START + (j * PA_STEP)), PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;
         if (ECHO){pa_script += `M117 K${Math.round10((PA_START + (j * PA_STEP)), PA_round)}\n`}
       }
-                   
+    
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
@@ -411,31 +457,8 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
                 createLine(primeStartX + (LINE_WIDTH * 1.5), primeStartY, -PRINT_SIZE_Y, basicSettings, {'extMult': EXT_MULT_PRIME, 'speed': SPEED_PRIME}) +
                 doEfeed('-', basicSettings);
   }
-
-  // print K values beside the test lines
-  if (USE_LINENO) {
-    var numStartX = CENTER_X + (0.5 * PATTERN_SIDE_LENGTH) + LENGTH_SLOW + (USE_PRIME ? 5 : 0) - 2,
-        numStartY = PAT_START_Y - 2,
-        stepping = 0;
-
-    pa_script += ';\n' +
-                '; print K-values\n' +
-                ';\n';
-
-    for (var i = PA_START; i <= PA_END; i += PA_STEP) {
-      if (stepping % 2 === 0) {
-        pa_script += moveTo(numStartX, numStartY + (stepping * PATTERN_SPACING), basicSettings) +
-                    zHop((HEIGHT_LAYER + Z_OFFSET), basicSettings) +
-                    doEfeed('+', basicSettings) +
-                    createGlyphs(numStartX, numStartY + (stepping * PATTERN_SPACING), basicSettings, Math.round10(i, PA_round)) +
-                    doEfeed('-', basicSettings) +
-                    zHop((HEIGHT_LAYER + Z_OFFSET) + 0.1, basicSettings);
-      }
-      stepping += 1;
-    }
-  }
   */
-  
+
   if (FIRMWARE == 'klipper'){
     if (EXTRUDER_NAME != ''){
       pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} EXTRUDER=${EXTRUDER_NAME} ; Set pressure advance back to start value\n`;
@@ -459,6 +482,105 @@ ${END_GCODE}
 `;
 
   $('#gcodetextarea').val(pa_script);
+}
+
+function calcMaxGlyphHeight(removeLeadingZeroes = false){
+  var sNumber = '',
+      maxHeight = 0,
+      curHeight = 0;
+
+  for (let i = 0; i < NUM_PATTERNS ; i++){
+    if (i % 2 == 0){
+      curHeight = 0
+      sNumber = (Math.round10((PA_START + (i * PA_STEP)), PA_round)).toString()
+      if (removeLeadingZeroes){sNumber = sNumber.replace(/^0+\./, '.')}
+      for (var j = 0; j < sNumber.length; j ++){
+        if (!(sNumber.charAt(j) === '1' || sNumber.charAt(j) === '.')) {
+          curHeight += 3 // glyph spacing
+        }
+      }
+      if (curHeight > maxHeight){maxHeight = curHeight}
+    }
+  }
+  return maxHeight;
+}
+
+// create digits for line numbering
+function createGlyphs(startX, startY, basicSettings, value, removeLeadingZeroes = false) {
+  var glyphSegLength = 2,
+      glyphDotSize = 0.75,
+      glyphSpacing = 3.0,
+      totalSpacing = 0,
+      glyphString = '',
+      sNumber = value.toString(),
+      glyphSeg = {
+        '1': ['bl','right','right'],
+        '2': ['bl','up','right','down','right','up'],
+        '3': ['bl','up','right','down','mup','right','down'],
+        '4': ['ul','right','right','mleft','down','left'],
+        '5': ['ul','down','right','up','right','down'],
+        '6': ['ul','down','right','right','up','left','down'],
+        '7': ['bl','up','right','right'],
+        '8': ['bl','right','right','up','left','left','down','mright','up'],
+        '9': ['br','up','left','left','down','right','up'],
+        '0': ['bl','right','right','up','left','left','down'],
+        '.': ['br','dot']
+      };
+
+  if (removeLeadingZeroes){sNumber = sNumber.replace(/^0+\./, '.')} 
+
+  for (var i = 0, len = sNumber.length; i < len; i += 1) { // loop through string chars
+    for (var key in glyphSeg[sNumber.charAt(i)]) { // loop through segments corresponding to current char
+      if(glyphSeg[sNumber.charAt(i)].hasOwnProperty(key)) {
+        switch (true){
+          case glyphSeg[sNumber.charAt(i)][key] === 'bl' :
+            glyphString += moveTo(startX, startY + totalSpacing, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'br' :
+            glyphString += moveTo(startX + glyphSegLength * 2, startY + totalSpacing, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'ul' :
+            glyphString += moveTo(startX, startY + totalSpacing + glyphSegLength, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'ur' :
+            glyphString += moveTo(startX + glyphSegLength * 2, startY + totalSpacing + glyphSegLength, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'up' :
+            glyphString += createLine(CUR_X, CUR_Y + glyphSegLength, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'down' :
+            glyphString += createLine(CUR_X, CUR_Y - glyphSegLength, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'right' :
+            glyphString += createLine(CUR_X + glyphSegLength, CUR_Y,  basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'left' :
+            glyphString += createLine(CUR_X - glyphSegLength, CUR_Y, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'mup' :
+            glyphString += moveTo(CUR_X, CUR_Y + glyphSegLength, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'mdown' :
+            glyphString += moveTo(CUR_X, CUR_Y - glyphSegLength, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'mright' :
+            glyphString += moveTo(CUR_X + glyphSegLength, CUR_Y, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'mleft' :
+            glyphString += moveTo(CUR_X - glyphSegLength, CUR_Y, basicSettings);
+            break;
+          case glyphSeg[sNumber.charAt(i)][key] === 'dot' :
+            glyphString += createLine(CUR_X - glyphDotSize, CUR_Y, basicSettings, {speed: basicSettings['firstLayerSpeed'], extMult: basicSettings['extMult'],comment: ' ; Glyph: .\n'});
+        }
+      }
+    }
+    if (sNumber.charAt(i) === '1' || sNumber.charAt(i) === '.') {
+      totalSpacing += 1
+    } else {
+      totalSpacing += glyphSpacing
+    }
+  }
+  return glyphString;
 }
 
 
@@ -554,7 +676,7 @@ function createLine(to_x, to_y, basicSettings, optional) {
       length = 0,
       gcode = '';
 
-  //handle optional function arguements passed as object
+  //handle optional function arguments passed as object
   var defaults = {
     extMult: basicSettings['extMult'],
     extRatio: basicSettings['extRatio'],
@@ -589,11 +711,11 @@ function moveTo(to_x, to_y, basicSettings, optional) {
       distance = getDistance(CUR_X, CUR_Y, to_x, to_y);
 
   var defaults = {
-    comment: ' ; Move\n'
+      comment: ' ; Move\n'
   };
   var optArgs = $.extend({}, defaults, optional);
 
-  if(distance >= 2){ // don't retract for travels under 2mm
+  if(distance > 2){ // don't retract for travels under 2mm
     gcode += doEfeed('-', basicSettings); //retract
   }
 
@@ -647,116 +769,144 @@ function doEfeed(dir, basicSettings) {
 }
 
 // draw perimeter, move inwards, repeat
-function createAnchorPerimeters(min_x, min_y, max_x, max_y, num_perims, basicSettings, optional){
+function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
   var gcode = '',
-      to_x = min_x,
-      to_y = min_y;
+      x = min_x,
+      y = min_y,
+      max_x = min_x + size_x,
+      max_y = min_y + size_y;
 
   //handle optional function arguments passed as object
   var defaults = {
+    fill: false,
+    num_perims: basicSettings['anchorPerimeters'],
     spacing: basicSettings['anchorLineSpacing'],
     extRatio: basicSettings['anchorExtRatio'],
     speed: basicSettings['firstLayerSpeed'],
-    comment: ' ; Print line\n'
   };
 
   var optArgs = $.extend({}, defaults, optional);
-  
-  for (let i = 0; i < num_perims ; i++){
 
+  var maxPerims = Math.min( // this is the equivalent of number of perims for concentric fill
+                            Math.floor((size_x * Math.sin(toRadians(45))) / (optArgs['spacing'] / Math.sin(toRadians(45)))),
+                            Math.floor((size_y * Math.sin(toRadians(45))) / (optArgs['spacing'] / Math.sin(toRadians(45))))
+                          ); 
+  
+  optArgs['num_perims'] = Math.min(optArgs['num_perims'], maxPerims)
+  
+  if (min_x != CUR_X || min_y != CUR_Y){
+    gcode += moveTo(min_x, min_y, basicSettings, {comment: ' ; Move to box start\n'});
+  }
+
+  for (let i = 0; i < optArgs['num_perims'] ; i++){
     if (i != 0){ // after first perimeter, step inwards to start next perimeter
-      to_x += optArgs['spacing'];
-      to_y += optArgs['spacing'];
-      gcode += moveTo(to_x, to_y, basicSettings, {comment: ' ; Step inwards to print next anchor perimeter\n'})
+      x += optArgs['spacing'];
+      y += optArgs['spacing'];
+      gcode += moveTo(x, y, basicSettings, {comment: ' ; Step inwards to print next perimeter\n'})
     }
     // draw line up
-    to_y += max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (up)\n'});
-
+    y += size_y - (i * optArgs['spacing']) * 2;
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (up)\n'});
     // draw line right
-    to_x += max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (right)\n'});
-
+    x += size_x - (i * optArgs['spacing']) * 2;
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (right)\n'});
     // draw line down
-    to_y -= max_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (down)\n'});
-
+    y -= size_y - (i * optArgs['spacing']) * 2;
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (down)\n'});
     // draw line left
-    to_x -= max_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(to_x, to_y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw anchor perimeter (left)\n'});
+    x -= size_x - (i * optArgs['spacing']) * 2;
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (left)\n'});
   }
-  return gcode;
-}
 
-/*
-// create digits for K line numbering
-function createGlyphs(startX, startY, basicSettings, value) {
-  var glyphSegHeight = 2,
-      glyphSegHeight2 = 0.4,
-      glyphSpacing = 3.0,
-      glyphString = '',
-      xCount = 0,
-      yCount = 0,
-      sNumber = value.toString(),
-      glyphSeg = {
-        '1': ['up', 'up'],
-        '2': ['mup', 'mup', 'right', 'down', 'left', 'down', 'right'],
-        '3': ['mup', 'mup', 'right', 'down', 'down', 'left', 'mup', 'right'],
-        '4': ['mup', 'mup', 'down', 'right', 'mup', 'down', 'down'],
-        '5': ['right', 'up', 'left', 'up', 'right'],
-        '6': ['mup', 'right', 'down', 'left', 'up', 'up', 'right'],
-        '7': ['mup', 'mup', 'right', 'down', 'down'],
-        '8': ['mup', 'right', 'down', 'left', 'up', 'up', 'right', 'down'],
-        '9': ['right', 'up', 'left', 'up', 'right', 'down'],
-        '0': ['right', 'up', 'up', 'left', 'down', 'down'],
-        '.': ['dot']
-      };
+  if (optArgs['fill']){
+    const spacing_45 = optArgs['spacing'] / Math.sin(toRadians(45)),
+          encroachment = 0.25,
+          xMinBound = min_x + (optArgs['spacing'] * (optArgs['num_perims'] - 1) + optArgs['spacing'] * encroachment),
+          xMaxBound = max_x - (optArgs['spacing'] * (optArgs['num_perims'] - 1) + optArgs['spacing'] * encroachment),
+          yMinBound = min_y + (optArgs['spacing'] * (optArgs['num_perims'] - 1) + optArgs['spacing'] * encroachment),
+          yMaxBound = max_y - (optArgs['spacing'] * (optArgs['num_perims'] - 1) + optArgs['spacing'] * encroachment),
+          xCount = Math.floor((xMaxBound - xMinBound) / spacing_45),
+          yCount = Math.floor((yMaxBound - yMinBound) / spacing_45),
+          xRemainder = (xMaxBound - xMinBound) % spacing_45,
+          yRemainder = (yMaxBound - yMinBound) % spacing_45;
 
-  for (var i = 0, len = sNumber.length; i < len; i += 1) {
-    for (var key in glyphSeg[sNumber.charAt(i)]) {
-      if(glyphSeg[sNumber.charAt(i)].hasOwnProperty(key)) {
-        var up = createLine(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) + glyphSegHeight, glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            down = createLine(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) - glyphSegHeight, glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            right = createLine(startX + (xCount * glyphSegHeight) + glyphSegHeight, startY + (yCount * glyphSegHeight), glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            left = createLine(startX + (xCount * glyphSegHeight) - glyphSegHeight, startY + (yCount * glyphSegHeight), glyphSegHeight, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; ' + sNumber.charAt(i) + '\n'}),
-            mup = moveTo(startX + (xCount * glyphSegHeight), startY + (yCount * glyphSegHeight) + glyphSegHeight, basicSettings),
-            dot = createLine(startX, startY + glyphSegHeight2, glyphSegHeight2, basicSettings, {speed: basicSettings['firstLayerSpeed'], comment: ' ; dot\n'});
-        if (glyphSeg[sNumber.charAt(i)][key] === 'up') {
-          glyphString += up;
-          yCount += 1;
-        } else if (glyphSeg[sNumber.charAt(i)][key] === 'down') {
-          glyphString += down;
-          yCount -= 1;
-        } else if (glyphSeg[sNumber.charAt(i)][key] === 'right') {
-          glyphString += right;
-          xCount += 1;
-        } else if (glyphSeg[sNumber.charAt(i)][key] === 'left') {
-          glyphString += left;
-          xCount -= 1;
-        } else if (glyphSeg[sNumber.charAt(i)][key] === 'mup') {
-          glyphString += mup;
-          yCount += 1;
-        } else if (glyphSeg[sNumber.charAt(i)][key] === 'dot') {
-          glyphString += dot;
+    x = xMinBound
+    y = yMinBound
+    gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'],  comment: ' ; Move to fill start\n'}) // move to start
+
+    for (let i = 0; i < yCount + xCount; i++){ // this isn't the most robust way, but less expensive than finding line intersections
+      if (i < Math.min(yCount, xCount)){
+        if (i % 2 == 0){
+          x += spacing_45
+          y = yMinBound
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
+          y += (x - xMinBound)
+          x = xMinBound
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+        } else {
+          y += spacing_45
+          x = xMinBound
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
+          x += (y - yMinBound)
+          y = yMinBound
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+        }
+      } else if (i < Math.max(xCount,yCount)){
+        if (xCount > yCount){ // if box is wider than tall
+          if (i % 2 == 0){
+            x += spacing_45
+            y = yMinBound
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
+            x -= yMaxBound - yMinBound
+            y = yMaxBound
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+          } else {
+            (i == yCount ? x += (spacing_45 - yRemainder) : x += spacing_45)
+            y = yMaxBound
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
+            x += yMaxBound - yMinBound
+            y = yMinBound
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+          }
+        } else { // if box is taller than wide
+          if (i % 2 == 0){
+            x = xMaxBound;
+            (i == xCount ? y += (spacing_45 - xRemainder) : y += spacing_45)
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
+            x = xMinBound
+            y += xMaxBound - xMinBound
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+          } else {
+            x = xMinBound
+            y += spacing_45
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
+            x = xMaxBound
+            y -= xMaxBound - xMinBound
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+          }
+        }
+      } else {
+        if (i % 2 == 0){
+          (i == Math.max(xCount, yCount) ? y += (spacing_45 - xRemainder) : y += spacing_45)
+          x = xMaxBound
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
+          x -= (yMaxBound - y)
+          y = yMaxBound
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+        } else {
+          (i == Math.max(xCount, yCount) ? x += (spacing_45 - yRemainder) : x += spacing_45)
+          //x += spacing_45
+          y = yMaxBound
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
+          y -= (xMaxBound - x)
+          x = xMaxBound
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
         }
       }
     }
-    if (sNumber.charAt(i) === '1' || sNumber.charAt(i) === '.') {
-      startX += 1;
-    } else {
-      startX += glyphSpacing;
-    }
-    if (i !== sNumber.length - 1) {
-      glyphString += doEfeed('-', basicSettings, (basicSettings['fwRetract'] ? 'FWR' : 'STD')) +
-                     moveTo(startX, startY, basicSettings) +
-                     doEfeed('+', basicSettings, (basicSettings['fwRetract'] ? 'FWR' : 'STD'));
-    }
-    yCount = 0;
-    xCount = 0;
   }
-  return glyphString;
+  return gcode;
 }
-*/
 
 // rotate x around a defined center xm, ym
 function rotateX(x, xm, y, ym, a) {
@@ -810,6 +960,7 @@ function setLocalStorage() {
     'HEIGHT_PRINT' : parseFloat($('#HEIGHT_PRINT').val()),
     'HOTEND_TEMP' : parseInt($('#HOTEND_TEMP').val()),
     'LINE_RATIO' : parseFloat($('#LINE_RATIO').val()),
+    'LINENO_NO_LEADING_ZERO' : $('#LINENO_NO_LEADING_ZERO').prop('checked'),
     'NOZZLE_DIAMETER' : parseFloat($('#NOZZLE_DIAMETER').val()),
     'ORIGIN_CENTER' : $('#ORIGIN_CENTER').prop('checked'),
     'PATTERN_ANGLE' : parseFloat($('#PATTERN_ANGLE').val()),
@@ -830,11 +981,11 @@ function setLocalStorage() {
     'START_GCODE' : $('#START_GCODE').val(),
     'START_GCODE_TYPE' : $('#START_GCODE_TYPE').val(),
     'TOOL_INDEX' : parseInt($('#TOOL_INDEX').val()),
+    'USE_LINENO' : $('#USE_LINENO').prop('checked'),
     'ZHOP_ENABLE' : $('#ZHOP_ENABLE').prop('checked'),
     'ZHOP_HEIGHT' : parseFloat($('#ZHOP_HEIGHT').val()),
     //'EXT_MULT_PRIME' : parseFloat($('#ENT_MULT_PRIME').val()),
     //'SPEED_PRIME' : parseFloat($('#PRIME_SPEED').val()),
-    //'USE_LINENO' : $('#LINE_NO').prop('checked');
     //'USE_PRIME' : $('#PRIME').prop('checked'),
   };
 
@@ -1034,8 +1185,8 @@ function toggleAnchorOptions(){
     $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
     $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/anchor_frame.png" alt="Anchor Frame" />')
   } else if ($('#ANCHOR_OPTION').val() == "anchor_layer") {
-    $('label[for=ANCHOR_PERIMETERS]').parent().hide();
-    $('#ANCHOR_PERIMETERS').parent().hide();
+    $('label[for=ANCHOR_PERIMETERS]').parent().show();
+    $('#ANCHOR_PERIMETERS').parent().show();
     $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
     $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
     $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/anchor_layer.png" alt="Anchor Layer" />')
@@ -1055,6 +1206,16 @@ function toggleZHop() {
   } else {
     $('label[for=ZHOP_HEIGHT]').parent().hide();
     $('#ZHOP_HEIGHT').parent().hide();
+  }
+}
+
+function toggleLeadingZero() {
+  if ($('#USE_LINENO').is(':checked')) {
+    $('label[for=LINENO_NO_LEADING_ZERO]').parent().show();
+    $('#LINENO_NO_LEADING_ZERO').parent().show();
+  } else {
+    $('label[for=LINENO_NO_LEADING_ZERO]').parent().hide();
+    $('#LINENO_NO_LEADING_ZERO').parent().hide();
   }
 }
 
@@ -1091,14 +1252,17 @@ function displayCalculatedValues(action = 'show'){
 function render(gcode) {
     const TRANSPARENT_COLOR = new gcodeViewer.Color()
     const DEFAULT_COLOR = new gcodeViewer.Color('#0000ff')
-    const ANCHOR_COLOR = new gcodeViewer.Color('#00ff00')
+    const PERIM_COLOR = new gcodeViewer.Color('#00ff00')
+    const FILL_COLOR = new gcodeViewer.Color('#80ff00')
 
     let colorConfig = []
 
     gcode.split("\n").forEach(function(line, i) {
         let color
-        if (line.includes("Draw anchor perimeter")) {
-          color = ANCHOR_COLOR
+        if (line.includes("; Draw perimeter")) {
+          color = PERIM_COLOR
+        } else if (line.includes("; Fill")) {
+          color = FILL_COLOR
         } else {
           color = DEFAULT_COLOR
         }
@@ -1182,9 +1346,9 @@ function validate(updateRender = false) {
   Object.keys(testNaN).forEach((k) => {
     if ((isNaN(testNaN[k]) && !isFinite(testNaN[k])) || testNaN[k].trim().length === 0 || testNaN[k] < 0) {
       $('label[for=' + k + ']').addClass('invalid');
-      $('#warning3').text('Some values are not proper numbers. Check highlighted Settings.');
-      $('#warning3').addClass('invalid');
-      $('#warning3').show();
+      $('#warning1').text('Some values are not proper numbers. Check highlighted Settings.');
+      $('#warning1').addClass('invalid');
+      $('#warning1').show();
       validationFail = true;
     }
   });
@@ -1195,6 +1359,24 @@ function validate(updateRender = false) {
     $('#warning2').text('File name cannot be blank.');
     $('#warning2').addClass('invalid');
     $('#warning2').show();
+    validationFail = true;
+  }
+
+  // Make sure spacing is >= 1mm
+  if ($('#PATTERN_SPACING').val() < 1 || $('#PATTERN_SPACING').val() == null) {
+    $('label[for=PATTERN_SPACING]').addClass('invalid');
+    $('#warning3').text('Pattern spacing must be at least 1mm');
+    $('#warning3').addClass('invalid');
+    $('#warning3').show();
+    validationFail = true;
+  }
+
+  // Make sure spacing is <= 180 degrees
+  if ($('#PATTERN_ANGLE').val() > 180 || $('#PATTERN_ANGLE').val() == null) {
+    $('label[for=PATTERN_ANGLE]').addClass('invalid');
+    $('#warning3').text('Pattern angle must be <= 180 degrees');
+    $('#warning3').addClass('invalid');
+    $('#warning3').show();
     validationFail = true;
   }
 
@@ -1382,8 +1564,8 @@ $(window).load(() => {
       $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
       $('#HEIGHT_PRINT').val(settings['HEIGHT_PRINT']);
       $('#HOTEND_TEMP').val(settings['HOTEND_TEMP']);
-      $('#LINE_NO').prop('checked', settings['USE_LINENO']);
       $('#LINE_RATIO').val(settings['LINE_RATIO']);
+      $('#LINENO_NO_LEADING_ZERO').prop('checked', settings['LINENO_NO_LEADING_ZERO']);
       $('#NOZZLE_DIAMETER').val(settings['NOZZLE_DIAMETER']);
       $('#ORIGIN_CENTER').prop('checked', settings['ORIGIN_CENTER']);
       $('#PATTERN_ANGLE').val(settings['PATTERN_ANGLE']);
@@ -1407,6 +1589,7 @@ $(window).load(() => {
       $('#START_GCODE').val(settings['START_GCODE']);
       $('#START_GCODE_TYPE').val(settings['START_GCODE_TYPE']);
       $('#TOOL_INDEX').val(settings['TOOL_INDEX']);
+      $('#USE_LINENO').prop('checked', settings['USE_LINENO']);
       $('#ZHOP_ENABLE').prop('checked', settings['ZHOP_ENABLE']);
       $('#ZHOP_HEIGHT').val(settings['ZHOP_HEIGHT']);
     }
