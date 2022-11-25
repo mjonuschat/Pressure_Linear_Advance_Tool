@@ -302,7 +302,7 @@
                 </td>
                 <td><label for=ZHOP_HEIGHT>Z Hop Height</label></td>
                 <td id="zhopHeightInputCell" class=inputCell>
-                  <input type=number id="ZHOP_HEIGHT" step=0.05 value=0.2 onblur=validate() /> mm
+                  <input type=number id="ZHOP_HEIGHT" step=0.05 value=0.1 onblur=validate() /> mm
                 </td>
               </tr>
               <tr>
@@ -493,11 +493,11 @@
                 </tr>
                 <tr>
                   <td><label for=USE_LINENO>Numbering</label></td>
-                  <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked onchange="toggleLeadingZero(); validate(true)" />
+                  <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked
+                      onchange="toggleLeadingZero(); validate(true)" />
                   </td>
                   <td><label for=LINENO_NO_LEADING_ZERO>No Leading Zeroes</label></td>
-                  <td class=inputCell><input type=checkbox id="LINENO_NO_LEADING_ZERO"
-                      onchange="validate(true)" />
+                  <td class=inputCell><input type=checkbox id="LINENO_NO_LEADING_ZERO" onchange="validate(true)" />
                   </td>
                 </tr>
                 <tr>
@@ -506,24 +506,6 @@
                   <td colspan="2">Echo current value to the LCD using <tt>M117</tt></td>
                 </tr>
               </thead>
-              <!--
-          <tr>
-            <td><label for=PRIME>Prime Line</label></td>
-            <td class=inputCell><input type=checkbox id="PRIME" checked=checked onchange="togglePrime(); validate(true);" /></td>
-            <td>Print a prime line before starting the test pattern (Disable if your start G-code performs a prime line already)</td>
-          </tr>
-          <tr>
-            <td><label for=ENT_MULT_PRIME>Prime Line Extrusion Multiplier</label></td>
-            <td class=inputCell><input type=number id="ENT_MULT_PRIME" step="0.1" value="2.5" onblur=validate() /></td>
-            <td>The default of 2.5 results in roughly 1mm of filament for 10mm line length</td>
-          </tr>
-          <tr>
-            <td height="24"><label for=PRIME_SPEED>Prime Line Print Speed</label></td>validateInput(
-            <td class=inputCell><input type=number id="PRIME_SPEED" step=1 value="30" onblur=validate() /></td>
-            <td>Speed of the prime move</td>
-          </tr>
-          -->
-
             </thead>
         </tbody>
 

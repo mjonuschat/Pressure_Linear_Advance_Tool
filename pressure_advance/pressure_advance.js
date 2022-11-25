@@ -49,7 +49,6 @@ function setVars(){
   window.END_GCODE = $('#END_GCODE').val();
   window.EXTRUDER_NAME = $('#EXTRUDER_NAME').val();
   window.EXT_MULT = parseFloat($('#EXT_MULT').val());
-  window.EXT_MULT_PRIME = parseFloat($('#ENT_MULT_PRIME').val());
   window.FAN_SPEED = parseFloat($('#FAN_SPEED').val());
   window.FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val());
   window.FIRMWARE = $('#FIRMWARE').val();
@@ -86,8 +85,6 @@ function setVars(){
   window.USE_LINENO = $('#USE_LINENO').prop('checked');
   window.ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
   window.ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
-  //SPEED_PRIME = parseInt($('#PRIME_SPEED').val());
-  //USE_PRIME = $('#PRIME').prop('checked');
 
   // adjust settings
   // ---------------
@@ -109,7 +106,6 @@ function setVars(){
   SPEED_FIRSTLAYER *= 60;
   SPEED_PERIMETER *= 60;
   SPEED_TRAVEL *= 60;
-  //SPEED_PRIME *= 60;
   SPEED_RETRACT *= 60;
   SPEED_UNRETRACT *= 60;
 
@@ -144,28 +140,30 @@ function setVars(){
                  ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) + 
                  (Math.cos(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round);
   window.PRINT_SIZE_Y = Math.round10(2 * (Math.sin(toRadians(PATTERN_ANGLE)/2) * PATTERN_SIDE_LENGTH), XY_round); // hypotenuse of given angle
-  if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out (frame thickness - 1 perim) so last pattern's tip doesn't run over it on the first layer
-    PRINT_SIZE_X += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
+  if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out so last pattern's tip doesn't run over it on the first layer
+    PRINT_SIZE_X += ANCHOR_LAYER_LINE_SPACING * ANCHOR_PERIMETERS;
   }
   window.FRAME_SIZE_Y = (Math.sin(toRadians(PATTERN_ANGLE / 2)) * PATTERN_SIDE_LENGTH) * 2
 
+  // point to start the print
   window.PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
   window.PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
 
+  // additional calculations if line numbering is enabled
   if (USE_LINENO){
     window.GLYPH_START_X = PAT_START_X + ((((PERIMETERS - 1) / 2) * LINE_SPACING_ANGLE) -2);
     window.GLYPH_END_X = PAT_START_X +
                   ((NUM_PATTERNS - 1) * (PATTERN_SPACING + LINE_WIDTH)) + 
                   ((NUM_PATTERNS - 1) * ((PERIMETERS - 1) * LINE_SPACING_ANGLE)) + 4;
 
-    window.GLYPH_TAB_MAX_X = GLYPH_END_X + GLYPH_PADDING_HORIZONTAL
+    window.GLYPH_TAB_MAX_X = GLYPH_END_X + GLYPH_PADDING_HORIZONTAL + ANCHOR_LAYER_LINE_WIDTH / 2
     if (PAT_START_X - GLYPH_START_X + GLYPH_PADDING_HORIZONTAL > 0){
-      window.PATTERNSHIFT = PAT_START_X - GLYPH_START_X + GLYPH_PADDING_HORIZONTAL
+      window.PATTERNSHIFT = PAT_START_X - GLYPH_START_X + GLYPH_PADDING_HORIZONTAL + ANCHOR_LAYER_LINE_WIDTH / 2
     } else (window.PATTERNSHIFT = 0)
 
-    // adjust final dimensions again
+    // adjust final dimensions & print start point again
     PRINT_SIZE_X += PATTERNSHIFT
-    PRINT_SIZE_Y += calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + GLYPH_PADDING_VERTICAL * 2
+    PRINT_SIZE_Y += calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + GLYPH_PADDING_VERTICAL * 2 + ANCHOR_LAYER_LINE_WIDTH
     window.PAT_START_X = CENTER_X - (PRINT_SIZE_X / 2);
     window.PAT_START_Y = CENTER_Y - (PRINT_SIZE_Y / 2);
   } else {
@@ -198,7 +196,6 @@ function genGcode() {
     'lineSpacing': LINE_SPACING,
     'extRatio': EXTRUSION_RATIO,
     'extMult': EXT_MULT,
-    'extMultPrime': EXT_MULT_PRIME,
     'anchorExtRatio': ANCHOR_LAYER_EXTRUSION_RATIO,
     'anchorLineWidth': ANCHOR_LAYER_LINE_WIDTH,
     'anchorLineSpacing': ANCHOR_LAYER_LINE_SPACING,
@@ -316,11 +313,6 @@ M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${T
 ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P${ACCELERATION}` )} ; Set printing acceleration
 `;
 
-// Number Lines: ${(USE_LINENO ? 'true': 'false')}\n             
-// Prime Nozzle: ${(USE_PRIME ? 'true': 'false')}\n
-// Prime Extrusion Multiplier: ${EXT_MULT_PRIME}\n
-// Prime Speed: ${SPEED_PRIME}\n`
-
   var TO_X = PAT_START_X,
       TO_Y = PAT_START_Y,
       TO_Z = HEIGHT_FIRSTLAYER;
@@ -343,19 +335,24 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     if (ECHO){pa_script += `M117 K${Math.round10(PA_START, PA_round)}\n`}
   }
 
+  // create anchor + line numbering frame if selected
   if (ANCHOR_OPTION == 'anchor_frame'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings);
+
+    if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
+      pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.65)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
+    }
   }
   else if (ANCHOR_OPTION == 'anchor_layer'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings, {fill: true});
-  }
-
-  if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
-    pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.75)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
+    if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
+      pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.65)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
+    }  
   }
 
   // draw PA pattern
   for (let i = (ANCHOR_OPTION == 'anchor_layer' ? 1 : 0); i < NUM_LAYERS ; i++){ // skip first layer if using full anchor layer
+
     if (i == 1){ // set new fan speed after first layer
       pa_script += `M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed\n`
     }
@@ -363,8 +360,9 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
     moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
 
-    if (USE_LINENO){ // draw line numbering
-      if (i == 1){ // if second layer
+    // line numbering, if selected
+    if (USE_LINENO){
+      if ((ANCHOR_OPTION != 'no_anchor' && i == 1) || (ANCHOR_OPTION == 'no_anchor' && i == 0)){
         for (let j = 0; j < NUM_PATTERNS; j++){
           if (j % 2 == 0){ // glyph on every other line
             var THIS_GLYPH_START_X = PAT_START_X + 
@@ -373,7 +371,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
             THIS_GLYPH_START_X += (((PERIMETERS - 1) / 2) * LINE_SPACING_ANGLE) -2; // shift glyph center to middle of pattern perimeters. 2 = half of glyph
             THIS_GLYPH_START_X += PATTERNSHIFT // adjust for pattern shift
 
-            pa_script += createGlyphs(THIS_GLYPH_START_X, (PAT_START_Y + FRAME_SIZE_Y + GLYPH_PADDING_VERTICAL + ANCHOR_LAYER_LINE_WIDTH), basicSettings, Math.round10((PA_START + (j * PA_STEP)), PA_round), LINENO_NO_LEADING_ZERO);
+            pa_script += createGlyphs(THIS_GLYPH_START_X, (PAT_START_Y + FRAME_SIZE_Y + GLYPH_PADDING_VERTICAL + LINE_WIDTH), basicSettings, Math.round10((PA_START + (j * PA_STEP)), PA_round), LINENO_NO_LEADING_ZERO);
           }
         }  
       }
@@ -441,23 +439,6 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
       }
     }
   }
-
-/*
-  // Prime nozzle if activated
-  if (USE_PRIME) {
-    var primeStartX = CENTER_X - LENGTH_SLOW - (0.5 * PATTERN_SIDE_LENGTH) - (USE_LINENO ? 4 : 0) - 5,
-        primeStartY = CENTER_Y - (PRINT_SIZE_Y / 2);
-
-    pa_script += ';\n' +
-                '; prime nozzle\n' +
-                ';\n' +
-                moveTo(primeStartX, primeStartY, basicSettings) +
-                createLine(primeStartX, primeStartY + PRINT_SIZE_Y, PRINT_SIZE_Y, basicSettings, {'extMult': EXT_MULT_PRIME, 'speed': SPEED_PRIME}) +
-                moveTo(primeStartX + (LINE_WIDTH * 1.5), primeStartY + PRINT_SIZE_Y, basicSettings) +
-                createLine(primeStartX + (LINE_WIDTH * 1.5), primeStartY, -PRINT_SIZE_Y, basicSettings, {'extMult': EXT_MULT_PRIME, 'speed': SPEED_PRIME}) +
-                doEfeed('-', basicSettings);
-  }
-  */
 
   if (FIRMWARE == 'klipper'){
     if (EXTRUDER_NAME != ''){
@@ -984,9 +965,6 @@ function setLocalStorage() {
     'USE_LINENO' : $('#USE_LINENO').prop('checked'),
     'ZHOP_ENABLE' : $('#ZHOP_ENABLE').prop('checked'),
     'ZHOP_HEIGHT' : parseFloat($('#ZHOP_HEIGHT').val()),
-    //'EXT_MULT_PRIME' : parseFloat($('#ENT_MULT_PRIME').val()),
-    //'SPEED_PRIME' : parseFloat($('#PRIME_SPEED').val()),
-    //'USE_PRIME' : $('#PRIME').prop('checked'),
   };
 
   const lsSettings = JSON.stringify(settings);
@@ -1007,19 +985,6 @@ function toggleBedShape() {
     $('#ORIGIN_CENTER').parents().eq(1).show();
   }
 }
-
-// toggle prime relevant options
-/*
-function togglePrime() {
-  if ($('#PRIME').is(':checked')) {
-    $('#ENT_MULT_PRIME').prop('disabled', false);
-    $('label[for=PRIME_EXT]').css({opacity: 1});
-  } else {
-    $('#ENT_MULT_PRIME').prop('disabled', true);
-    $('label[for=PRIME_EXT]').css({opacity: 0.5});
-  }
-}
-*/
 
 function toggleStartEndGcode(){
   var CANNED_GCODE = `\
@@ -1320,8 +1285,6 @@ function validate(updateRender = false) {
     SPEED_UNRETRACT: $('#SPEED_UNRETRACT').val(),
     TOOL_INDEX: $('#TOOL_INDEX').val(),
     ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val()
-    //PRIME_EXT: $('#ENT_MULT_PRIME').val(),
-    //PRIME_SPEED: $('#PRIME_SPEED').val(),
   }
 
   var decimals = getDecimals(parseFloat(testNaN['PA_STEP']));
@@ -1552,7 +1515,6 @@ $(window).load(() => {
       $('#BED_Y').val(settings['BED_Y']);
       $('#ECHO').prop('checked', settings['ECHO']);
       $('#END_GCODE').val(settings['END_GCODE']);
-      $('#ENT_MULT_PRIME').val(settings['EXT_MULT_PRIME']);
       $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
       $('#EXT_MULT').val(settings['EXT_MULT']);
       $('#FAN_SPEED').val(settings['FAN_SPEED']);
@@ -1576,8 +1538,6 @@ $(window).load(() => {
       $('#PA_START').val(settings['PA_START']);
       $('#PA_STEP').val(settings['PA_STEP']);
       $('#PERIMETERS').val(settings['PERIMETERS']);
-      $('#PRIME').prop('checked', settings['USE_PRIME']);
-      $('#PRIME_SPEED').val(settings['SPEED_PRIME']);
       $('#PRINT_ACCL').val(settings['ACCELERATION']);
       $('#PRINT_DIR').val(settings['PRINT_DIR']);
       $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
@@ -1602,7 +1562,7 @@ $(window).load(() => {
   togglePatternOptions();
   toggleAnchorOptions();
   toggleStartEndGcodeTypeDescriptions();
-  //togglePrime();
+  toggleLeadingZero();
 
   // validate input on page load
   // generates gcode and updates 3d preview if validations pass
