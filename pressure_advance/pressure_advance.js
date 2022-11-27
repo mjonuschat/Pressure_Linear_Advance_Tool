@@ -358,7 +358,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     }
 
     TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
-    moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
+      pa_script += moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
 
     // line numbering, if selected
     if (USE_LINENO){
@@ -716,7 +716,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
 
 function moveToZ(to_z, basicSettings){
   var gcode = '';
-  gcode += 'G1 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Move to z height\n';
+  gcode += 'G0 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Move to z height\n';
   CUR_Z = to_z; // update global position var
   return gcode;
 }
