@@ -29,11 +29,6 @@ const EXT_round = -5; // Was previously -4
 const GLYPH_PADDING_HORIZONTAL = 1;
 const GLYPH_PADDING_VERTICAL = 1;
 
-var CUR_X = 0, // Globally track current coordinates
-    CUR_Y = 0,
-    CUR_Z = 0,
-    RETRACTED = false; // Globally keep track of current retract state to prevent retracting/unretracting twice
-
 // set global HTML vars from form inputs
 // -------------------------------------
 function setVars(){
@@ -85,6 +80,12 @@ function setVars(){
   window.USE_LINENO = $('#USE_LINENO').prop('checked');
   window.ZHOP_ENABLE = $('#ZHOP_ENABLE').prop('checked');
   window.ZHOP_HEIGHT = parseFloat($('#ZHOP_HEIGHT').val());
+
+  window.CUR_X = 0; // Globally track current coordinates
+  window.CUR_Y = 0;
+  window.CUR_Z = 0;
+  window.RETRACTED = false;
+  window.HOPPED = false; // Globally keep track of current retract state to prevent retracting/unretracting twice
 
   // adjust settings
   // ---------------
@@ -259,7 +260,7 @@ ${(ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width: ${ANCHOR_LAYER_LINE_R
 ;
 ; Print Settings:
 ;  - Layer Height: ${HEIGHT_LAYER} mm
-;  - Print Speed: ${SPEED_PERIMETER} mm/s
+;  - Print Speed: ${SPEED_PERIMETER / 60} mm/s
 ;  - Acceleration: ${ACCELERATION} mm/s^2
 ;  - Fan Speed: ${FAN_SPEED}%
 ;
@@ -313,14 +314,12 @@ M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)}${(FIRMWARE == 'marlin' ? ` P${T
 ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P${ACCELERATION}` )} ; Set printing acceleration
 `;
 
-  var TO_X = PAT_START_X,
-      TO_Y = PAT_START_Y,
-      TO_Z = HEIGHT_FIRSTLAYER;
-
-  CUR_Z = HEIGHT_FIRSTLAYER; // set initial Z coordinate, otherwise z hop will go back to 0 at first
-
   // Move to layer height, set initial PA
-  pa_script += moveToZ(TO_Z, basicSettings, {comment: ' ; Move to start layer height\n'})
+  pa_script += doEfeed('-', basicSettings, {hop: false}) +
+               moveToZ(5, basicSettings, {comment: 'Z raise'}) +
+               moveTo(PAT_START_X, PAT_START_Y, basicSettings, {retract:false, hop:false, comment: 'Move to start position'}) +
+               moveToZ(HEIGHT_FIRSTLAYER, basicSettings, {comment: 'Move to start layer height'}) +
+               doEfeed('+', basicSettings, {hop: false})
   
   if (FIRMWARE == 'klipper'){
       if (EXTRUDER_NAME != ''){
@@ -345,6 +344,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   }
   else if (ANCHOR_OPTION == 'anchor_layer'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings, {fill: true});
+    
     if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
       pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.65)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
     }  
@@ -357,8 +357,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
       pa_script += `M106 S${Math.round(FAN_SPEED * 2.55)}${(FIRMWARE == 'marlin' ? ` P${TOOL_INDEX}` : '')} ; Set fan speed\n`
     }
 
-    TO_Z = (i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER;
-      pa_script += moveToZ(TO_Z, basicSettings, {comment: ' ; Move to layer height\n'});
+    pa_script += moveToZ((i * HEIGHT_LAYER) + HEIGHT_FIRSTLAYER, basicSettings, {comment: 'Move to layer height'});
 
     // line numbering, if selected
     if (USE_LINENO){
@@ -377,6 +376,9 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
       }
     }
 
+    var TO_X = PAT_START_X,
+        TO_Y = PAT_START_Y
+
     TO_X = PAT_START_X + PATTERNSHIFT;
     TO_Y = PAT_START_Y;
 
@@ -393,7 +395,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
         INITIAL_Y = TO_Y;
 
     // move to start xy then layer height
-    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to pattern start\n'})
+    pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move to pattern start\n'})
 
     for (let j = 0; j < NUM_PATTERNS; j++){
       // increment pressure advance
@@ -413,25 +415,25 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
       for (let k = 0; k < PERIMETERS ; k++){
         TO_X += (Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH);
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; Print pattern perimeter\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: 'Print pattern perimeter'});
 
         TO_X -= Math.cos(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
         TO_Y += Math.sin(toRadians(PATTERN_ANGLE) / 2) * SIDE_LENGTH;
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: ' ; Print pattern perimeter\n'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: 'Print pattern perimeter'});
 
         TO_Y = INITIAL_Y;
         switch (true){
           case k != PERIMETERS - 1:  // perims not done yet. move to next perim
             TO_X += LINE_SPACING_ANGLE;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to start next pattern perimeter\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move to start next pattern perimeter'});
             break;
           case j != NUM_PATTERNS - 1: // patterns not done yet. move to next pattern
             TO_X += (PATTERN_SPACING + LINE_WIDTH);
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move to next pattern\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move to next pattern'});
             break;
           case i != NUM_LAYERS - 1: // layers not done yet. move back to start
             TO_X = INITIAL_X;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: ' ; Move back to start position\n'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move back to start position'});
             break;
           default:  // everything done. break
             break;
@@ -527,16 +529,16 @@ function createGlyphs(startX, startY, basicSettings, value, removeLeadingZeroes 
             glyphString += moveTo(startX + glyphSegLength * 2, startY + totalSpacing + glyphSegLength, basicSettings);
             break;
           case glyphSeg[sNumber.charAt(i)][key] === 'up' :
-            glyphString += createLine(CUR_X, CUR_Y + glyphSegLength, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            glyphString += createLine(CUR_X, CUR_Y + glyphSegLength, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i)});
             break;
           case glyphSeg[sNumber.charAt(i)][key] === 'down' :
-            glyphString += createLine(CUR_X, CUR_Y - glyphSegLength, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            glyphString += createLine(CUR_X, CUR_Y - glyphSegLength, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i)});
             break;
           case glyphSeg[sNumber.charAt(i)][key] === 'right' :
-            glyphString += createLine(CUR_X + glyphSegLength, CUR_Y,  basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            glyphString += createLine(CUR_X + glyphSegLength, CUR_Y,  basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i)});
             break;
           case glyphSeg[sNumber.charAt(i)][key] === 'left' :
-            glyphString += createLine(CUR_X - glyphSegLength, CUR_Y, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i) + '\n'});
+            glyphString += createLine(CUR_X - glyphSegLength, CUR_Y, basicSettings, {'speed': basicSettings['firstLayerSpeed'], 'comment': ' ; Glyph: ' + sNumber.charAt(i)});
             break;
           case glyphSeg[sNumber.charAt(i)][key] === 'mup' :
             glyphString += moveTo(CUR_X, CUR_Y + glyphSegLength, basicSettings);
@@ -551,7 +553,7 @@ function createGlyphs(startX, startY, basicSettings, value, removeLeadingZeroes 
             glyphString += moveTo(CUR_X - glyphSegLength, CUR_Y, basicSettings);
             break;
           case glyphSeg[sNumber.charAt(i)][key] === 'dot' :
-            glyphString += createLine(CUR_X - glyphDotSize, CUR_Y, basicSettings, {speed: basicSettings['firstLayerSpeed'], extMult: basicSettings['extMult'],comment: ' ; Glyph: .\n'});
+            glyphString += createLine(CUR_X - glyphDotSize, CUR_Y, basicSettings, {speed: basicSettings['firstLayerSpeed'], extMult: basicSettings['extMult'],comment: 'Glyph: .'});
         }
       }
     }
@@ -662,7 +664,7 @@ function createLine(to_x, to_y, basicSettings, optional) {
     extMult: basicSettings['extMult'],
     extRatio: basicSettings['extRatio'],
     speed: basicSettings['firstLayerSpeed'],
-    comment: ' ; Print line\n'
+    comment: 'Print line'
   };
   var optArgs = $.extend({}, defaults, optional);
 
@@ -676,9 +678,7 @@ function createLine(to_x, to_y, basicSettings, optional) {
   length = getDistance(CUR_X, CUR_Y, to_x, to_y);
   ext = Math.round10(optArgs['extRatio'] * optArgs['extMult'] * Math.abs(length), EXT_round);
 
-  gcode += 'G1 X' + Math.round10(rotateX(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' Y' + Math.round10(rotateY(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' E' + ext + ' F' + optArgs['speed'] + optArgs['comment'];
+  gcode += `G1 X${Math.round10(rotateX(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round)} Y${Math.round10(rotateY(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round)} E${ext} F${optArgs['speed']} ; ${optArgs['comment']}\n`
 
   CUR_X = to_x, // update global position vars
   CUR_Y = to_y;
@@ -689,62 +689,74 @@ function createLine(to_x, to_y, basicSettings, optional) {
 // move print head to coordinates
 function moveTo(to_x, to_y, basicSettings, optional) {
   var gcode = '',
-      distance = getDistance(CUR_X, CUR_Y, to_x, to_y);
+    distance = getDistance(CUR_X, CUR_Y, to_x, to_y);
 
   var defaults = {
-      comment: ' ; Move\n'
+    comment: 'Move',
+    hop: basicSettings['zhopEnable'],
+    retract: true
   };
   var optArgs = $.extend({}, defaults, optional);
 
-  if(distance > 2){ // don't retract for travels under 2mm
-    gcode += doEfeed('-', basicSettings); //retract
-  }
+  if (to_x != CUR_X || to_y != CUR_Y){ // don't do anything if we're already there
 
-  gcode += 'G0 X' + Math.round10(rotateX(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' Y' + Math.round10(rotateY(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round) +
-             ' F' + basicSettings['moveSpeed'] + optArgs['comment'];
-  
-  CUR_X = to_x, // update global position vars
-  CUR_Y = to_y;
+    if(distance > 2 && optArgs['retract']){ // don't retract for travels under 2mm
+      gcode += doEfeed('-', basicSettings, {hop: optArgs['hop']}); //retract
+    }
+    gcode += `G0 X${Math.round10(rotateX(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round)} Y${Math.round10(rotateY(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round)} F${basicSettings['moveSpeed']} ; ${optArgs['comment']}\n`
 
-  if(distance >= 2){
-    gcode += doEfeed('+', basicSettings);  //unretract
+    CUR_X = to_x, // update global position vars
+    CUR_Y = to_y;
+
+    if(distance > 2 && optArgs['retract']){
+      gcode += doEfeed('+', basicSettings, {hop: optArgs['hop']});  //unretract
+    }
   }
-        
+     
   return gcode;
 }
 
-function moveToZ(to_z, basicSettings){
+function moveToZ(to_z, basicSettings, optional){
   var gcode = '';
-  gcode += 'G0 Z' + Math.round10(to_z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Move to z height\n';
+
+  var defaults = {
+    comment: 'Move'
+  };
+  var optArgs = $.extend({}, defaults, optional);
+
+  gcode += `G0 Z${Math.round10(to_z, Z_round)} F${basicSettings['moveSpeed']} ; ${optArgs['comment']}\n`
   CUR_Z = to_z; // update global position var
   return gcode;
 }
 
 // create retract / un-retract gcode
-function doEfeed(dir, basicSettings) {
+function doEfeed(dir, basicSettings, optional) {
   var gcode = '';
 
-    switch (true) {
-      case (dir === '+' && RETRACTED && !basicSettings['zhopEnable']):
-        gcode += 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; Un-retract\n';
-        RETRACTED = false;
-        break;
-      case (dir === '-' && !RETRACTED && !basicSettings['zhopEnable']):
-        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; Retract\n';
-        RETRACTED = true;
-        break;
-      case (dir === '+' && RETRACTED && basicSettings['zhopEnable']):
-        gcode += 'G1 Z' + Math.round10(CUR_Z, Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Z hop return\n' +
-                 'G1 E' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['unretractSpeed'] + ' ; Un-retract\n';
-        RETRACTED = false;
-        break;
-      case (dir === '-' && !RETRACTED && basicSettings['zhopEnable']):
-        gcode += 'G1 E-' + Math.round10(basicSettings['retractDist'], EXT_round) + ' F' + basicSettings['retractSpeed'] + ' ; Retract\n' +
-                 'G1 Z' + Math.round10((CUR_Z + basicSettings['zhopHeight']), Z_round) + ' F' + basicSettings['moveSpeed'] + ' ; Z hop\n';
-        RETRACTED = true;
-        break;
+  var defaults = {
+    hop: basicSettings['zhopEnable']
+  };
+  var optArgs = $.extend({}, defaults, optional);
+
+  if (dir === '-'){
+    if (!RETRACTED){
+      gcode += `G1 E-${Math.round10(basicSettings['retractDist'], EXT_round)} F${basicSettings['retractSpeed']} ; Retract\n`;
+      RETRACTED = true
     }
+    if (optArgs['hop'] && !HOPPED){
+      gcode += `G1 Z${Math.round10((CUR_Z + basicSettings['zhopHeight']), Z_round)} F${basicSettings['moveSpeed']} ; Z hop\n`
+      HOPPED = true
+    }
+  } else if (dir === '+') {
+    if (HOPPED){ // always return hop on unretract
+      gcode += `G1 Z${Math.round10(CUR_Z, Z_round)} F${basicSettings['moveSpeed']} ; Z hop return\n`
+      HOPPED = false
+    }    
+    if (RETRACTED){
+      gcode += `G1 E${Math.round10(basicSettings['retractDist'], EXT_round)} F${basicSettings['unretractSpeed']} ; Un-retract\n`
+      RETRACTED = false
+    }
+  }
 
   return gcode;
 }
@@ -775,28 +787,26 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
   
   optArgs['num_perims'] = Math.min(optArgs['num_perims'], maxPerims)
   
-  if (min_x != CUR_X || min_y != CUR_Y){
-    gcode += moveTo(min_x, min_y, basicSettings, {comment: ' ; Move to box start\n'});
-  }
+  gcode += moveTo(min_x, min_y, basicSettings, {comment: 'Move to box start'});
 
   for (let i = 0; i < optArgs['num_perims'] ; i++){
     if (i != 0){ // after first perimeter, step inwards to start next perimeter
       x += optArgs['spacing'];
       y += optArgs['spacing'];
-      gcode += moveTo(x, y, basicSettings, {comment: ' ; Step inwards to print next perimeter\n'})
+      gcode += moveTo(x, y, basicSettings, {comment: 'Step inwards to print next perimeter'})
     }
     // draw line up
     y += size_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (up)\n'});
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Draw perimeter (up)'});
     // draw line right
     x += size_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (right)\n'});
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Draw perimeter (right)'});
     // draw line down
     y -= size_y - (i * optArgs['spacing']) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (down)\n'});
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Draw perimeter (down)'});
     // draw line left
     x -= size_x - (i * optArgs['spacing']) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Draw perimeter (left)\n'});
+    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Draw perimeter (left)'});
   }
 
   if (optArgs['fill']){
@@ -813,7 +823,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
 
     x = xMinBound
     y = yMinBound
-    gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'],  comment: ' ; Move to fill start\n'}) // move to start
+    gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'],  comment: 'Move to fill start'}) // move to start
 
     for (let i = 0; i < yCount + xCount; i++){ // this isn't the most robust way, but less expensive than finding line intersections
       if (i < Math.min(yCount, xCount)){
@@ -823,14 +833,14 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
           y += (x - xMinBound)
           x = xMinBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print up/left
         } else {
           y += spacing_45
           x = xMinBound
           gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
           x += (y - yMinBound)
           y = yMinBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print down/right
         }
       } else if (i < Math.max(xCount,yCount)){
         if (xCount > yCount){ // if box is wider than tall
@@ -840,14 +850,14 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
             gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
             x -= yMaxBound - yMinBound
             y = yMaxBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print up/left
           } else {
             (i == yCount ? x += (spacing_45 - yRemainder) : x += spacing_45)
             y = yMaxBound
             gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
             x += yMaxBound - yMinBound
             y = yMinBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print down/right
           }
         } else { // if box is taller than wide
           if (i % 2 == 0){
@@ -856,14 +866,14 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
             gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
             x = xMinBound
             y += xMaxBound - xMinBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print up/left
           } else {
             x = xMinBound
             y += spacing_45
             gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
             x = xMaxBound
             y -= xMaxBound - xMinBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print down/right
           }
         }
       } else {
@@ -873,7 +883,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
           x -= (yMaxBound - y)
           y = yMaxBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print up/left
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print up/left
         } else {
           (i == Math.max(xCount, yCount) ? x += (spacing_45 - yRemainder) : x += spacing_45)
           //x += spacing_45
@@ -881,7 +891,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
           y -= (xMaxBound - x)
           x = xMaxBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: ' ; Fill\n'}) // print down/right
+          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print down/right
         }
       }
     }
