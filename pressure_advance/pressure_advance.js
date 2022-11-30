@@ -1092,29 +1092,49 @@ PRINT_END ; End macro
 RESTART   ; Restart Klipper to reset PA value`
 
   switch(true){
-    case $('#FIRMWARE').val().includes('marlin') :
+    case $('#FIRMWARE').val() == ('klipper') :
+      $('#TOOL_INDEX').parents().eq(1).hide()
+      $('#EXTRUDER_NAME').parents().eq(1).show()
+      $('#STEPPING_HEADER').html('Pressure Advance Stepping')
+      $('#STEPPING_HEADER_BODY').html(`\
+<i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
+Bowden: Start with ~0 to ~1* @ 0.05 increment<br><br>
+This will get a rough idea of what range to work in.<br>
+Run the test again with a narrower range and finer increment afterwards.<br><br>
+*Very long Bowden paths can sometimes need higher than 1.`)
+      $('label[for=PA_START]').html('PA Start Value')
+      $('label[for=PA_END]').html('PA End Value')
+      $('label[for=PA_STEP]').html('PA Increment')
+      $('#START_GCODE_TYPE').parents().eq(1).show()
+      $('#END_GCODE').val(KLIPPER_END_GCODE);
+      break;
+    case $('#FIRMWARE').val() == ('marlin-1.1.9') :
       $('#TOOL_INDEX').parents().eq(1).show()
       $('#EXTRUDER_NAME').parents().eq(1).hide()
       $('#STEPPING_HEADER').html('Linear Advance Stepping')
-      $('#STEPPING_HEADER_BODY').html('')
+      $('#STEPPING_HEADER_BODY').html(`\
+<i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
+Bowden: Start with ~0 to ~1* @ 0.05 increment<br><br>
+This will get a rough idea of what range to work in.<br>
+Run the test again with a narrower range and finer increment afterwards.<br><br>
+*Very long Bowden paths can sometimes need higher than 1.`)
       $('label[for=PA_START]').html('Start K Value')
       $('label[for=PA_END]').html('End K Value')
       $('label[for=PA_STEP]').html('K Value Increment')
       $('#START_GCODE_TYPE').parents().eq(1).hide()
       $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
-    default :
-      $('#TOOL_INDEX').parents().eq(1).hide()
-      $('#EXTRUDER_NAME').parents().eq(1).show()
-      $('#STEPPING_HEADER').html('Pressure Advance Stepping')
-      $('#STEPPING_HEADER_BODY').html(`\
-<i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
-Bowden: Start with ~0 to ~0.8 @ 0.05 increment</i>`)
-      $('label[for=PA_START]').html('PA Start Value')
-      $('label[for=PA_END]').html('PA End Value')
-      $('label[for=PA_STEP]').html('PA Increment')
-      $('#START_GCODE_TYPE').parents().eq(1).show()
-      $('#END_GCODE').val(KLIPPER_END_GCODE);
+    case $('#FIRMWARE').val() == ('marlin-1.1.8') :
+      $('#TOOL_INDEX').parents().eq(1).show()
+      $('#EXTRUDER_NAME').parents().eq(1).hide()
+      $('#STEPPING_HEADER').html('Linear Advance Stepping')
+      $('#STEPPING_HEADER_BODY').html(``)
+      $('label[for=PA_START]').html('Start K Value')
+      $('label[for=PA_END]').html('End K Value')
+      $('label[for=PA_STEP]').html('K Value Increment')
+      $('#START_GCODE_TYPE').parents().eq(1).hide()
+      $('#END_GCODE').val(MARLIN_END_GCODE);
+      break;
   }
 }
 
