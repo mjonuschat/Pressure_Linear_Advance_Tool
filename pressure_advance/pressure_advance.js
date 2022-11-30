@@ -1108,8 +1108,8 @@ RESTART   ; Restart Klipper to reset PA value`
       $('#EXTRUDER_NAME').parents().eq(1).show()
       $('#STEPPING_HEADER').html('Pressure Advance Stepping')
       $('#STEPPING_HEADER_BODY').html(`\
-<i>(Start with ~0 to ~0.<font color="red">
-<strong><u>0</u></strong></font>8 for direct drive or ~0 to ~0.8 for bowden.)</i>`)
+<i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
+Bowden: Start with ~0 to ~0.8 @ 0.05 increment</i>`)
       $('label[for=PA_START]').html('PA Start Value')
       $('label[for=PA_END]').html('PA End Value')
       $('label[for=PA_STEP]').html('PA Increment')
