@@ -15,7 +15,7 @@
   <script language="JavaScript" type="text/javascript" src="./javascript/jquery-2.2.1.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./javascript/jquery-ui.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./javascript/FileSaver.min.js?v1"></script>
-  <script language="JavaScript" type="text/javascript" src="./javascript/pressure_linear_advance.js?v11"></script>
+  <script language="JavaScript" type="text/javascript" src="./javascript/pressure_linear_advance.js?v12"></script>
   <script src="./javascript/gcode-viewer.js?v1"></script>
   <div class="container" role="main">
     <div class="row">
@@ -27,7 +27,7 @@
         <sup>The old "lines" version of this tool has been <strong>deprecated.</strong> It's still available <a
             href="https://ellis3dp.com/Pressure_Linear_Advance_Tool/lines_method_deprecated/">here</a>
           if you prefer it.</i></sup><br><br>
-        For issues, bugs, and feature requests, please <a
+        For issues/bugs, contributions, and feature requests, please <a
           href="https://github.com/AndrewEllis93/Pressure_Linear_Advance_Tool/issues">open a GitHub
           issue.</a><br><br>
 
@@ -47,7 +47,9 @@
                 <strong>See my</strong><br>
                 <h5><u><a href="https://ellis3dp.com/Print-Tuning-Guide/">Print Tuning Guide</a></u></h5>
                 and
-                <h5><u><a href="https://ellis3dp.com/Print-Tuning-Guide/articles/pressure_linear_advance/introduction.html">Pressure / Linear Advance article</a></u></h5>
+                <h5><u><a
+                      href="https://ellis3dp.com/Print-Tuning-Guide/articles/pressure_linear_advance/introduction.html">Pressure
+                      / Linear Advance article</a></u></h5>
                 <strong>for demonstrations and examples!</strong>
               <td class="tdSection" id="gcode-viewer" colspan="2">
             </tr>
@@ -102,7 +104,7 @@
                     <option value="klipper">Klipper</option>
                     <option value="marlin-1.1.9">Marlin 1.1.9+</option>
                     <option value="marlin-1.1.8">Marlin 1.1.8 & Older</option>
-                    <option value="rrf3">RepRap Firmware 3+</option>
+                    <option value="rrf3">RepRapFirmware 3+</option>
                   </select>
                   <p id="KFACTOR_DESRIPTION"></p>
                 </td>
@@ -173,9 +175,9 @@
               <tr>
                 <td colspan="4" id="startGcodeWarningHeader">
                   <br>
-                  This section is the SINGLE most frequent cause of problems.<br><br>
-                  Please don't fly through it.<br><br>
-                  UNDERSTAND IT FULLY.<br><br>
+                  This section is the SINGLE most frequent cause of problems.<br>
+                  Please don't fly through it.<br>
+                  UNDERSTAND IT FULLY.<br>
                 </td>
               </tr>
               <tr>
@@ -191,10 +193,9 @@
                 <td class=inputCell><select size="3" id="START_GCODE_TYPE"
                     onchange="toggleStartEndGcode(); toggleStartEndGcodeTypeDescriptions(); validate()">
                     <option id="custom" value="custom">Manual Start G-code</option>
-                    <option id="custom-marlin" value="custom-marlin" hidden>Manual Start G-code (Marlin)
-                    </option>
+                    <option id="custom-marlin" value="custom-marlin" hidden>Manual Start G-code (Marlin)</option>
                     <option id="standalone" value="standalone" selected="selected">Standalone Macro</option>
-                    <option id="standalone_temp_passing" value="standalone_temp_passing">Standalone Macro w/ Temp Params
+                    <option id="standalone_temp_passing" value="standalone_temp_passing">Standalone Macro + Temp Passing
                     </option>
                   </select></td>
                 <td id="START_GCODE_TYPE_Description" colspan="3">
@@ -213,7 +214,37 @@
               </tr>
               <tr>
                 <td><label for=START_GCODE>Start G-code</label></td>
-                <td colspan=3><br>
+                <td colspan=3>
+                  <br>
+                  <u><strong>Variables</strong></u><br>
+                  (These placeholders will be replaced with REAL VALUES from the form AUTOMATICALLY)<br>
+                  <ul>
+                    <li>
+                      <font color="red"><strong>Required:</strong></font>
+                      <font color="blue"><strong><tt>[BED_TEMP]</tt></strong></font>, <font color="blue">
+                        <strong><tt>[HOTEND_TEMP]</tt></strong>
+                      </font><br>
+                    <li>Optional: <font color="blue"><tt>[EXTRUDER_NAME]</tt>
+                      </font> <i>(Klipper)</i>, <font color="blue">
+                        <tt>[TOOL_INDEX]</tt>
+                      </font> <i>(Marlin / RepRap)</i><br>
+                  </ul>
+                  <u><strong>Instructions</strong></u><br>
+                  <li>You should <i>generally</i> be able to copy your start g-code from your slicer,
+                    making sure <strong>not to overwrite the default <tt>M109</tt> / <tt>M190</tt> commands</strong>.
+                    You may move those up/down as needed, but don't delete them.<br>
+                    <p style="text-indent: 30px;"><i>(If you are using "Standalone Macro + Temp Pasing" , you only need
+                        to keep the <strong>variables</strong> rather than the full
+                        heating
+                        commands.)</i>
+                    </p>
+
+                  <li>Replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>
+                      <font color="blue">their counterparts from the list above.</font><br></ul>
+                      <p style="text-indent: 40px;">
+                    </strong><i>If you have a slicer variable without a counterpart above, use a REAL VALUE
+                      instead.</i></p><br>
+                    <!--
                   <strong>The below start g-code is only a starting point and is <font color="red">intended to be
                       revised.</font></strong><br><br>
                   The following variables will be replaced by inputs from this form:<br>
@@ -223,19 +254,20 @@
                     <strong><tt>[EXTRUDER_NAME]</tt></strong>
                   </font> <i>(Klipper)</i>, <font color="blue">
                     <strong><tt>[TOOL_INDEX]</tt></strong>
-                  </font> <i>(Marlin)</i><br><br>
+                  </font> <i>(Marlin / RepRap)</i><br><br>
                   You should <i>generally</i> be able to copy your usual start g-code from your slicer,<br>
                   making sure to replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>
                     <font color="blue">those listed
                       above</font>
                   </strong> or real values.<br><br>
-                  <p id=startGcodeWarning style="display: none;">warning</p>
-                  </p><textarea id="START_GCODE" onblur=validate()></textarea>
-                  +<br>
-                  <tt>G21 ; Millimeter units<br>
-                    G90 ; Absolute XYZ<br>
-                    M83 ; Relative E<br>
-                    G92 E0 ; Reset extruder distance<br></tt>
+                  -->
+                    <p id=startGcodeWarning style="display: none;">warning</p>
+                    </p><textarea id="START_GCODE" onblur=validate()></textarea>
+                    +<br>
+                    <tt>G21 ; Millimeter units<br>
+                      G90 ; Absolute XYZ<br>
+                      M83 ; Relative E<br>
+                      G92 E0 ; Reset extruder distance<br></tt>
                 </td>
               </tr>
               <tr>
