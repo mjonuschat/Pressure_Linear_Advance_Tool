@@ -1246,19 +1246,19 @@ function toggleAnchorOptions(){
     $('#ANCHOR_PERIMETERS').parent().show();
     $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
     $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
-    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/anchor_frame.png" alt="Anchor Frame" />')
+    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/anchor_frame.png" alt="Anchor Frame" />')
   } else if ($('#ANCHOR_OPTION').val() == "anchor_layer") {
     $('label[for=ANCHOR_PERIMETERS]').parent().show();
     $('#ANCHOR_PERIMETERS').parent().show();
     $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
     $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
-    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/anchor_layer.png" alt="Anchor Layer" />')
+    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/anchor_layer.png" alt="Anchor Layer" />')
   } else {
     $('label[for=ANCHOR_PERIMETERS]').parent().hide();
     $('#ANCHOR_PERIMETERS').parent().hide();
     $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().hide();
     $('#ANCHOR_LAYER_LINE_RATIO').parent().hide();
-    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 200px;" src="./images/no_anchor.png" alt="No Anchor" />')
+    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/no_anchor.png" alt="No Anchor" />')
   }
 }
 
