@@ -252,7 +252,7 @@ ${(ZHOP_ENABLE ? `;  - Z Hop Height: ${ZHOP_HEIGHT}mm\n`: '')}\
 ;
 ; First Layer Settings:
 ;  - First Layer Height: ${HEIGHT_FIRSTLAYER} mm
-;  - First Layer Printing Speed: ${SPEED_FIRSTLAYER} mm/s
+;  - First Layer Printing Speed: ${SPEED_FIRSTLAYER / 60} mm/s
 ;  - First Layer Fan: ${FAN_SPEED_FIRSTLAYER}%
 ;  - Anchor Option: ${ANCHOR_OPTION}
 ${(ANCHOR_OPTION == 'anchor_frame' ? `;  - Anchor Frame Perimeters: ${ANCHOR_PERIMETERS}\n`: '')}\
