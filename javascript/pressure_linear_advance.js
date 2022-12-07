@@ -33,6 +33,11 @@ const GLYPH_PADDING_VERTICAL = 1;
 // -------------------------------------
 function setVars(){
   window.ACCELERATION = parseInt($('#PRINT_ACCL').val());
+  window.ADVANCED_FILFLOW = $('#ADVANCED_FILFLOW').prop('checked');
+  window.ADVANCED_FIRSTLAYER = $('#ADVANCED_FIRSTLAYER').prop('checked');
+  window.ADVANCED_PASTEP = $('#ADVANCED_PASTEP').prop('checked');
+  window.ADVANCED_PRINTER = $('#ADVANCED_PRINTER').prop('checked');
+  window.ADVANCED_RETRACT = $('#ADVANCED_RETRACT').prop('checked');
   window.ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val());
   window.ANCHOR_OPTION = $('#ANCHOR_OPTION').val();
   window.ANCHOR_PERIMETERS = parseFloat($('#ANCHOR_PERIMETERS').val());
@@ -817,9 +822,10 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           yMinBound = min_y + (optArgs['spacing'] * (optArgs['num_perims'] - 1) + optArgs['spacing'] * encroachment),
           yMaxBound = max_y - (optArgs['spacing'] * (optArgs['num_perims'] - 1) + optArgs['spacing'] * encroachment),
           xCount = Math.floor((xMaxBound - xMinBound) / spacing_45),
-          yCount = Math.floor((yMaxBound - yMinBound) / spacing_45),
-          xRemainder = (xMaxBound - xMinBound) % spacing_45,
-          yRemainder = (yMaxBound - yMinBound) % spacing_45;
+          yCount = Math.floor((yMaxBound - yMinBound) / spacing_45);
+          
+    var xRemainder = (xMaxBound - xMinBound) % spacing_45,
+        yRemainder = (yMaxBound - yMinBound) % spacing_45;
 
     x = xMinBound
     y = yMinBound
@@ -852,7 +858,12 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
             y = yMaxBound
             gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print up/left
           } else {
-            (i == yCount ? x += (spacing_45 - yRemainder) : x += spacing_45)
+            if (i == yCount){
+              x += (spacing_45 - yRemainder)
+              yRemainder = 0
+            } else {
+              x += spacing_45
+            }
             y = yMaxBound
             gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
             x += yMaxBound - yMinBound
@@ -862,7 +873,12 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
         } else { // if box is taller than wide
           if (i % 2 == 0){
             x = xMaxBound;
-            (i == xCount ? y += (spacing_45 - xRemainder) : y += spacing_45)
+            if (i == xCount){
+              y += (spacing_45 - xRemainder) 
+              xRemainder = 0
+            } else {
+              y += spacing_45
+            }
             gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
             x = xMinBound
             y += xMaxBound - xMinBound
@@ -878,16 +894,15 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
         }
       } else {
         if (i % 2 == 0){
+          x = xMaxBound;
           (i == Math.max(xCount, yCount) ? y += (spacing_45 - xRemainder) : y += spacing_45)
-          x = xMaxBound
           gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step up
           x -= (yMaxBound - y)
           y = yMaxBound
           gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio'], comment: 'Fill'}) // print up/left
         } else {
           (i == Math.max(xCount, yCount) ? x += (spacing_45 - yRemainder) : x += spacing_45)
-          //x += spacing_45
-          y = yMaxBound
+          y = yMaxBound;
           gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], extRatio: optArgs['extRatio']}) // step right
           y -= (xMaxBound - x)
           x = xMaxBound
@@ -931,6 +946,11 @@ function setLocalStorage() {
   var settings = {
     'SETTINGS_VERSION': SETTINGS_VERSION,
     'ACCELERATION' : parseInt($('#PRINT_ACCL').val()),
+    'ADVANCED_FILFLOW' : $('#ADVANCED_FILFLOW').prop('checked'),
+    'ADVANCED_FIRSTLAYER' : $('#ADVANCED_FIRSTLAYER').prop('checked'),
+    'ADVANCED_PASTEP' : $('#ADVANCED_PASTEP').prop('checked'),
+    'ADVANCED_PRINTER' : $('#ADVANCED_PRINTER').prop('checked'),
+    'ADVANCED_RETRACT' : $('#ADVANCED_RETRACT').prop('checked'),
     'ANCHOR_LAYER_LINE_RATIO' : parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
     'ANCHOR_OPTION' : $('#ANCHOR_OPTION').val(),
     'BED_SHAPE' : $('#BED_SHAPE').val(),
@@ -1109,6 +1129,37 @@ It must contain <strong>all necessary preparatory g-codes!</strong><br>
     $('#START_GCODE_TYPE_Description').html('');
   }
 }
+
+/*
+function toggleAdvancedPrinter(){
+
+}
+
+function toggleAdvancedFilFlow(){
+
+}
+
+function toggleAdvancedRetract(){
+
+}
+
+function toggleAdvancedFirstLayer(){
+
+}
+
+function toggleAdvancedPastep(){
+  
+}
+*/
+
+/*
+function toggleAdvanced(){
+  if (!$('#ADVANCED_PRINTER').is(':checked')) {
+    $('#TOOL_INDEX').parents().eq(1).hide()
+    $('#EXTRUDER_NAME').parents().eq(1).hide()
+    $('#USE_LINENO').parent().eq(1).hide()
+  }
+}*/
 
 function toggleFirmwareOptions(){
   var RRF3_END_GCODE = `\
@@ -1337,6 +1388,7 @@ function render(gcode) {
     });
 
     const renderer = new gcodeViewer.GCodeRenderer(gcode, 480, 360, new gcodeViewer.Color(0x808080))
+    //const renderer = new gcodeViewer.GCodeRenderer(gcode, 640, 480, new gcodeViewer.Color(0x808080))
     renderer.colorizer = new gcodeViewer.LineColorizer(colorConfig)
     renderer.travelWidth = 0 // disable rendering travel moves
     $('#gcode-viewer').empty().append(renderer.element())
@@ -1620,6 +1672,12 @@ $(window).load(() => {
   if (lsSettings) {
     var settings = jQuery.parseJSON(lsSettings);
     if (settings['SETTINGS_VERSION'] == SETTINGS_VERSION){ // only populate form with saved settings if version matches current
+      $('#ACCELERATION').val(settings['ACCELERATION']);
+      $('#ADVANCED_FILFLOW').prop('checked', settings['ADVANCED_FILFLOW']);
+      $('#ADVANCED_FIRSTLAYER').prop('checked', settings['ADVANCED_FIRSTLAYER']);
+      $('#ADVANCED_PASTEP').prop('checked', settings['ADVANCED_PASTEP']);
+      $('#ADVANCED_PRINTER').prop('checked', settings['ADVANCED_PRINTER']);
+      $('#ADVANCED_RETRACT').prop('checked', settings['ADVANCED_RETRACT']);
       $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
       $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
       $('#BED_SHAPE').val(settings['BED_SHAPE']);
@@ -1676,6 +1734,11 @@ $(window).load(() => {
   toggleAnchorOptions();
   toggleStartEndGcodeTypeDescriptions();
   toggleLeadingZero();
+  /*toggleAdvancedFilFlow();
+  toggleAdvancedFirstLayer();
+  toggleAdvancedPastep();
+  toggleAdvancedPrinter();
+  toggleAdvancedRetract();*/
 
   // validate input on page load
   // generates gcode and updates 3d preview if validations pass
