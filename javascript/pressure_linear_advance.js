@@ -29,17 +29,18 @@ const EXT_round = -5; // Was previously -4
 const GLYPH_PADDING_HORIZONTAL = 1;
 const GLYPH_PADDING_VERTICAL = 1;
 
-const ENCROACHMENT = 0.25;
+const ENCROACHMENT = 1/3;
 
 // set global HTML vars from form inputs
 // -------------------------------------
 function setVars(){
-  window.ACCELERATION = parseInt($('#PRINT_ACCL').val());
-  window.ADVANCED_FILFLOW = $('#ADVANCED_FILFLOW').prop('checked');
-  window.ADVANCED_FIRSTLAYER = $('#ADVANCED_FIRSTLAYER').prop('checked');
-  window.ADVANCED_PASTEP = $('#ADVANCED_PASTEP').prop('checked');
-  window.ADVANCED_PRINTER = $('#ADVANCED_PRINTER').prop('checked');
-  window.ADVANCED_RETRACT = $('#ADVANCED_RETRACT').prop('checked');
+  window.ACCELERATION = parseInt($('#ACCELERATION').val());
+  window.ACCELERATION_ENABLE = $('#ACCELERATION_ENABLE').prop('checked');
+  //window.ADVANCED_FILFLOW = $('#ADVANCED_FILFLOW').prop('checked');
+  //window.ADVANCED_FIRSTLAYER = $('#ADVANCED_FIRSTLAYER').prop('checked');
+  //window.ADVANCED_PASTEP = $('#ADVANCED_PASTEP').prop('checked');
+  //window.ADVANCED_PRINTER = $('#ADVANCED_PRINTER').prop('checked');
+  //window.ADVANCED_RETRACT = $('#ADVANCED_RETRACT').prop('checked');
   window.ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val());
   window.ANCHOR_OPTION = $('#ANCHOR_OPTION').val();
   window.ANCHOR_PERIMETERS = parseFloat($('#ANCHOR_PERIMETERS').val());
@@ -49,7 +50,9 @@ function setVars(){
   window.BED_Y = parseInt($('#BED_Y').val());
   window.ECHO = $('#ECHO').prop('checked');
   window.END_GCODE = $('#END_GCODE').val();
+  window.EXPERT_MODE = $('#EXPERT_MODE').prop('checked');
   window.EXTRUDER_NAME = $('#EXTRUDER_NAME').val();
+  window.EXTRUDER_NAME_ENABLE = $('#EXTRUDER_NAME_ENABLE').prop('checked');
   window.EXT_MULT = parseFloat($('#EXT_MULT').val());
   window.FAN_SPEED = parseFloat($('#FAN_SPEED').val());
   window.FAN_SPEED_FIRSTLAYER = parseFloat($('#FAN_SPEED_FIRSTLAYER').val());
@@ -111,6 +114,21 @@ function setVars(){
     PRINT_DIR = 0;
   }
 
+  // if "expert mode" is off, use defaults for expert settings
+  if (!EXPERT_MODE){
+    if (BED_SHAPE == 'Rect'){
+      ORIGIN_CENTER = false
+    }
+    EXTRUDER_NAME_ENABLE = false
+    TOOL_INDEX = parseInt($('#TOOL_INDEX').prop("defaultValue"))
+    LINE_RATIO = parseInt($('#LINE_RATIO').prop("defaultValue"))
+    ANCHOR_LAYER_LINE_RATIO = parseInt($('#ANCHOR_LAYER_LINE_RATIO').prop("defaultValue"))
+    ANCHOR_PERIMETERS = parseInt($('#ANCHOR_PERIMETERS').prop("defaultValue"))
+    USE_LINENO = true
+    LINENO_NO_LEADING_ZERO = false
+    ECHO = true
+  }
+
   SPEED_FIRSTLAYER *= 60;
   SPEED_PERIMETER *= 60;
   SPEED_TRAVEL *= 60;
@@ -136,7 +154,7 @@ function setVars(){
 
   // line spacings
   window.LINE_SPACING = LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4); // from slic3r documentation: spacing = extrusion_width - layer_height * (1 - PI/4)
-  window.ANCHOR_LAYER_LINE_SPACING = ANCHOR_LAYER_LINE_WIDTH - HEIGHT_LAYER * (1 - Math.PI / 4);
+  window.ANCHOR_LAYER_LINE_SPACING = ANCHOR_LAYER_LINE_WIDTH - HEIGHT_FIRSTLAYER * (1 - Math.PI / 4);
   window.LINE_SPACING_ANGLE = LINE_SPACING / Math.sin(toRadians(CORNER_ANGLE)/2);
 
   // calculate end dimensions so we can center the print properly & know where to start/end
@@ -195,7 +213,6 @@ function genGcode() {
     'centerY': CENTER_Y,
     'encroachment': ENCROACHMENT,
     'extMult': EXT_MULT,
-    //'extRatio': PATTERN_EXTRUSION_RATIO,
     'extruderName': EXTRUDER_NAME,
     'filamentDiameter': FILAMENT_DIAMETER,
     'firstLayerHeight': HEIGHT_FIRSTLAYER,
@@ -227,13 +244,18 @@ function genGcode() {
 ; Generated: ${new Date()}
 ; -------------------------------------------
 ;
+; Expert mode: ${EXPERT_MODE}
+;
 ; Printer:
 ;  - Firmware: ${FIRMWARE}
 ;  - Bed Shape: ${BED_SHAPE}
 ${(BED_SHAPE === 'Round' ? `;  - Bed Diameter: ${BED_X} mm\n`: `;  - Bed Size X: ${BED_X} mm\n`)}\
 ${(BED_SHAPE === 'Round' ? '': `;  - Bed Size Y: ${BED_Y} mm\n`)}\
 ;  - Origin Bed Center: ${(ORIGIN_CENTER ? 'true': 'false')}
-${(FIRMWARE == 'klipper' ? `;  - Extruder Name: ${EXTRUDER_NAME}\n`: `;  - Tool Index: ${TOOL_INDEX}\n`)}\
+${(FIRMWARE == 'klipper' && EXTRUDER_NAME_ENABLE ? `;  - Extruder Name: ${EXTRUDER_NAME}\n` : '')}\
+${(FIRMWARE == 'klipper' && !EXTRUDER_NAME_ENABLE ? `;  - Extruder Name: Disabled\n` : '')}\
+${(FIRMWARE != 'klipper' && TOOL_INDEX != 0 ? `;  - Tool Index: ${TOOL_INDEX}\n` : '')}\
+${(FIRMWARE != 'klipper' && TOOL_INDEX == 0 ? `;  - Tool Index: Disabled (0)\n` : '')}\
 ;  - Travel Speed: ${SPEED_TRAVEL / 60} mm/s
 ;  - Nozzle Diameter: ${NOZZLE_DIAMETER} mm
 ;
@@ -265,14 +287,14 @@ ${(ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width: ${ANCHOR_LAYER_LINE_R
 ; Print Settings:
 ;  - Layer Height: ${HEIGHT_LAYER} mm
 ;  - Print Speed: ${SPEED_PERIMETER / 60} mm/s
-;  - Acceleration: ${ACCELERATION} mm/s^2
+;  - Acceleration: ${ACCELERATION_ENABLE ? `${ACCELERATION} mm/s^2` : `Disabled`}
 ;  - Fan Speed: ${FAN_SPEED}%
 ;
 ; Pattern Settings ${(!PATTERN_OPTIONS_ENABLE ? `(Using defaults)`: '`(Customized)`')}:
 ;  - Print Height: ${HEIGHT_PRINT} mm
-;  - Perimeter Count: ${WALL_COUNT}
-;  - Side Length: ${WALL_SIDE_LENGTH} mm
-;  - Spacing: ${PATTERN_SPACING} mm
+;  - Pattern Wall Count: ${WALL_COUNT}
+;  - Pattern Side Length: ${WALL_SIDE_LENGTH} mm
+;  - Pattern Spacing: ${PATTERN_SPACING} mm
 ;  - Corner Angle: ${CORNER_ANGLE} degrees 
 ;  - Printing Direction: ${PRINT_DIR} degree
 ;
@@ -305,7 +327,8 @@ pa_script += `\
 ;
 ; Prepare printing
 ; 
-${(EXTRUDER_NAME != '' ? `ACTIVATE_EXTRUDER EXTRUDER=${EXTRUDER_NAME} ; Activate extruder\n`: '')}\
+${(FIRMWARE == 'klipper' && EXTRUDER_NAME != '' && EXTRUDER_NAME_ENABLE ? `ACTIVATE_EXTRUDER EXTRUDER=${EXTRUDER_NAME} ; Activate extruder\n`: '')}\
+${(FIRMWARE != 'klipper' && TOOL_INDEX != 0 ? `T${TOOL_INDEX} ; Activate extruder\n`: '')}\
 ${START_GCODE}
 G21 ; Millimeter units
 G90 ; Absolute XYZ
@@ -315,8 +338,15 @@ G92 E0 ; Reset extruder distance
 ;  Begin printing
 ;
 M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)} ${(FIRMWARE.includes('marlin') && TOOL_INDEX != 0 ? ` P${TOOL_INDEX} ` : '')}; Set fan speed
-${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P${ACCELERATION}` )} ; Set printing acceleration
 `;
+
+if (ACCELERATION_ENABLE){
+  if (FIRMWARE == 'klipper') {
+    pa_script += `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION} ; Set printing acceleration\n`
+  } else {
+    pa_script += `M204 P${ACCELERATION} ; Set printing acceleration\n`
+  }
+}
 
   // Move to layer height, set initial PA
   pa_script += doEfeed('-', basicSettings, {hop: false}) +
@@ -344,15 +374,15 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
   if (ANCHOR_OPTION == 'anchor_frame'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings);
 
-    if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
-      pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.65)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
+    if (USE_LINENO){ // create tab for numbers                                        // Set to <1 for extra overlap 
+      pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 1)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
     }
   }
   else if (ANCHOR_OPTION == 'anchor_layer'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings, {fill: true});
     
-    if (USE_LINENO){ // create tab for numbers                                        // a little extra overlap so tab doesn't fall of
-      pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 0.65)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
+    if (USE_LINENO){ // create tab for numbers                                        // Set to <1 for extra overlap 
+      pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 1)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
     }  
   }
 
@@ -373,7 +403,7 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
             var THIS_GLYPH_START_X = PAT_START_X + 
                 (j * (PATTERN_SPACING + LINE_WIDTH)) + 
                 (j * ((WALL_COUNT - 1) * LINE_SPACING_ANGLE)); // this aligns glyph starts with first pattern perim
-            THIS_GLYPH_START_X += (((WALL_COUNT - 1) / 2) * LINE_SPACING_ANGLE) -2; // shift glyph center to middle of pattern perimeters. 2 = half of glyph
+            THIS_GLYPH_START_X += (((WALL_COUNT - 1) / 2) * LINE_SPACING_ANGLE) -2; // shift glyph center to middle of pattern walls. 2 = half of glyph
             THIS_GLYPH_START_X += PATTERNSHIFT // adjust for pattern shift
 
             pa_script += createGlyphs(THIS_GLYPH_START_X, (PAT_START_Y + FRAME_SIZE_Y + GLYPH_PADDING_VERTICAL + LINE_WIDTH), basicSettings, Math.round10((PA_START + (j * PA_STEP)), PA_round), LINENO_NO_LEADING_ZERO);
@@ -389,10 +419,10 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     TO_Y = PAT_START_Y;
 
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
-      var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1)) / Math.sin(toRadians(CORNER_ANGLE) / 2);
+      var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1) + (ANCHOR_LAYER_LINE_WIDTH * (1 - ENCROACHMENT))) / Math.sin(toRadians(CORNER_ANGLE) / 2);
       var SIDE_LENGTH = WALL_SIDE_LENGTH - SHRINK; 
       TO_X += SHRINK * Math.sin(toRadians(90) - toRadians(CORNER_ANGLE) / 2);
-      TO_Y += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1);
+      TO_Y += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1) + (ANCHOR_LAYER_LINE_WIDTH * (1 - ENCROACHMENT));
     } else {
       var SIDE_LENGTH = WALL_SIDE_LENGTH;
     }
@@ -400,38 +430,40 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     var INITIAL_X = TO_X,
         INITIAL_Y = TO_Y;
 
-    // move to start xy then layer height
+    // move to start xy
     pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move to pattern start\n'})
 
     for (let j = 0; j < NUM_PATTERNS; j++){
-      // increment pressure advance
-      if (FIRMWARE == 'klipper'){
-        pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance\n`;
-        if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
-      }
-      else if (FIRMWARE == 'marlin-1.1.8' || FIRMWARE == 'marlin-1.1.9'){
-        pa_script += `M900 K${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;
-        if (ECHO){pa_script += `M117 LA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
-      }
-      else if (FIRMWARE == 'rrf3'){
-        pa_script += `M572 S${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(TOOL_INDEX != 0 ? `D${TOOL_INDEX} ` : '')}; Set pressure advance\n`;
-        if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
+      if (i !== 0){
+        // increment pressure advance
+        if (FIRMWARE == 'klipper'){
+          pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance\n`;
+          if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
+        }
+        else if (FIRMWARE == 'marlin-1.1.8' || FIRMWARE == 'marlin-1.1.9'){
+          pa_script += `M900 K${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(TOOL_INDEX != 0 ? `T${TOOL_INDEX} ` : '')}; Set linear advance k factor\n`;
+          if (ECHO){pa_script += `M117 LA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
+        }
+        else if (FIRMWARE == 'rrf3'){
+          pa_script += `M572 S${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(TOOL_INDEX != 0 ? `D${TOOL_INDEX} ` : '')}; Set pressure advance\n`;
+          if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
+        }
       }
     
       for (let k = 0; k < WALL_COUNT ; k++){
         TO_X += (Math.cos(toRadians(CORNER_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(CORNER_ANGLE) / 2) * SIDE_LENGTH);
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: 'Print pattern perimeter'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'height': (i == 0 ? HEIGHT_FIRSTLAYER : HEIGHT_LAYER), 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: 'Print pattern wall'});
 
         TO_X -= Math.cos(toRadians(CORNER_ANGLE) / 2) * SIDE_LENGTH;
         TO_Y += Math.sin(toRadians(CORNER_ANGLE) / 2) * SIDE_LENGTH;
-        pa_script += createLine(TO_X, TO_Y, basicSettings, {'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: 'Print pattern perimeter'});
+        pa_script += createLine(TO_X, TO_Y, basicSettings, {'height': (i == 0 ? HEIGHT_FIRSTLAYER : HEIGHT_LAYER), 'speed': (i == 0 ? SPEED_FIRSTLAYER : SPEED_PERIMETER), comment: 'Print pattern wall'});
 
         TO_Y = INITIAL_Y;
         switch (true){
           case k != WALL_COUNT - 1:  // perims not done yet. move to next perim
             TO_X += LINE_SPACING_ANGLE;
-            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move to start next pattern perimeter'});
+            pa_script += moveTo(TO_X, TO_Y, basicSettings, {comment: 'Move to start next pattern wall'});
             break;
           case j != NUM_PATTERNS - 1: // patterns not done yet. move to next pattern
             TO_X += (PATTERN_SPACING + LINE_WIDTH);
@@ -460,7 +492,11 @@ ${(FIRMWARE == 'klipper' ? `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION}` : `M204 P$
     pa_script += `M572 S${Math.round10(PA_START, PA_round)} ${(TOOL_INDEX != 0 ? `D${TOOL_INDEX} ` : '')}; Set pressure advance back to start value\n`;
     if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START, PA_round)}\n`}
   }
-  pa_script += doEfeed('-', basicSettings) +`\
+  pa_script += doEfeed('-', basicSettings) +
+               moveToZ(CUR_Z + 5, basicSettings, {comment: 'Z raise'}) +`\
+M104 S0 ; Turn off hotend
+M140 S0 ; Turn off bed
+M107    ; Turn off fan
 ;
 ; End G-code
 ;
@@ -668,13 +704,12 @@ function createLine(to_x, to_y, basicSettings, optional) {
   //handle optional function arguments passed as object
   var defaults = {
     extMult: basicSettings['extMult'],
-    layerHeight: basicSettings['layerHeight'],
+    height: basicSettings['layerHeight'],
     lineWidth: basicSettings['lineWidth'],
     speed: basicSettings['perimSpeed'],
     comment: 'Print line'
   };
   var optArgs = $.extend({}, defaults, optional);
-  var extRatio = optArgs['lineWidth'] * optArgs['layerHeight'] / (Math.pow(basicSettings['filamentDiameter'] / 2, 2) * Math.PI);
 
   // change speed if first layer
   if (Math.round10(CUR_Z, Z_round) == basicSettings['firstLayerHeight']){
@@ -684,7 +719,11 @@ function createLine(to_x, to_y, basicSettings, optional) {
   }
 
   length = getDistance(CUR_X, CUR_Y, to_x, to_y);
-  ext = Math.round10(extRatio * optArgs['extMult'] * Math.abs(length), EXT_round);
+
+  var extArea = ((optArgs['lineWidth'] - optArgs['height']) * optArgs['height']) + (Math.PI * Math.pow((optArgs['height'] / 2), 2)) // cross sectional area of extrusion
+  var vol = length * extArea // total volume of extrusion
+  var filArea = Math.PI * Math.pow((basicSettings['filamentDiameter'] / 2), 2) // cross sectional area of filament
+  ext = Math.round10((vol / filArea) * optArgs['extMult'], EXT_round) // volume to filament length
 
   gcode += `G1 X${Math.round10(rotateX(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round)} Y${Math.round10(rotateY(to_x, basicSettings['centerX'], to_y, basicSettings['centerY'], basicSettings['printDir']), XY_round)} E${ext} F${optArgs['speed']} ; ${optArgs['comment']}\n`
 
@@ -728,7 +767,7 @@ function moveToZ(to_z, basicSettings, optional){
   var gcode = '';
 
   var defaults = {
-    comment: 'Move'
+    comment: 'Move to Z'
   };
   var optArgs = $.extend({}, defaults, optional);
 
@@ -781,14 +820,14 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
   var defaults = {
     fill: false,
     num_perims: basicSettings['anchorPerimeters'],
-    layerHeight: basicSettings['firstLayerHeight'],
+    height: basicSettings['firstLayerHeight'],
     lineWidth: basicSettings['anchorLineWidth'],
     speed: basicSettings['firstLayerSpeed'],
   };
 
   var optArgs = $.extend({}, defaults, optional);
 
-  var spacing = optArgs['lineWidth'] - optArgs['layerHeight'] * (1 - Math.PI / 4);
+  var spacing = optArgs['lineWidth'] - optArgs['height'] * (1 - Math.PI / 4);
 
   // if number of perims exceeds size of box, reduce it to max
   var maxPerims = Math.min( // this is the equivalent of number of perims for concentric fill
@@ -798,7 +837,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
   optArgs['num_perims'] = Math.min(optArgs['num_perims'], maxPerims)
   
   gcode += moveTo(min_x, min_y, basicSettings, {comment: 'Move to box start'});
-
+1
   for (let i = 0; i < optArgs['num_perims'] ; i++){
     if (i != 0){ // after first perimeter, step inwards to start next perimeter
       x += spacing;
@@ -807,16 +846,16 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
     }
     // draw line up
     y += size_y - (i * spacing) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Draw perimeter (up)'});
+    gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Draw perimeter (up)'});
     // draw line right
     x += size_x - (i * spacing) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Draw perimeter (right)'});
+    gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Draw perimeter (right)'});
     // draw line down
     y -= size_y - (i * spacing) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Draw perimeter (down)'});
+    gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Draw perimeter (down)'});
     // draw line left
     x -= size_x - (i * spacing) * 2;
-    gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Draw perimeter (left)'});
+    gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Draw perimeter (left)'});
   }
 
   if (optArgs['fill']){
@@ -827,7 +866,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           yMaxBound = max_y - ((spacing * (optArgs['num_perims'] - 1)) + (optArgs['lineWidth'] * (1 - basicSettings['encroachment']))),
           xCount = Math.floor((xMaxBound - xMinBound) / spacing_45),
           yCount = Math.floor((yMaxBound - yMinBound) / spacing_45);
-
+    
     var xRemainder = (xMaxBound - xMinBound) % spacing_45,
         yRemainder = (yMaxBound - yMinBound) % spacing_45;
 
@@ -835,32 +874,32 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
     y = yMinBound
     gcode += moveTo(x, y, basicSettings, {comment: 'Move to fill start'}) // move to start
 
-    for (let i = 0; i < yCount + xCount; i++){ // this isn't the most robust way, but less expensive than finding line intersections
+    for (let i = 0; i < yCount + xCount + (xRemainder + yRemainder >= spacing_45 ? 1 : 0); i++){ // this isn't the most robust way, but less expensive than finding line intersections
       if (i < Math.min(yCount, xCount)){
         if (i % 2 == 0){
           x += spacing_45
           y = yMinBound
-          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step right
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step right
           y += (x - xMinBound)
           x = xMinBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print up/left
+          gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print up/left
         } else {
           y += spacing_45
           x = xMinBound
-          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step up
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step up
           x += (y - yMinBound)
           y = yMinBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print down/right
+          gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print down/right
         }
       } else if (i < Math.max(xCount,yCount)){
         if (xCount > yCount){ // if box is wider than tall
           if (i % 2 == 0){
             x += spacing_45
             y = yMinBound
-            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step right
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step right
             x -= yMaxBound - yMinBound
             y = yMaxBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print up/left
+            gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print up/left
           } else {
             if (i == yCount){
               x += (spacing_45 - yRemainder)
@@ -869,10 +908,10 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
               x += spacing_45
             }
             y = yMaxBound
-            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step right
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step right
             x += yMaxBound - yMinBound
             y = yMinBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print down/right
+            gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print down/right
           }
         } else { // if box is taller than wide
           if (i % 2 == 0){
@@ -883,34 +922,42 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
             } else {
               y += spacing_45
             }
-            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step up
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step up
             x = xMinBound
             y += xMaxBound - xMinBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print up/left
+            gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print up/left
           } else {
             x = xMinBound
             y += spacing_45
-            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step up
+            gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step up
             x = xMaxBound
             y -= xMaxBound - xMinBound
-            gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print down/right
+            gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print down/right
           }
         }
       } else {
         if (i % 2 == 0){
           x = xMaxBound;
-          (i == Math.max(xCount, yCount) ? y += (spacing_45 - xRemainder) : y += spacing_45)
-          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step up
+          if (i == xCount){
+            y += (spacing_45 - xRemainder)
+          } else {
+            y += spacing_45
+          }
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step up
           x -= (yMaxBound - y)
           y = yMaxBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print up/left
+          gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print up/left
         } else {
-          (i == Math.max(xCount, yCount) ? x += (spacing_45 - yRemainder) : x += spacing_45)
+          if (i == yCount){
+            x += (spacing_45 - yRemainder)
+          } else {
+            x += spacing_45
+          }
           y = yMaxBound;
-          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth']}) // step right
+          gcode += moveTo(x, y, basicSettings, {speed: optArgs['speed']}) // step right
           y -= (xMaxBound - x)
           x = xMaxBound
-          gcode += createLine(x, y, basicSettings, {speed: optArgs['speed'], layerHeight: optArgs['layerHeight'], lineWidth: optArgs['lineWidth'], comment: 'Fill'}) // print down/right
+          gcode += createLine(x, y, basicSettings, {height: optArgs['height'], lineWidth: optArgs['lineWidth'], speed: optArgs['speed'], comment: 'Fill'}) // print down/right
         }
       }
     }
@@ -949,12 +996,8 @@ function rotateY(x, xm, y, ym, a) {
 function setLocalStorage() {
   var settings = {
     'SETTINGS_VERSION': SETTINGS_VERSION,
-    'ACCELERATION' : parseInt($('#PRINT_ACCL').val()),
-    'ADVANCED_FILFLOW' : $('#ADVANCED_FILFLOW').prop('checked'),
-    'ADVANCED_FIRSTLAYER' : $('#ADVANCED_FIRSTLAYER').prop('checked'),
-    'ADVANCED_PASTEP' : $('#ADVANCED_PASTEP').prop('checked'),
-    'ADVANCED_PRINTER' : $('#ADVANCED_PRINTER').prop('checked'),
-    'ADVANCED_RETRACT' : $('#ADVANCED_RETRACT').prop('checked'),
+    'ACCELERATION' : parseInt($('#ACCELERATION').val()),
+    'ACCELERATION_ENABLE' : $('#ACCELERATION_ENABLE').prop('checked'),
     'ANCHOR_LAYER_LINE_RATIO' : parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
     'ANCHOR_OPTION' : $('#ANCHOR_OPTION').val(),
     'BED_SHAPE' : $('#BED_SHAPE').val(),
@@ -963,7 +1006,9 @@ function setLocalStorage() {
     'BED_Y' : parseInt($('#BED_Y').val()),
     'ECHO' : $('#ECHO').prop('checked'),
     'END_GCODE' : $('#END_GCODE').val(),
+    'EXPERT_MODE' : $('#EXPERT_MODE').prop('checked'),
     'EXTRUDER_NAME' : $('#EXTRUDER_NAME').val(),
+    'EXTRUDER_NAME_ENABLE' : $('#EXTRUDER_NAME_ENABLE').prop('checked'),
     'EXT_MULT' : parseFloat($('#EXT_MULT').val()),
     'FAN_SPEED' : parseFloat($('#FAN_SPEED').val()),
     'FAN_SPEED_FIRSTLAYER' : parseFloat($('#FAN_SPEED_FIRSTLAYER').val()),
@@ -1009,14 +1054,22 @@ function setLocalStorage() {
 function toggleBedShape() {
   if ($('#BED_SHAPE').val() === 'Round') {
     $('label[for=BED_X]').text('Bed Diameter:');
-    $('label[for=BED_Y]').parent().hide();
-    $('#BED_Y').parent().hide();
+    //$('label[for=BED_Y]').parent().hide();
+    //$('#BED_Y').parent().hide();
+    $('label[for=BED_Y]').css({opacity: 0});
+    $('#BED_Y').parent().css({opacity: 0});
+    $('#BED_Y').prop('disabled', true);
     $('#ORIGIN_CENTER').parents().eq(1).hide();
   } else {
     $('label[for=\'BED_X\']').text('Bed Size X');
-    $('label[for=BED_Y]').parent().show();
-    $('#BED_Y').parent().show();
+    $//('label[for=BED_Y]').parent().show();
+    //$('#BED_Y').parent().show();
+    $('label[for=BED_Y]').css({opacity: 1});
+    $('#BED_Y').parent().css({opacity: 1});
+    $('#BED_Y').prop('disabled', false);
+    if ($('#EXPERT_MODE').is(':checked')){
     $('#ORIGIN_CENTER').parents().eq(1).show();
+    }
   }
 }
 
@@ -1033,19 +1086,16 @@ M109 S[HOTEND_TEMP] ; Set & wait for hotend temp. !Don't modify/delete, only mov
 ;QUAD_GANTRY_LEVEL  ; Level flying gantry (uncomment if used)
 ;Z_TILT_ADJUST      ; Tilt level bed (uncomment if used)
 G28 Z               ; Home Z
-;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)
-M112                ; Reading comprehension check! (emergency stop)`
+;BED_MESH_CALIBRATE ; Generate bed mesh (uncomment if used)`
 
   CANNED_GCODE["rrf3"] = `\
 G28                 ; Home all axes !Don't modify/delete, only move!
-T[TOOL_INDEX]       ; Select tool
 G90                 ; Absolute XYZ
 G1 Z5 F100          ; Z raise
 M190 S[BED_TEMP]    ; Set & wait for bed temp. !Don't modify/delete, only move!
 M109 S[HOTEND_TEMP] ; Set & wait for hotend temp. !Don't modify/delete, only move!
 G32                 ; Run bed.g macro
-G28 Z               ; Home Z
-M112                ; Reading comprehension check! (emergency stop)`
+G28 Z               ; Home Z`
 
   var STANDALONE_MACRO = {};
 
@@ -1055,9 +1105,7 @@ M109 S[HOTEND_TEMP] ; Set & wait for hotend temp. !Don't modify/delete, only mov
 PRINT_START         ; Start macro
 ;
 ; Make sure this macro name matches your own! 
-; (For example, some may use START_PRINT instead.)
-;
-M112                ; Reading comprehension check! (emergency stop)`
+; (For example, some may use START_PRINT instead.)`
 
   STANDALONE_MACRO["rrf3"] = `\
 M190 S[BED_TEMP]          ; Set & wait for bed temp. !Don't modify/delete, only move!
@@ -1065,8 +1113,7 @@ M109 S[HOTEND_TEMP]       ; Set & wait for hotend temp. !Don't modify/delete, on
 M98 P"/sys/print_start.g" ; Start macro
 ;
 ; Make sure this macro name matches your own!
-;
-M112                      ; Reading comprehension check! (emergency stop)`
+;`
 
   var STANDALONE_TEMP_PASSING_MACRO = {};
   
@@ -1076,28 +1123,22 @@ PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] CHAMBER=40 ; Start macro w/ temp
 ; - Make sure the macro name AND parameter names match YOUR start macro setup!
 ;     (For example, some macros use EXTRUDER=X rather than HOTEND=X, or START_PRINT instead of PRINT_START)!
 ; - Replace any slicer variables with those listed above! It should look like the top example, !!! NOT !!! like this:
-;     PRINT_START BED=[first_layer_bed_temperature](...)
-;
-M112                                                       ; Reading comprehension check! (emergency stop)`
+;     PRINT_START BED=[first_layer_bed_temperature](...)`
 
   STANDALONE_TEMP_PASSING_MACRO["rrf3"] = `\
 M98 P"/sys/print_start.g" E[HOTEND_TEMP] B[BED_TEMP] ; Start macro w/ temp params. Keep the variables!
 ;
 ; - Make sure the macro name AND parameter names match YOUR start macro setup!
 ; - Replace any slicer variables with those listed above! It should look like the top example, !!! NOT !!! like this:
-;     M98 P"/sys/print_start.g" B=[first_layer_bed_temperature](...)
-;
-M112                                                 ; Reading comprehension check! (emergency stop)`
+;     M98 P"/sys/print_start.g" B=[first_layer_bed_temperature](...)`
 
   var MARLIN_GCODE = `\
 G28                 ; Home all axes !Don't modify/delete, only move!
-T[TOOL_INDEX]       ; Select tool
 G90                 ; Absolute XYZ
 G1 Z5 F100          ; Z raise
 M190 S[BED_TEMP]    ; Set & wait for bed temp !Don't modify/delete, only move!
 M109 S[HOTEND_TEMP] ; Set & wait for hotend temp !Don't modify/delete, only move!
-;G29                ; Auto bed leveling
-M112                ; Reading comprehension check! (emergency stop)`
+;G29                ; Auto bed leveling`
 
   switch (true){
     case $('#START_GCODE_TYPE').val() == "custom" :
@@ -1134,75 +1175,88 @@ It must contain <strong>all necessary preparatory g-codes!</strong><br>
   }
 }
 
-/*
-function toggleAdvancedPrinter(){
-
+function toggleAcceleration(){
+  if ($('#ACCELERATION_ENABLE').is(':checked')){
+    $('#ACCELERATION').prop('disabled', false);
+    if ($('#ACCELERATION').val() == ''){
+      $('#ACCELERATION').val(1000)
+    }
+  } else {
+    //$('#ACCELERATION').val('')
+    $('#ACCELERATION').prop('disabled', true);
+  }
 }
 
-function toggleAdvancedFilFlow(){
-
+function toggleExtruderName(){
+  if ($('#EXTRUDER_NAME_ENABLE').is(':checked')){
+    $('#EXTRUDER_NAME').prop('disabled', false);
+  } else {
+    $('#EXTRUDER_NAME').prop('disabled', true);
+  }
 }
 
-function toggleAdvancedRetract(){
-
-}
-
-function toggleAdvancedFirstLayer(){
-
-}
-
-function toggleAdvancedPastep(){
-  
-}
-*/
-
-/*
-function toggleAdvanced(){
-  if (!$('#ADVANCED_PRINTER').is(':checked')) {
+function toggleExpertMode(){
+  if ($('#EXPERT_MODE').is(':checked')){
+    $('#ORIGIN_CENTER').parents().eq(1).show();
+    $('#LINE_RATIO').parents().eq(1).show()
+    $('#patternSettingsHead').show()
+    $('#USE_LINENO').parents().eq(1).show()
+    $('#ECHO').parents().eq(1).show()
+    toggleAnchorOptions();
+    toggleFirmwareOptions();
+    /*
+    if ($('#FIRMWARE').val() != ('klipper')){
+      if (!$('#START_GCODE').val().includes("T[TOOL_INDEX]")){
+        $('#START_GCODE').val("T[TOOL_INDEX] ; Select tool\n" + $('#START_GCODE').val())
+      }
+    } else {
+      if (!$('#START_GCODE').val().includes("T[TOOL_INDEX]")){
+        $('#START_GCODE').val("T[TOOL_INDEX] ; Select tool\n" + $('#START_GCODE').val())
+      }
+    }*/
+  } else {
+    
+    $('#ORIGIN_CENTER').parents().eq(1).hide();
     $('#TOOL_INDEX').parents().eq(1).hide()
     $('#EXTRUDER_NAME').parents().eq(1).hide()
-    $('#USE_LINENO').parent().eq(1).hide()
+    $('#LINE_RATIO').parents().eq(1).hide()
+    //$('#SPEED_UNRETRACT').parents().eq(1).hide()
+    $("#PATTERN_OPTIONS_ENABLE").prop( "checked", false );
+    togglePatternOptions();
+    $('#patternSettingsHead').hide()
+    $('#USE_LINENO').parents().eq(1).hide()
+    $('#ECHO').parents().eq(1).hide()
+    $('label[for=ANCHOR_PERIMETERS]').parent().hide();
+    $('#ANCHOR_PERIMETERS').parent().hide();
+    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().hide();
+    $('#ANCHOR_LAYER_LINE_RATIO').parent().hide();
   }
-}*/
+
+  validate(true);
+}
 
 function toggleFirmwareOptions(){
   var RRF3_END_GCODE = `\
-G91   ; Relative XYZ
-G0 Z5 ; Move up 5mm
-G90   ; Absolute XYZ
-M107  ; Turn off fan
 M0    ; Stop`
 
   var MARLIN_END_GCODE = `\
-M400    ; Finish moving
-G91     ; Relative XYZ
-G0 Z5   ; Move up 5mm
-G90     ; Absolute XYZ
-M107    ; Turn off fan
-M104 S0 ; Turn off hotend
-M140 S0 ; Turn off bed
-M84     ; Disable motors
 M501    ; Load settings from EEPROM (to restore previous values)`
 
   var KLIPPER_END_GCODE = `\
-M400      ; Finish moving
-G91       ; Relative XYZ
-G0 Z5     ; Move up 5mm
-G90       ; Absolute XYZ
-PRINT_END ; End macro. Change name to match yours
-RESTART   ; Restart Klipper to reset PA value`
+PRINT_END ; End macro. Change name to match yours`
 
   switch(true){
     case $('#FIRMWARE').val() == ('klipper') :
       $('#TOOL_INDEX').parents().eq(1).hide()
-      $('#EXTRUDER_NAME').parents().eq(1).show()
+      if ($('#EXPERT_MODE').is(':checked')){
+        $('#EXTRUDER_NAME').parents().eq(1).show()
+      }
       $('#STEPPING_HEADER').html('Pressure Advance Stepping')
       $('#STEPPING_HEADER_BODY').html(`\
 <i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
-Bowden: Start with ~0 to ~1* @ 0.05 increment<br><br>
-This will get a rough idea of what range to work in.<br>
-Run the test again with a narrower range and finer increment afterwards.<br><br>
-*Very long Bowden paths can sometimes need higher than 1.`)
+Bowden: Start with ~0 to ~1* @ 0.05 increment<br>
+<sup>*Long bowden paths can sometimes need higher than 1</sup><br></i>
+Once you find a general range, run again with narrower range / finer increment.<br>`)
       $('label[for=PA_START]').html('PA Start Value')
       $('label[for=PA_END]').html('PA End Value')
       $('label[for=PA_STEP]').html('PA Increment')
@@ -1210,15 +1264,16 @@ Run the test again with a narrower range and finer increment afterwards.<br><br>
       $('#END_GCODE').val(KLIPPER_END_GCODE);
       break;
     case $('#FIRMWARE').val() == ('marlin-1.1.9') :
-      $('#TOOL_INDEX').parents().eq(1).show()
+      if ($('#EXPERT_MODE').is(':checked')){
+        $('#TOOL_INDEX').parents().eq(1).show()
+      }
       $('#EXTRUDER_NAME').parents().eq(1).hide()
       $('#STEPPING_HEADER').html('Linear Advance Stepping')
       $('#STEPPING_HEADER_BODY').html(`\
 <i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
-Bowden: Start with ~0 to ~1* @ 0.05 increment<br><br>
-This will get a rough idea of what range to work in.<br>
-Run the test again with a narrower range and finer increment afterwards.<br><br>
-*Very long Bowden paths can sometimes need higher than 1.`)
+Bowden: Start with ~0 to ~1* @ 0.05 increment<br>
+<sup>*Long bowden paths can sometimes need higher than 1</sup><br></i>
+Once you find a general range, run again with narrower range / finer increment.<br>`)
       $('label[for=PA_START]').html('Start K Value')
       $('label[for=PA_END]').html('End K Value')
       $('label[for=PA_STEP]').html('K Value Increment')
@@ -1226,7 +1281,9 @@ Run the test again with a narrower range and finer increment afterwards.<br><br>
       $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
     case $('#FIRMWARE').val() == ('marlin-1.1.8') :
-      $('#TOOL_INDEX').parents().eq(1).show()
+      if ($('#EXPERT_MODE').is(':checked')){
+        $('#TOOL_INDEX').parents().eq(1).show()
+      }
       $('#EXTRUDER_NAME').parents().eq(1).hide()
       $('#STEPPING_HEADER').html('Linear Advance Stepping')
       $('#STEPPING_HEADER_BODY').html(``)
@@ -1237,15 +1294,16 @@ Run the test again with a narrower range and finer increment afterwards.<br><br>
       $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
     case $('#FIRMWARE').val() == ('rrf3') :
-      $('#TOOL_INDEX').parents().eq(1).show()
+      if ($('#EXPERT_MODE').is(':checked')){
+        $('#TOOL_INDEX').parents().eq(1).show()
+      }
       $('#EXTRUDER_NAME').parents().eq(1).hide()
       $('#STEPPING_HEADER').html('Pressure Advance Stepping')
       $('#STEPPING_HEADER_BODY').html(`\
 <i>Direct Drive: Start with ~0 to ~0.08 @ 0.005 increment<br>
-Bowden: Start with ~0 to ~1* @ 0.05 increment<br><br>
-This will get a rough idea of what range to work in.<br>
-Run the test again with a narrower range and finer increment afterwards.<br><br>
-*Very long Bowden paths can sometimes need higher than 1.`)
+Bowden: Start with ~0 to ~1* @ 0.05 increment<br>
+<sup>*Long bowden paths can sometimes need higher than 1</sup><br></i>
+Once you find a general range, run again with narrower range / finer increment.<br>`)
       $('label[for=PA_START]').html('PA Start Value')
       $('label[for=PA_END]').html('PA End Value')
       $('label[for=PA_STEP]').html('PA Increment')
@@ -1270,7 +1328,7 @@ function toggleFirmwareValues(){
       $('#START_GCODE_TYPE').val('custom-marlin')
       break;
     case $('#FIRMWARE').val() === 'klipper' :
-      $('#START_GCODE_TYPE').val('custom');
+      $('#START_GCODE_TYPE').val('standalone');
       $('#PA_START').val(0)
       $('#PA_END').val(0.08)
       $('#PA_STEP').val(0.005)
@@ -1296,25 +1354,30 @@ function togglePatternOptions(){
 }
 
 function toggleAnchorOptions(){
+  
     if ($('#ANCHOR_OPTION').val() == "anchor_frame"){
-    $('label[for=ANCHOR_PERIMETERS]').parent().show();
-    $('#ANCHOR_PERIMETERS').parent().show();
-    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
-    $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
-    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/anchor_frame.png" alt="Anchor Frame" />')
-  } else if ($('#ANCHOR_OPTION').val() == "anchor_layer") {
-    $('label[for=ANCHOR_PERIMETERS]').parent().show();
-    $('#ANCHOR_PERIMETERS').parent().show();
-    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
-    $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
-    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/anchor_layer.png" alt="Anchor Layer" />')
-  } else {
-    $('label[for=ANCHOR_PERIMETERS]').parent().hide();
-    $('#ANCHOR_PERIMETERS').parent().hide();
-    $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().hide();
-    $('#ANCHOR_LAYER_LINE_RATIO').parent().hide();
-    $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/no_anchor.png" alt="No Anchor" />')
-  }
+      if ($('#EXPERT_MODE').is(':checked')){
+        $('label[for=ANCHOR_PERIMETERS]').parent().show();
+        $('#ANCHOR_PERIMETERS').parent().show();
+        $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
+        $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
+      }
+      $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/anchor_frame.png" alt="Anchor Frame" />')
+    } else if ($('#ANCHOR_OPTION').val() == "anchor_layer") {
+      if ($('#EXPERT_MODE').is(':checked')){
+        $('label[for=ANCHOR_PERIMETERS]').parent().hide();
+        $('#ANCHOR_PERIMETERS').parent().hide();
+        $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().show();
+        $('#ANCHOR_LAYER_LINE_RATIO').parent().show();
+      }
+      $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/anchor_layer.png" alt="Anchor Layer" />')
+    } else {
+      $('label[for=ANCHOR_PERIMETERS]').parent().hide();
+      $('#ANCHOR_PERIMETERS').parent().hide();
+      $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().hide();
+      $('#ANCHOR_LAYER_LINE_RATIO').parent().hide();
+      $('#anchorOptionDescription').html('<img style="width: auto; max-height: 150px;" src="./images/no_anchor.png" alt="No Anchor" />')
+    }
 }
 
 function toggleZHop() {
@@ -1392,7 +1455,7 @@ function render(gcode) {
     });
 
     const renderer = new gcodeViewer.GCodeRenderer(gcode, 480, 360, new gcodeViewer.Color(0x808080))
-    //const renderer = new gcodeViewer.GCodeRenderer(gcode, 640, 480, new gcodeViewer.Color(0x808080))
+    //const renderer = new gcodeViewer.GCodeRenderer(gcode, 1024, 768, new gcodeViewer.Color(0x808080))
     renderer.colorizer = new gcodeViewer.LineColorizer(colorConfig)
     renderer.travelWidth = 0 // disable rendering travel moves
     $('#gcode-viewer').empty().append(renderer.element())
@@ -1430,7 +1493,6 @@ function validate(updateRender = false) {
     PA_START: $('#PA_START').val(),
     PA_STEP: $('#PA_STEP').val(),
     WALL_COUNT: $('#WALL_COUNT').val(),
-    PRINT_ACCL: $('#PRINT_ACCL').val(),
     RETRACT_DIST: $('#RETRACT_DIST').val(),
     SPEED_FIRSTLAYER: $('#SPEED_FIRSTLAYER').val(),
     SPEED_PERIMETER: $('#SPEED_PERIMETER').val(),
@@ -1441,12 +1503,20 @@ function validate(updateRender = false) {
     ZHOP_HEIGHT: $('#ZHOP_HEIGHT').val()
   }
 
+  if ($('#ACCELERATION_ENABLE').prop('checked')){
+    testNaN.ACCELERATION = $('#ACCELERATION').val()
+  }
+
   var decimals = getDecimals(parseFloat(testNaN['PA_STEP']));
   var invalid = 0;
   var validationFail = false;
   
   // Reset all warnings before re-check
-  $('ANCHOR_LAYER_LINE_RATIO,#BED_TEMP,#BED_X,#BED_Y,#TOOL_INDEX,#END_GCODE,#EXT_MULT,#EXTRUDER_NAME,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,#FILENAME,#HEIGHT_FIRSTLAYER,#HEIGHT_PRINT,#HOTEND_TEMP,#LAYER_HEIGHT,#LINE_RATIO,#NOZZLE_DIAMETER,#CORNER_ANGLE,#WALL_SIDE_LENGTH,#PATTERN_SPACING,#PA_END,#PA_START,#PA_STEP,#WALL_COUNT,#PRINT_ACCL,#RETRACT_DIST,#SPEED_FIRSTLAYER,#SPEED_PERIMETER,#SPEED_RETRACT,#SPEED_TRAVEL,#SPEED_UNRETRACT,#START_GCODE,#START_GCODE_TYPE,#ZHOP_HEIGHT').each((i,t) => {
+  $(`\
+  #ACCELERATION,#ANCHOR_LAYER_LINE_RATIO,#BED_TEMP,#BED_X,#BED_Y,#TOOL_INDEX,#END_GCODE,#EXT_MULT,#EXTRUDER_NAME,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,\
+  #FILENAME,#HEIGHT_FIRSTLAYER,#HEIGHT_PRINT,#HOTEND_TEMP,#LAYER_HEIGHT,#LINE_RATIO,#NOZZLE_DIAMETER,#CORNER_ANGLE,#WALL_SIDE_LENGTH,#PATTERN_SPACING,\
+  #PA_END,#PA_START,#PA_STEP,#WALL_COUNT,#RETRACT_DIST,#SPEED_FIRSTLAYER,#SPEED_PERIMETER,#SPEED_RETRACT,#SPEED_TRAVEL,#SPEED_UNRETRACT,\
+  #START_GCODE,#START_GCODE_TYPE,#ZHOP_HEIGHT`).each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
     $(`label[for=${tid}]`).removeClass();
@@ -1677,11 +1747,12 @@ $(window).load(() => {
     var settings = jQuery.parseJSON(lsSettings);
     if (settings['SETTINGS_VERSION'] == SETTINGS_VERSION){ // only populate form with saved settings if version matches current
       $('#ACCELERATION').val(settings['ACCELERATION']);
-      $('#ADVANCED_FILFLOW').prop('checked', settings['ADVANCED_FILFLOW']);
-      $('#ADVANCED_FIRSTLAYER').prop('checked', settings['ADVANCED_FIRSTLAYER']);
-      $('#ADVANCED_PASTEP').prop('checked', settings['ADVANCED_PASTEP']);
-      $('#ADVANCED_PRINTER').prop('checked', settings['ADVANCED_PRINTER']);
-      $('#ADVANCED_RETRACT').prop('checked', settings['ADVANCED_RETRACT']);
+      $('#ACCELERATION_ENABLE').prop('checked', settings['ACCELERATION_ENABLE']);
+      //$('#ADVANCED_FILFLOW').prop('checked', settings['ADVANCED_FILFLOW']);
+      //$('#ADVANCED_FIRSTLAYER').prop('checked', settings['ADVANCED_FIRSTLAYER']);
+      //$('#ADVANCED_PASTEP').prop('checked', settings['ADVANCED_PASTEP']);
+      //$('#ADVANCED_PRINTER').prop('checked', settings['ADVANCED_PRINTER']);
+      //$('#ADVANCED_RETRACT').prop('checked', settings['ADVANCED_RETRACT']);
       $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
       $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
       $('#BED_SHAPE').val(settings['BED_SHAPE']);
@@ -1690,7 +1761,9 @@ $(window).load(() => {
       $('#BED_Y').val(settings['BED_Y']);
       $('#ECHO').prop('checked', settings['ECHO']);
       $('#END_GCODE').val(settings['END_GCODE']);
+      $('#EXPERT_MODE').prop('checked', settings['EXPERT_MODE']);
       $('#EXTRUDER_NAME').val(settings['EXTRUDER_NAME']);
+      $('#EXTRUDER_NAME_ENABLE').prop('checked', settings['EXTRUDER_NAME_ENABLE']);
       $('#EXT_MULT').val(settings['EXT_MULT']);
       $('#FAN_SPEED').val(settings['FAN_SPEED']);
       $('#FAN_SPEED_FIRSTLAYER').val(settings['FAN_SPEED_FIRSTLAYER']);
@@ -1713,7 +1786,6 @@ $(window).load(() => {
       $('#PA_START').val(settings['PA_START']);
       $('#PA_STEP').val(settings['PA_STEP']);
       $('#WALL_COUNT').val(settings['WALL_COUNT']);
-      $('#PRINT_ACCL').val(settings['ACCELERATION']);
       $('#PRINT_DIR').val(settings['PRINT_DIR']);
       $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
       $('#SPEED_FIRSTLAYER').val(settings['SPEED_FIRSTLAYER']);
@@ -1738,9 +1810,12 @@ $(window).load(() => {
   toggleAnchorOptions();
   toggleStartEndGcodeTypeDescriptions();
   toggleLeadingZero();
+  toggleAcceleration();
+  toggleExtruderName()
+  toggleExpertMode();
   /*toggleAdvancedFilFlow();
   toggleAdvancedFirstLayer();
-  toggleAdvancedPastep();
+  toggleAdvancedPaStep();
   toggleAdvancedPrinter();
   toggleAdvancedRetract();*/
 

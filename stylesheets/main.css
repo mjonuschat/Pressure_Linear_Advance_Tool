@@ -1874,12 +1874,12 @@ label {
 }
 
 #START_GCODE {
-    min-height: 20em;
+    min-height: 15em;
     resize: vertical;
 }
 
 #END_GCODE {
-    min-height: 15em;
+    min-height: 3em;
     resize: vertical;
 }
 
@@ -1921,4 +1921,13 @@ label {
     font-size: larger;
     border-top: none;
     font-size: 90%;
+}
+
+.expert{
+    background-color: #ffffcc;
+}
+
+.redLabel {
+    color: #cc0000;
+    text-decoration: underline;
 }
