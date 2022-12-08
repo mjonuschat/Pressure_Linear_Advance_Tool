@@ -7,7 +7,7 @@
   <title>Ellis' Pressure Advance / Linear Advance Calibration Tool</title>
   <meta charset="UTF-8">
   <meta content="Ellis' Pressure Advance / Linear Advance Calibration Tool">
-  <link rel="stylesheet" href="./stylesheets/main.css?v5" />
+  <link rel="stylesheet" href="./stylesheets/main.css?v6" />
   <link rel="stylesheet" href="./stylesheets/font-awesome.min.css?v2" />
 </head>
 
@@ -15,7 +15,7 @@
   <script language="JavaScript" type="text/javascript" src="./javascript/jquery-2.2.1.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./javascript/jquery-ui.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./javascript/FileSaver.min.js?v1"></script>
-  <script language="JavaScript" type="text/javascript" src="./javascript/pressure_linear_advance.js?v16"></script>
+  <script language="JavaScript" type="text/javascript" src="./javascript/pressure_linear_advance.js?v17"></script>
   <script src="./javascript/gcode-viewer.js?v1"></script>
   <div class="container" role="main">
     <div class="row">
@@ -139,9 +139,18 @@
                 </td>
               </tr>
               <tr>
-                <td><label for=EXT_MULT>Extrusion Multiplier</label></td>
+                <td>
+                  <label for=EXT_MULT>Extrusion Multiplier</label>
+                </td>
                 <td class=inputCell colspan="1">
-                  <input type=number id="EXT_MULT" step=0.0005 value=1 onblur=validate() /> x
+                  <input type=number id="EXT_MULT" step=0.0005 value=0.97 onblur=validate() /> x
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      A rough guess is fine if you haven't tuned this yet.<br><br>
+                      ABS: ~0.94x<br>
+                      PLA: ~0.97x
+                    </span>
+                  </div>
                 </td>
                 <td><label for=SPEED_TRAVEL>Travel Speed</label></td>
                 <td class=inputCell>
@@ -149,28 +158,43 @@
                 </td>
               </tr>
               <tr class="expert">
-                <td><label for=ORIGIN_CENTER>Origin Bed Center</label></td>
-                <td class=inputCell>
-                  <input type=checkbox id="ORIGIN_CENTER" onchange=validate() />
-                </td>
-                <td colspan="2">Uncommon on rectangular beds.<br><i>(Sets X0, Y0 to the center instead of the
-                    corner)</i></td>
-              </tr>
-              <tr class="expert">
                 <td><label for=EXTRUDER_NAME>Extruder Name</label> <input type=checkbox id="EXTRUDER_NAME_ENABLE"
                     onchange="toggleExtruderName(); validate()" /></td>
                 <td class=inputCell>
-                  <input type=text id="EXTRUDER_NAME" onblur=validate() /> (optional, case sensitive)
+                  <input type=text id="EXTRUDER_NAME" onblur=validate() />
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      CASE SENSITIVE.<br><br>
+                      For printers with multiple toolheads.<br><br>
+                      Enter the config section name of the desired extruder (e.g. "extruder2").<br><br>
+                      Emits <tt>ACTIVATE_EXTRUDER EXTRUDER=[EXTRUDER_NAME]</tt> to g-code.<br><br>
+                      Also appends <tt>EXTRUDER_NAME=[EXTRUDER_NAME]</tt> to pressure advance g-codes.
+                    </span>
+                  </div>
                 </td>
-                <td colspan="2">Uncommon. For printers with multiple toolheads.<br>Enter the config section name of the
-                  desired extruder (e.g. "extruder2").<br><strong>Leave blank for standard printers.</strong></td>
-              </tr>
-              <tr class="expert">
                 <td><label for=TOOL_INDEX>Tool Index</label></th>
                 <td class=inputCell>
                   <input type=number id="TOOL_INDEX" value=0 step="1" value="0" onblur=validate() />
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Usually 0 if only one extruder. Allows choosing extruder if more than one.<br><br>
+                      Emits <tt>T[TOOL_INDEX]</tt> if not set to 0.
+                    </span>
+                  </div>
                 </td>
-                <td colspan="2">Usually 0 if only one extruder. Allows choosing extruder if more than one</td>
+                <td>
+                  <label for=ORIGIN_CENTER>Origin Bed Center</label>
+                </td>
+                <td class=inputCell>
+                  <input type=checkbox id="ORIGIN_CENTER" onchange=validate() />
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Uncommon on rectangular beds.<br><br>
+                      Sets X0, Y0 to the center instead of the
+                      corner.
+                    </span>
+                  </div>
+                </td>
               </tr>
             </thead>
             <thead>
@@ -180,7 +204,7 @@
                 </td>
               </tr>
               <tr>
-                <td><label for=RETRACT_DIST>Retraction Distance</label></td>
+                <td><label for=RETRACT_DIST>Retract Distance</label></td>
                 <td class=inputCell>
                   <input type=number id="RETRACT_DIST" step=0.05 value=0.5 onblur=validate() /> mm
                 </td>
@@ -237,9 +261,12 @@
                 <td class="expert"><label for=ANCHOR_LAYER_LINE_RATIO>Anchor Line Width</label>
                 </td>
                 <td id="anchorLayerLineRatioInputCell" class="inputCell expert">
-                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140 onblur="validate(true)" /> % (of
-                  nozzle diameter)
-                </td>
+                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140 onblur="validate(true)" /> %
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Percentage is based on nozzle diameter.
+                    </span>
+                  </div>
               </tr>
               <tr>
                 <td><label for=FAN_SPEED_FIRSTLAYER>First Layer Fan Speed</label></td>
@@ -260,34 +287,46 @@
                   <h4>Print Settings</h4>
                 </td>
               </tr>
-
-              <tr>
-                <td><label for=HEIGHT_LAYER>Layer Height</label></td>
-                <td class=inputCell>
-                  <input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 onblur="validate(true)" />
-                  mm
-                </td>
-                <td></td>
-                <td></td>
-              </tr>
               <tr class="expert">
                 <td><label for=LINE_RATIO>Line Width</label></td>
                 <td class="inputCell">
-                  <input type=number id="LINE_RATIO" step=1 value=115 onblur="validate(true)" /> % (of nozzle diameter)
+                  <input type=number id="LINE_RATIO" step=0.5 value=112.5 onblur="validate(true)" /> %
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Percentage is based on nozzle diameter.<br><br>
+                      Match your thickest perimeter from your slicer settings (internal/external).
+                    </span>
+                  </div>
                 </td>
-                <td colspan="3" class="note">Match your thickest perimeter from your slicer settings (internal/external)
+                <td><label for=NUM_LAYERS>Layer Count</label></td>
+                <td class="inputCell">
+                  <input type=number id="NUM_LAYERS" step=1 value=4 onblur="validate(true)" />
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Includes first layer.
+                    </span>
+                  </div>
                 </td>
               </tr>
-
               <tr>
-                <td><label for=SPEED_PERIMETER>Print Speed</label></td>
+                <td>
+                  <label for=SPEED_PERIMETER>Print Speed</label>
+                </td>
                 <td class=inputCell>
-                  <input type=number id="SPEED_PERIMETER" step=1 value=120 onblur=validate() /> mm/s
+                  <input type=number id="SPEED_PERIMETER" step=1 value=100 onblur=validate() /> mm/s
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Use your fastest perimeter speed (internal/external) from your slicer settings.<br><br>
+                      If you can't see differences in the test patterns, try a faster speed.
+                    </span>
+                  </div>
                 </td>
-                <td colspan="3">
-                  Use your fastest perimeter speed from your slicer settings.<br>
-                  If you can't see differences in the test patterns, try a faster speed.
+                <td><label for=HEIGHT_LAYER>Layer Height</label></td>
+                <td class="inputCell">
+                  <input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 onblur="validate(true)" />
+                  mm
                 </td>
+
               </tr>
               <tr>
                 <td>
@@ -297,19 +336,18 @@
                 <td class=inputCell>
                   <input type=number id="ACCELERATION" step=1 onblur=validate() />
                   mm/s<sup>2</sup>
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Enable this if you use acceleration control in your slicer.<br><br>
+                      Set to your fastest perimeter acceleration (internal/external).
+                    </span>
+                  </div>
                 </td>
-                <td colspan="2">
-                  Optional.<br>
-                  If you use slicer accel control, use your fastest perimeter acceleration.
-                </td>
-              </tr>
-              <tr>
                 <td><label for=FAN_SPEED>Fan Speed</label></td>
                 <td class=inputCell>
                   <input type=number id="FAN_SPEED" step=1 value=100 onblur=validate() /> %
                 </td>
-                <td></td>
-                <td></td>
+
               </tr>
             </thead>
             <thead id="patternSettingsHead" class="expert">
@@ -321,54 +359,55 @@
                 </td>
               </tr>
               <tr>
-                <td><label for=HEIGHT_PRINT>Print Height</label></td>
-                <td class=inputCell>
-                  <input type=number id="HEIGHT_PRINT" step=0.1 value=1 onblur="validate(true)" /> mm
-                </td>
-                <td colspan="3">Total height of the print</td>
-              </tr>
-              <tr>
-                <td><label for=WALL_COUNT>Pattern Wall Count</label></td>
+                <td><label for=WALL_COUNT>Wall Count</label></td>
                 <td class=inputCell>
                   <input type=number id="WALL_COUNT" step=1 value=3 onblur="validate(true)" />
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Wall/perimeter count for each test pattern. This will slightly impact print size.
+                    </span>
+                  </div>
                 </td>
-                <td colspan="3">Wall count for the test patterns. This will slightly impact print size</td>
-              </tr>
-              <tr>
-                <td><label for=WALL_SIDE_LENGTH>Pattern Side Length</label></td>
-                <td class=inputCell>
-                  <input type=number id="WALL_SIDE_LENGTH" step=1 value=30 onblur="validate(true)" />
-                  mm
-                </td>
-                <td colspan="3">Length of the pattern sides</td>
-              </tr>
-              <tr>
-                <td><label for=PATTERN_SPACING>Pattern Spacing</label></td>
-                <td class=inputCell>
-                  <input type=number id="PATTERN_SPACING" step=1 value="3" onblur="validate(true)" />
-                  mm
-                </td>
-                <td colspan="3">Horizontal spacing between the patterns</td>
-              </tr>
-              <tr>
                 <td><label for=CORNER_ANGLE>Corner Angle</label></td>
-                <td class=inputCell colspan="3">
+                <td class=inputCell colspan="1">
                   <input type=number id="CORNER_ANGLE" step=1 value=90 onblur="validate(true)" /> °
                 </td>
               </tr>
               <tr>
+                <td><label for=WALL_SIDE_LENGTH>Side Length</label></td>
+                <td class=inputCell>
+                  <input type=number id="WALL_SIDE_LENGTH" step=1 value=30 onblur="validate(true)" />
+                  mm
+                </td>
                 <td><label for=PRINT_DIR>Printing Direction</label></td>
                 <td class=inputCell><select id="PRINT_DIR" onchange="validate(true)">
-                    <option value="0" selected="selected">Left to Right (0°)</option>
+                    <option value="0" selected="selected">0°</option>
                     <option value="45">45°</option>
-                    <option value="90">Front to Back (90°)</option>
+                    <option value="90">90°</option>
                     <option value="135">135°</option>
-                    <option value="180">Right to Left (180°)</option>
+                    <option value="180">180°</option>
                     <option value="225">225°</option>
-                    <option value="270">Back to Front (270°)</option>
+                    <option value="270">270°</option>
                     <option value="315">315°</option>
-                  </select></td>
-                <td colspan="3">Rotates the print</td>
+                  </select>
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Rotates the print.
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><label for=PATTERN_SPACING>Spacing</label></td>
+                <td class=inputCell colspan="3">
+                  <input type=number id="PATTERN_SPACING" step=1 value="3" onblur="validate(true)" />
+                  mm
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Horizontal spacing between the patterns.
+                    </span>
+                  </div>
+                </td>
               </tr>
               <thead>
                 <tr>
@@ -390,26 +429,49 @@
                   </td>
                 </tr>
                 <tr>
-                  <td><label for=PA_STEP>PA Increment</label></td>
+                  <td>
+                    <label for=PA_STEP>PA Increment</label>
+                  </td>
                   <td class=inputCell>
                     <input type=number id="PA_STEP" step=0.0005 value=0.005 onblur="validate(true)" />
+                    <div class="hover-text">&#x1F6C8;
+                      <span class="tooltip-text">
+                        Increment for each pattern.<br>
+                        Needs to cleanly divide into range (End - Start).
+                      </span>
+                    </div>
                   </td>
-                  <td id="step_factor" colspan="2">Increment for each pattern. Needs to cleanly divide into range (End -
-                    Start).</td>
+                  <td class="expert"><label for=ECHO>Show on LCD</label></td>
+                  <td class="inputCell expert">
+                    <input type=checkbox id="ECHO" checked=checked />
+                    <div class="hover-text">&#x1F6C8;
+                      <span class="tooltip-text">
+                        Echo current value to the LCD using <tt>M117</tt>.
+                      </span>
+                    </div>
+                  </td>
                 </tr>
                 <tr class="expert">
-                  <td><label for=USE_LINENO>Numbering</label></td>
+                  <td><label for=USE_LINENO>Number Tab</label></td>
                   <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked
                       onchange="toggleLeadingZero(); validate(true)" />
+                    <div class="hover-text">&#x1F6C8;
+                      <span class="tooltip-text">
+                        Creates a tab with PA/LA values printed on it.
+                      </span>
+                    </div>
                   </td>
-                  <td><label for=LINENO_NO_LEADING_ZERO>No Leading Zeroes</label></td>
-                  <td class=inputCell><input type=checkbox id="LINENO_NO_LEADING_ZERO" onchange="validate(true)" />
+                  <td>
+                    <label for=LINENO_NO_LEADING_ZERO>No Leading Zeroes</label>
                   </td>
-                </tr>
-                <tr class="expert">
-                  <td><label for=ECHO>Show on LCD</label></td>
-                  <td class=inputCell><input type=checkbox id="ECHO" checked=checked /></td>
-                  <td colspan="2">Echo current value to the LCD using <tt>M117</tt></td>
+                  <td class=inputCell>
+                    <input type=checkbox id="LINENO_NO_LEADING_ZERO" onchange="validate(true)" />
+                    <div class="hover-text">&#x1F6C8;
+                      <span class="tooltip-text">
+                        Removes leading zeroes on the number tab.
+                      </span>
+                    </div>
+                  </td>
                 </tr>
               </thead>
               <thead>
@@ -459,38 +521,31 @@
                 <tr>
                   <td><label for=START_GCODE>Start G-code</label></td>
                   <td colspan=3>
-                    <br>
-                    <u><strong>Variables</strong></u><br>
-                    (These placeholders will be replaced with REAL VALUES from the form AUTOMATICALLY)<br>
-                    <ul>
-                      <li>
-                        <font color="red"><strong>Required:</strong></font>
-                        <font color="blue"><strong><tt>[BED_TEMP]</tt></strong></font>, <font color="blue">
-                          <strong><tt>[HOTEND_TEMP]</tt></strong>
-                        </font><br>
-                        <!-- <li>Optional: <font color="blue"><tt>[EXTRUDER_NAME]</tt>
+                    <h6>Variables</h6>
+                    These placeholders will be replaced with REAL VALUES from the form AUTOMATICALLY:<br>
+                    <font color="red"><strong>Required:</strong></font>
+                    <font color="blue"><strong><tt>[BED_TEMP]</tt></strong></font>, <font color="blue">
+                      <strong><tt>[HOTEND_TEMP]</tt></strong>
+                    </font><br><br>
+                    <!-- Optional: <font color="blue"><tt>[EXTRUDER_NAME]</tt>
                                       </font> <i>(Klipper)</i>, <font color="blue">
                                         <tt>[TOOL_INDEX]</tt>
                                       </font> <i>(Marlin / RepRap)</i><br> -->
-                    </ul>
-                    <u><strong>Instructions</strong></u><br>
-                    <li>You should <i>generally</i> be able to copy your start g-code from your slicer,
+                    <h6>Instructions</h6>
+                    <p>
+                      You should <i>generally</i> be able to copy your start g-code from your slicer,
                       making sure <strong>not to overwrite the default <tt>M109</tt> / <tt>M190</tt> commands</strong>.
                       You may move those up/down as needed, but don't delete them.<br>
-                      <p style="text-indent: 30px;"><i>(If you are using "Standalone Macro + Temp Pasing" , you only
-                          need
-                          to keep the <strong>variables</strong> rather than the full
-                          heating
-                          commands.)</i>
-                      </p>
-
-                    <li>Replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>
-                        <font color="blue">their counterparts from the list above.</font><br></ul>
-                        <p style="text-indent: 40px;">
-                      </strong><i>If you have a slicer variable without a counterpart above, use a REAL VALUE
-                        instead.</i></p>
-                      <p id=startGcodeWarning style="display: none;">warning</p>
-                      </p><textarea id="START_GCODE" onblur=validate()></textarea>
+                      If you are using the "temp passing" option, you only need to keep the variables.
+                    </p>
+                    <p>Replace any slicer variables like <tt>[first_layer_bed_temperature]</tt> with <strong>
+                        <font color="blue">their counterparts from the list above.</font>
+                      </strong><br>
+                      <i>If you have a slicer variable without a counterpart above, use a REAL VALUE
+                        instead.</i>
+                    </p>
+                    <p id=startGcodeWarning style="display: none;">warning</p>
+                    </p><textarea id="START_GCODE" onblur=validate()></textarea>
                   </td>
                 </tr>
                 <tr>

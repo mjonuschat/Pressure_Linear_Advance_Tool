@@ -1296,7 +1296,7 @@ h3,
 h4,
 h5,
 h6 {
-    color: var(--color-header)
+    /*color: var(--color-header)*/
 }
 
 h1+h2 {
@@ -1895,7 +1895,6 @@ label {
 
 .inputCell {
     font-size: 12px;
-    font-weight: bold;
 }
 
 .inputCell input,
@@ -1930,4 +1929,49 @@ label {
 .redLabel {
     color: #cc0000;
     text-decoration: underline;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    position: absolute;
+    z-index: 1;
+    min-width: 15em;
+    color: white;
+    text-align: left;
+    font-size: 12px;
+    background-color: #192733;
+    border-radius: 10px;
+    padding: 10px 15px 10px 15px;
+}
+
+.hover-text:hover .tooltip-text {
+    visibility: visible;
+}
+
+#top {
+    top: -40px;
+    left: -50%;
+}
+
+#bottom {
+    top: 25px;
+    left: -50%;
+}
+
+#left {
+    top: -8px;
+    right: 120%;
+}
+
+#right {
+    top: -8px;
+    left: 120%;
+}
+
+.hover-text {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+    color: var(--kf-k-label);
+    font-size: 16px;
 }
