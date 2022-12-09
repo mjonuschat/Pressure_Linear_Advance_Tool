@@ -7,7 +7,7 @@
   <title>Ellis' Pressure Advance / Linear Advance Calibration Tool</title>
   <meta charset="UTF-8">
   <meta content="Ellis' Pressure Advance / Linear Advance Calibration Tool">
-  <link rel="stylesheet" href="./stylesheets/main.css?v6" />
+  <link rel="stylesheet" href="./stylesheets/main.css?v7" />
   <link rel="stylesheet" href="./stylesheets/font-awesome.min.css?v2" />
 </head>
 
@@ -15,7 +15,7 @@
   <script language="JavaScript" type="text/javascript" src="./javascript/jquery-2.2.1.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./javascript/jquery-ui.min.js?v1"></script>
   <script language="JavaScript" type="text/javascript" src="./javascript/FileSaver.min.js?v1"></script>
-  <script language="JavaScript" type="text/javascript" src="./javascript/pressure_linear_advance.js?v17"></script>
+  <script language="JavaScript" type="text/javascript" src="./javascript/pressure_linear_advance.js?v18"></script>
   <script src="./javascript/gcode-viewer.js?v1"></script>
   <div class="container" role="main">
     <div class="row">
@@ -84,7 +84,7 @@
           <thead>
             <td colspan=4 class=tdHead>
               <h3>Settings</h3>
-              <h5>Expert Mode <input type=checkbox id="EXPERT_MODE" onchange=toggleExpertMode() /></h5>
+              <h5 style="color:rgb(172, 74, 160);">Advanced Mode <input type=checkbox id="EXPERT_MODE" onchange=toggleExpertMode() /></h5>
               <br>
               <input type=button id="saveSettingsButton" onclick=setLocalStorage() value="Save Settings to Browser"
                 title="Save settings in a cookie." />
@@ -99,7 +99,7 @@
                 </td>
               </tr>
               <tr>
-                <td><label for="FIRMWARE" class="redLabel">Firmware</td>
+                <td><label for="FIRMWARE">Firmware</td>
                 <td class=inputCell>
                   <select id="FIRMWARE"
                     onchange="toggleFirmwareOptions(); toggleFirmwareValues(); toggleStartEndGcode(); toggleStartEndGcodeTypeDescriptions();">
@@ -158,7 +158,7 @@
                 </td>
               </tr>
               <tr class="expert">
-                <td><label for=EXTRUDER_NAME>Extruder Name</label> <input type=checkbox id="EXTRUDER_NAME_ENABLE"
+                <td><label for=EXTRUDER_NAME class="expertLabel">Extruder Name</label> <input type=checkbox id="EXTRUDER_NAME_ENABLE"
                     onchange="toggleExtruderName(); validate()" /></td>
                 <td class=inputCell>
                   <input type=text id="EXTRUDER_NAME" onblur=validate() />
@@ -172,7 +172,7 @@
                     </span>
                   </div>
                 </td>
-                <td><label for=TOOL_INDEX>Tool Index</label></th>
+                <td><label for=TOOL_INDEX class="expertLabel">Tool Index</label></th>
                 <td class=inputCell>
                   <input type=number id="TOOL_INDEX" value=0 step="1" value="0" onblur=validate() />
                   <div class="hover-text">&#x1F6C8;
@@ -183,7 +183,7 @@
                   </div>
                 </td>
                 <td>
-                  <label for=ORIGIN_CENTER>Origin Bed Center</label>
+                  <label for=ORIGIN_CENTER class="expertLabel">Origin Bed Center</label>
                 </td>
                 <td class=inputCell>
                   <input type=checkbox id="ORIGIN_CENTER" onchange=validate() />
@@ -225,8 +225,18 @@
               </tr>
               <tr>
                 <td><label for=SPEED_UNRETRACT>Unretract Speed</label></td>
-                <td class=inputCell colspan="3">
+                <td class=inputCell colspan="1">
                   <input type=number id="SPEED_UNRETRACT" step=1 value=35 onblur=validate() /> mm/s
+                </td>
+                <td class="expert"><label for=FW_RETRACT class="expertLabel">Use Firmware Retraction</label></td>
+                <td class="inputCell expert" colspan="1">
+                  <input type=checkbox id="FW_RETRACT" onchange="toggleFwRetract(); validate()" />
+                  <div class="hover-text">&#x1F6C8;
+                    <span class="tooltip-text">
+                      Must be set up in your printer's firmware.<br><br>
+                      Uses <tt>G10</tt> / <tt>G11</tt> for retracts instead of directly commanding E moves.
+                    </span>
+                  </div>
                 </td>
               </tr>
               <tr>
@@ -258,7 +268,7 @@
                 <td class=inputCell>
                   <input type=number id="SPEED_FIRSTLAYER" step=1 value=30 onblur=validate() /> mm/s
                 </td>
-                <td class="expert"><label for=ANCHOR_LAYER_LINE_RATIO>Anchor Line Width</label>
+                <td class="expert"><label for=ANCHOR_LAYER_LINE_RATIO class="expertLabel">Anchor Line Width</label>
                 </td>
                 <td id="anchorLayerLineRatioInputCell" class="inputCell expert">
                   <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140 onblur="validate(true)" /> %
@@ -273,7 +283,7 @@
                 <td class=inputCell>
                   <input type=number id="FAN_SPEED_FIRSTLAYER" step=1 value=0 onblur=validate() /> %
                 </td>
-                <td class="expert"><label for=ANCHOR_PERIMETERS>Anchor Frame Perimeters</label></td>
+                <td class="expert"><label for=ANCHOR_PERIMETERS class="expertLabel">Anchor Frame Perimeters</label></td>
                 <td id="anchorPerimetersInputCell" class="inputCell expert">
                   <input type=number id="ANCHOR_PERIMETERS" step=1 value=4 onblur="validate(true)" />
                 </td>
@@ -288,7 +298,7 @@
                 </td>
               </tr>
               <tr class="expert">
-                <td><label for=LINE_RATIO>Line Width</label></td>
+                <td><label for=LINE_RATIO class="expertLabel">Line Width</label></td>
                 <td class="inputCell">
                   <input type=number id="LINE_RATIO" step=0.5 value=112.5 onblur="validate(true)" /> %
                   <div class="hover-text">&#x1F6C8;
@@ -298,7 +308,7 @@
                     </span>
                   </div>
                 </td>
-                <td><label for=NUM_LAYERS>Layer Count</label></td>
+                <td><label for=NUM_LAYERS class="expertLabel">Layer Count</label></td>
                 <td class="inputCell">
                   <input type=number id="NUM_LAYERS" step=1 value=4 onblur="validate(true)" />
                   <div class="hover-text">&#x1F6C8;
@@ -350,7 +360,7 @@
 
               </tr>
             </thead>
-            <thead id="patternSettingsHead" class="expert">
+            <thead id="patternSettingsHead" class="expertLabel">
               <tr>
                 <td colspan=4 class="tdSection expert">
                   <h4>Pattern Settings &nbsp;</input><input type=checkbox id="PATTERN_OPTIONS_ENABLE"
@@ -359,7 +369,7 @@
                 </td>
               </tr>
               <tr>
-                <td><label for=WALL_COUNT>Wall Count</label></td>
+                <td><label for=WALL_COUNT class="expertLabel">Wall Count</label></td>
                 <td class=inputCell>
                   <input type=number id="WALL_COUNT" step=1 value=3 onblur="validate(true)" />
                   <div class="hover-text">&#x1F6C8;
@@ -368,18 +378,18 @@
                     </span>
                   </div>
                 </td>
-                <td><label for=CORNER_ANGLE>Corner Angle</label></td>
+                <td><label for=CORNER_ANGLE class="expertLabel">Corner Angle</label></td>
                 <td class=inputCell colspan="1">
                   <input type=number id="CORNER_ANGLE" step=1 value=90 onblur="validate(true)" /> °
                 </td>
               </tr>
               <tr>
-                <td><label for=WALL_SIDE_LENGTH>Side Length</label></td>
+                <td><label for=WALL_SIDE_LENGTH class="expertLabel">Side Length</label></td>
                 <td class=inputCell>
                   <input type=number id="WALL_SIDE_LENGTH" step=1 value=30 onblur="validate(true)" />
                   mm
                 </td>
-                <td><label for=PRINT_DIR>Printing Direction</label></td>
+                <td><label for=PRINT_DIR class="expertLabel">Printing Direction</label></td>
                 <td class=inputCell><select id="PRINT_DIR" onchange="validate(true)">
                     <option value="0" selected="selected">0°</option>
                     <option value="45">45°</option>
@@ -398,7 +408,7 @@
                 </td>
               </tr>
               <tr>
-                <td><label for=PATTERN_SPACING>Spacing</label></td>
+                <td><label for=PATTERN_SPACING class="expertLabel">Spacing</label></td>
                 <td class=inputCell colspan="3">
                   <input type=number id="PATTERN_SPACING" step=1 value="3" onblur="validate(true)" />
                   mm
@@ -413,12 +423,10 @@
                 <tr>
                   <td colspan=4 class=tdSection>
                     <h4 id="STEPPING_HEADER">Pressure Advance Stepping</h4>
-                    <!-- Show Advanced <input type=checkbox id="ADVANCED_PASTEP" onchange=toggleAdvancedPaStep() /><br><br> -->
                     <p id='STEPPING_HEADER_BODY'></p>
                   </td>
                 </tr>
                 <tr>
-                  <!--TODO: Smooth time toggle?-->
                   <td><label for=PA_START>PA Start Value</label></td>
                   <td class=inputCell id="start_factor" colspan=1>
                     <input type=number id="PA_START" step=0.0005 value=0 onblur="validate(true)" />
@@ -441,18 +449,22 @@
                       </span>
                     </div>
                   </td>
-                  <td class="expert"><label for=ECHO>Show on LCD</label></td>
+                  <td class="expert"><label for=PA_SMOOTH class="expertLabel">Increment Smooth Time Instead</label></td>
                   <td class="inputCell expert">
-                    <input type=checkbox id="ECHO" checked=checked />
+                    <input type=checkbox id="PA_SMOOTH" />
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
-                        Echo current value to the LCD using <tt>M117</tt>.
+                        Klipper only.<br><br>
+                        Increment PA smooth time INSTEAD of PA value.<br><br>
+                        This should only be ran <strong>after</strong> tuning pressure advance.<br><br>
+                        Don't forget to activate your new PA value first.<br><br>
+                        Experimental.
                       </span>
                     </div>
                   </td>
                 </tr>
                 <tr class="expert">
-                  <td><label for=USE_LINENO>Number Tab</label></td>
+                  <td><label for=USE_LINENO class="expertLabel">Number Tab</label></td>
                   <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked
                       onchange="toggleLeadingZero(); validate(true)" />
                     <div class="hover-text">&#x1F6C8;
@@ -462,13 +474,24 @@
                     </div>
                   </td>
                   <td>
-                    <label for=LINENO_NO_LEADING_ZERO>No Leading Zeroes</label>
+                    <label for=LINENO_NO_LEADING_ZERO class="expertLabel">No Leading Zeroes</label>
                   </td>
                   <td class=inputCell>
                     <input type=checkbox id="LINENO_NO_LEADING_ZERO" onchange="validate(true)" />
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
                         Removes leading zeroes on the number tab.
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="expert">
+                  <td><label for=ECHO class="expertLabel">Show on LCD</label></td>
+                  <td class="inputCell" colspan="3">
+                    <input type=checkbox id="ECHO" checked=checked />
+                    <div class="hover-text">&#x1F6C8;
+                      <span class="tooltip-text">
+                        Echo current value to the LCD using <tt>M117</tt>.
                       </span>
                     </div>
                   </td>

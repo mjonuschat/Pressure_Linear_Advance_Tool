@@ -1922,14 +1922,22 @@ label {
     font-size: 90%;
 }
 
+/*
 .expert{
     background-color: #ffffcc;
+    color: red;
+}*/
+
+.expertLabel {
+    /*background-color: #ffffcc;*/
+    color: rgb(172, 74, 160)
 }
 
+/*
 .redLabel {
     color: #cc0000;
     text-decoration: underline;
-}
+}*/
 
 .tooltip-text {
     visibility: hidden;

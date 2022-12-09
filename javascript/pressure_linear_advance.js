@@ -55,6 +55,7 @@ function setVars(){
   window.FILAMENT = $('#FILAMENT').val();
   window.FILAMENT_DIAMETER = parseFloat($('#FILAMENT_DIAMETER').val());
   window.FILENAME = $('#FILENAME').val();
+  window.FW_RETRACT = $('#FW_RETRACT').prop('checked');
   window.HEIGHT_FIRSTLAYER = parseFloat($('#HEIGHT_FIRSTLAYER').val());
   window.HEIGHT_LAYER = parseFloat($('#HEIGHT_LAYER').val());
   window.NUM_LAYERS = parseInt($('#NUM_LAYERS').val());
@@ -70,6 +71,7 @@ function setVars(){
   window.PA_END = parseFloat($('#PA_END').val());
   window.PA_START = parseFloat($('#PA_START').val());
   window.PA_STEP = parseFloat($('#PA_STEP').val());
+  window.PA_SMOOTH = $('#PA_SMOOTH').prop('checked');
   window.WALL_COUNT = parseInt($('#WALL_COUNT').val());
   window.PRINTER = $('#PRINTER').val();
   window.PRINT_DIR = $('#PRINT_DIR').val();
@@ -119,9 +121,11 @@ function setVars(){
     LINE_RATIO = parseInt($('#LINE_RATIO').prop("defaultValue"))
     ANCHOR_LAYER_LINE_RATIO = parseInt($('#ANCHOR_LAYER_LINE_RATIO').prop("defaultValue"))
     ANCHOR_PERIMETERS = parseInt($('#ANCHOR_PERIMETERS').prop("defaultValue"))
+    FW_RETRACT = false
     USE_LINENO = true
     LINENO_NO_LEADING_ZERO = false
     ECHO = true
+    PA_SMOOTH = false
   }
 
   SPEED_FIRSTLAYER *= 60;
@@ -211,6 +215,7 @@ function genGcode() {
     'filamentDiameter': FILAMENT_DIAMETER,
     'firstLayerHeight': HEIGHT_FIRSTLAYER,
     'firstLayerSpeed': SPEED_FIRSTLAYER,
+    'fwRetract': FW_RETRACT,
     'layerHeight': HEIGHT_LAYER,
     'lineWidth': LINE_WIDTH,
     'moveSpeed': SPEED_TRAVEL,
@@ -218,6 +223,7 @@ function genGcode() {
     'paEnd': PA_END,
     'paStart': PA_START,
     'paStep': PA_STEP,
+    'paSmooth': PA_SMOOTH,
     'perimSpeed': SPEED_PERIMETER,
     'printDir': PRINT_DIR,
     'retractDist': RETRACT_DIST,
@@ -246,19 +252,20 @@ function genGcode() {
 ${(BED_SHAPE === 'Round' ? `;  - Bed Diameter: ${BED_X} mm\n`: `;  - Bed Size X: ${BED_X} mm\n`)}\
 ${(BED_SHAPE === 'Round' ? '': `;  - Bed Size Y: ${BED_Y} mm\n`)}\
 ;  - Origin Bed Center: ${(ORIGIN_CENTER ? 'true': 'false')}
-${(FIRMWARE == 'klipper' && EXTRUDER_NAME_ENABLE ? `;  - Extruder Name: ${EXTRUDER_NAME}\n` : '')}\
-${(FIRMWARE == 'klipper' && !EXTRUDER_NAME_ENABLE ? `;  - Extruder Name: Disabled\n` : '')}\
-${(FIRMWARE != 'klipper' && TOOL_INDEX != 0 ? `;  - Tool Index: ${TOOL_INDEX}\n` : '')}\
-${(FIRMWARE != 'klipper' && TOOL_INDEX == 0 ? `;  - Tool Index: Disabled (0)\n` : '')}\
+${(EXPERT_MODE && FIRMWARE == 'klipper' && EXTRUDER_NAME_ENABLE ? `;  - Extruder Name: ${EXTRUDER_NAME}\n` : '')}\
+${(EXPERT_MODE && FIRMWARE == 'klipper' && !EXTRUDER_NAME_ENABLE ? `;  - Extruder Name: Disabled\n` : '')}\
+${(EXPERT_MODE && FIRMWARE != 'klipper' && TOOL_INDEX != 0 ? `;  - Tool Index: ${TOOL_INDEX}\n` : '')}\
+${(EXPERT_MODE && FIRMWARE != 'klipper' && TOOL_INDEX == 0 ? `;  - Tool Index: Disabled (0)\n` : '')}\
 ;  - Travel Speed: ${SPEED_TRAVEL / 60} mm/s
 ;  - Nozzle Diameter: ${NOZZLE_DIAMETER} mm
 ;  - Filament Diameter: ${FILAMENT_DIAMETER} mm
 ;  - Extrusion Multiplier: ${EXT_MULT}
 ;
 ; Retraction / Z Hop:
-;  - Retraction Distance: ${RETRACT_DIST} mm
-;  - Retract Speed: ${SPEED_RETRACT / 60} mm/s
-;  - Unretract Speed: ${SPEED_UNRETRACT / 60} mm/s
+${(EXPERT_MODE ? `;  - Firmware Retraction: ${FW_RETRACT}\n` : '')}\
+${(!FW_RETRACT ? `;  - Retraction Distance: ${RETRACT_DIST} mm\n` : '')}\
+${(!FW_RETRACT ? `;  - Retract Speed: ${SPEED_RETRACT / 60} mm/s\n` : '')}\
+${(!FW_RETRACT ? `;  - Unretract Speed: ${SPEED_UNRETRACT / 60} mm/s\n` : '')}\
 ;  - Z Hop Enable: ${ZHOP_ENABLE}
 ${(ZHOP_ENABLE ? `;  - Z Hop Height: ${ZHOP_HEIGHT}mm\n`: '')}\
 ;
@@ -267,31 +274,32 @@ ${(ZHOP_ENABLE ? `;  - Z Hop Height: ${ZHOP_HEIGHT}mm\n`: '')}\
 ;  - First Layer Printing Speed: ${SPEED_FIRSTLAYER / 60} mm/s
 ;  - First Layer Fan Speed: ${FAN_SPEED_FIRSTLAYER}%
 ;  - Anchor Option: ${ANCHOR_OPTION}
-${(ANCHOR_OPTION == 'anchor_frame' ? `;  - Anchor Frame Perimeters: ${ANCHOR_PERIMETERS}\n`: '')}\
-${(ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width: ${ANCHOR_LAYER_LINE_RATIO} %\n`: '')}\
+${(EXPERT_MODE && ANCHOR_OPTION == 'anchor_frame' ? `;  - Anchor Frame Perimeters: ${ANCHOR_PERIMETERS}\n`: '')}\
+${(EXPERT_MODE && ANCHOR_OPTION != 'no_anchor' ? `;  - Anchor Line Width: ${ANCHOR_LAYER_LINE_RATIO} %\n`: '')}\
 ;
 ; Print Settings:
-;  - Line Width: ${LINE_RATIO} %
-;  - Layer Count: ${NUM_LAYERS}
+${(EXPERT_MODE ? `;  - Line Width: ${LINE_RATIO} %\n`: '')}\
+${(EXPERT_MODE ? `;  - Layer Count: ${NUM_LAYERS}\n` : '')}\
 ;  - Layer Height: ${HEIGHT_LAYER} mm
 ;  - Print Speed: ${SPEED_PERIMETER / 60} mm/s
 ;  - Acceleration: ${ACCELERATION_ENABLE ? `${ACCELERATION} mm/s^2` : `Disabled`}
 ;  - Fan Speed: ${FAN_SPEED}%
 ;
-; Pattern Settings ${(!PATTERN_OPTIONS_ENABLE ? `(Using defaults)`: '`(Customized)`')}:
-;  - Wall Count: ${WALL_COUNT}
-;  - Side Length: ${WALL_SIDE_LENGTH} mm
-;  - Spacing: ${PATTERN_SPACING} mm
-;  - Corner Angle: ${CORNER_ANGLE} degrees 
-;  - Printing Direction: ${PRINT_DIR} degree
-;
+${(EXPERT_MODE ? `; Pattern Settings ${(!PATTERN_OPTIONS_ENABLE ? `(Using defaults)`: '`(Customized)`')}:\n` : '')}\
+${(EXPERT_MODE ? `;  - Wall Count: ${WALL_COUNT}\n` : '')}\
+${(EXPERT_MODE ? `;  - Side Length: ${WALL_SIDE_LENGTH} mm\n` : '')}\
+${(EXPERT_MODE ? `;  - Spacing: ${PATTERN_SPACING} mm\n` : '')}\
+${(EXPERT_MODE ? `;  - Corner Angle: ${CORNER_ANGLE} degrees \n` : '')}\
+${(EXPERT_MODE ? `;  - Printing Direction: ${PRINT_DIR} degree\n` : '')}\
+${(EXPERT_MODE ? ';\n' : '')}\
 ; Pressure Advance Stepping:
 ;  - ${(FIRMWARE == 'klipper' || FIRMWARE == 'rrf3' ? 'PA' : 'LA')} Start Value: ${Math.round10(PA_START, PA_round)}
 ;  - ${(FIRMWARE == 'klipper' || FIRMWARE == 'rrf3' ? 'PA' : 'LA')} End Value: ${PA_END}
 ;  - ${(FIRMWARE == 'klipper' || FIRMWARE == 'rrf3' ? 'PA' : 'LA')} Increment: ${PA_STEP}
-;  - Show on LCD: ${ECHO}
-;  - Number Tab: ${USE_LINENO}
-${(USE_LINENO ? `;  - No Leading Zeroes: ${LINENO_NO_LEADING_ZERO}\n`: '')}\
+${(EXPERT_MODE && FIRMWARE == 'klipper' ? `;  - Increment Smooth Time Instead: ${PA_SMOOTH}\n` : '')}\
+${(EXPERT_MODE ? `;  - Show on LCD: ${ECHO}\n` : '')}\
+${(EXPERT_MODE ? `;  - Number Tab: ${USE_LINENO}\n` : '')}\
+${(EXPERT_MODE ? `${(USE_LINENO ? `;  - No Leading Zeroes: ${LINENO_NO_LEADING_ZERO}\n`: '')}` : '')}\
 ;
 ; Start / End G-code:
 ;  - Start G-code Type: ${START_GCODE_TYPE}
@@ -348,7 +356,7 @@ if (ACCELERATION_ENABLE){
   
   /*
   if (FIRMWARE == 'klipper'){
-    pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance to start value\n`;
+    pa_script += `SET_PRESSURE_ADVANCE ${(PA_SMOOTH ? `SMOOTH_TIME=` : `ADVANCE=`)}${Math.round10(PA_START, PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance to start value\n`;
     if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START, PA_round)}\n`}
   }
   else if (FIRMWARE == 'marlin-1.1.8' || FIRMWARE == 'marlin-1.1.9'){
@@ -428,7 +436,7 @@ if (ACCELERATION_ENABLE){
       if (i !== 0){
         // increment pressure advance
         if (FIRMWARE == 'klipper'){
-          pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance\n`;
+          pa_script += `SET_PRESSURE_ADVANCE ${(PA_SMOOTH ? `SMOOTH_TIME=` : `ADVANCE=`)}${Math.round10(PA_START + (j * PA_STEP), PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance\n`;
           if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
         }
         else if (FIRMWARE == 'marlin-1.1.8' || FIRMWARE == 'marlin-1.1.9'){
@@ -472,7 +480,7 @@ if (ACCELERATION_ENABLE){
   }
 
   if (FIRMWARE == 'klipper'){
-    pa_script += `SET_PRESSURE_ADVANCE ADVANCE=${Math.round10(PA_START, PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance back to start value\n`;
+    pa_script += `SET_PRESSURE_ADVANCE ${(PA_SMOOTH ? `SMOOTH_TIME=` : `ADVANCE=`)}${Math.round10(PA_START, PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance back to start value\n`;
     if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START, PA_round)}\n`}
   }
   else if (FIRMWARE == 'marlin-1.1.8' || FIRMWARE == 'marlin-1.1.9'){
@@ -702,13 +710,6 @@ function createLine(to_x, to_y, basicSettings, optional) {
   };
   var optArgs = $.extend({}, defaults, optional);
 
-  // change speed if first layer
-  if (Math.round10(CUR_Z, Z_round) == basicSettings['firstLayerHeight']){
-    optArgs['speed'] = basicSettings['firstLayerSpeed'];
-  } else {
-    optArgs['speed'] = basicSettings['perimSpeed'];
-  }
-
   length = getDistance(CUR_X, CUR_Y, to_x, to_y);
 
   var extArea = ((optArgs['lineWidth'] - optArgs['height']) * optArgs['height']) + (Math.PI * Math.pow((optArgs['height'] / 2), 2)) // cross sectional area of extrusion
@@ -778,7 +779,11 @@ function doEfeed(dir, basicSettings, optional) {
 
   if (dir === '-'){
     if (!RETRACTED){
-      gcode += `G1 E-${Math.round10(basicSettings['retractDist'], EXT_round)} F${basicSettings['retractSpeed']} ; Retract\n`;
+      if (basicSettings['fwRetract']){
+        gcode += `G10 ; Retract\n`;
+      } else {
+        gcode += `G1 E-${Math.round10(basicSettings['retractDist'], EXT_round)} F${basicSettings['retractSpeed']} ; Retract\n`;
+      }
       RETRACTED = true
     }
     if (optArgs['hop'] && !HOPPED){
@@ -791,7 +796,11 @@ function doEfeed(dir, basicSettings, optional) {
       HOPPED = false
     }    
     if (RETRACTED){
-      gcode += `G1 E${Math.round10(basicSettings['retractDist'], EXT_round)} F${basicSettings['unretractSpeed']} ; Un-retract\n`
+      if (basicSettings['fwRetract']){
+        gcode += `G11 ; Un-retract\n`
+      } else {
+        gcode += `G1 E${Math.round10(basicSettings['retractDist'], EXT_round)} F${basicSettings['unretractSpeed']} ; Un-retract\n`
+      }
       RETRACTED = false
     }
   }
@@ -1006,6 +1015,7 @@ function setLocalStorage() {
     'FILAMENT_DIAMETER' : parseFloat($('#FILAMENT_DIAMETER').val()),
     'FILENAME' : $('#FILENAME').val(),
     'FIRMWARE' : $('#FIRMWARE').val(),
+    'FW_RETRACT' : $('#FW_RETRACT').prop('checked'),
     'HEIGHT_FIRSTLAYER' : parseFloat($('#HEIGHT_FIRSTLAYER').val()),
     'HEIGHT_LAYER' : parseFloat($('#HEIGHT_LAYER').val()),
     'NUM_LAYERS' : parseFloat($('#NUM_LAYERS').val()),
@@ -1021,6 +1031,7 @@ function setLocalStorage() {
     'PA_END' : parseFloat($('#PA_END').val()),
     'PA_START' : parseFloat($('#PA_START').val()),
     'PA_STEP' : parseFloat($('#PA_STEP').val()),
+    'PA_SMOOTH' : $('#PA_SMOOTH').prop('checked'),
     'WALL_COUNT' : parseFloat($('#WALL_COUNT').val()),
     'PRINT_DIR' : $('#PRINT_DIR').val(),
     'RETRACT_DIST' : parseFloat($('#RETRACT_DIST').val()),
@@ -1189,24 +1200,32 @@ function toggleExtruderName(){
 function toggleExpertMode(){
   if ($('#EXPERT_MODE').is(':checked')){
     $('#ORIGIN_CENTER').parents().eq(1).show()
+    $('label[for=FW_RETRACT]').parent().css({opacity: 1});
+    $('#FW_RETRACT').parent().css({opacity: 1});
+    toggleFwRetract();
     $('#NUM_LAYERS').parents().eq(1).show()
     $('#LINE_RATIO').parents().eq(1).show()
     $('#patternSettingsHead').show()
+    //$('label[for=PA_SMOOTH]').parent().css({opacity: 1});
+    //$('#PA_SMOOTH').parent().css({opacity: 1});
     $('#USE_LINENO').parents().eq(1).show()
-    $('label[for=ECHO]').parent().css({opacity: 1});
-    $('#ECHO').parent().css({opacity: 1});
+    $('#ECHO').parents().eq(1).show()
     toggleAnchorOptions();
     toggleFirmwareOptions();
   } else {
     $('#ORIGIN_CENTER').parents().eq(1).hide()
+    $('label[for=FW_RETRACT]').parent().css({opacity: 0});
+    $('#FW_RETRACT').parent().css({opacity: 0});
+    toggleFwRetract();
     $('#NUM_LAYERS').parents().eq(1).hide()
     $('#LINE_RATIO').parents().eq(1).hide()
     $("#PATTERN_OPTIONS_ENABLE").prop( "checked", false );
     togglePatternOptions();
     $('#patternSettingsHead').hide()
+    $('label[for=PA_SMOOTH]').parent().css({opacity: 0});
+    $('#PA_SMOOTH').parent().css({opacity: 0});
     $('#USE_LINENO').parents().eq(1).hide()
-    $('label[for=ECHO]').parent().css({opacity: 0});
-    $('#ECHO').parent().css({opacity: 0});
+    $('#ECHO').parents().eq(1).hide()
     $('label[for=ANCHOR_PERIMETERS]').parent().hide();
     $('#ANCHOR_PERIMETERS').parent().hide();
     $('label[for=ANCHOR_LAYER_LINE_RATIO]').parent().hide();
@@ -1233,6 +1252,8 @@ PRINT_END ; End macro. Change name to match yours`
       if ($('#EXPERT_MODE').is(':checked')){
         $('label[for=EXTRUDER_NAME').parent().show()
         $('#EXTRUDER_NAME').parent().show()
+        $('label[for=PA_SMOOTH]').parent().css({opacity: 1});
+        $('#PA_SMOOTH').parent().css({opacity: 1});
       }
       $('#STEPPING_HEADER').html('Pressure Advance Stepping')
       $('#STEPPING_HEADER_BODY').html(`\
@@ -1262,6 +1283,8 @@ Once you find a general range, run again with narrower range / finer increment.<
       $('label[for=PA_START]').html('Start K Value')
       $('label[for=PA_END]').html('End K Value')
       $('label[for=PA_STEP]').html('K Value Increment')
+      $('label[for=PA_SMOOTH]').parent().css({opacity: 0});
+      $('#PA_SMOOTH').parent().css({opacity: 0});
       $('#START_GCODE_TYPE').parents().eq(1).hide()
       $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
@@ -1277,6 +1300,8 @@ Once you find a general range, run again with narrower range / finer increment.<
       $('label[for=PA_START]').html('Start K Value')
       $('label[for=PA_END]').html('End K Value')
       $('label[for=PA_STEP]').html('K Value Increment')
+      $('label[for=PA_SMOOTH]').parent().css({opacity: 0});
+      $('#PA_SMOOTH').parent().css({opacity: 0});
       $('#START_GCODE_TYPE').parents().eq(1).hide()
       $('#END_GCODE').val(MARLIN_END_GCODE);
       break;
@@ -1296,6 +1321,8 @@ Once you find a general range, run again with narrower range / finer increment.<
       $('label[for=PA_START]').html('PA Start Value')
       $('label[for=PA_END]').html('PA End Value')
       $('label[for=PA_STEP]').html('PA Increment')
+      $('label[for=PA_SMOOTH]').parent().css({opacity: 0});
+      $('#PA_SMOOTH').parent().css({opacity: 0});
       $('#START_GCODE_TYPE').parents().eq(1).show()
       $('#END_GCODE').val(RRF3_END_GCODE);
       break;
@@ -1376,6 +1403,33 @@ function toggleZHop() {
   } else {
     $('label[for=ZHOP_HEIGHT]').parent().hide();
     $('#ZHOP_HEIGHT').parent().hide();
+  }
+}
+
+    $('#ORIGIN_CENTER').prop('disabled', true);
+    $('#ORIGIN_CENTER').parent().css({opacity: 0});
+
+function toggleFwRetract() {
+  if (!$('#FW_RETRACT').is(':checked') || !$('#EXPERT_MODE').is(':checked')) {
+    $('label[for=SPEED_RETRACT]').parent().css({opacity: 1});
+    $('#SPEED_RETRACT').css({opacity: 1});
+    $('#SPEED_RETRACT').prop('disabled', false);
+    $('label[for=SPEED_UNRETRACT]').parent().css({opacity: 1});
+    $('#SPEED_UNRETRACT').css({opacity: 1});
+    $('#SPEED_UNRETRACT').prop('disabled', false);
+    $('label[for=RETRACT_DIST]').parent().css({opacity: 1});
+    $('#RETRACT_DIST').css({opacity: 1});
+    $('#RETRACT_DIST').prop('disabled', false);
+  } else {
+    $('label[for=SPEED_RETRACT]').parent().css({opacity: 0.5});
+    $('#SPEED_RETRACT').css({opacity: 0.5});
+    $('#SPEED_RETRACT').prop('disabled', true);
+    $('label[for=SPEED_UNRETRACT]').parent().css({opacity: 0.5});
+    $('#SPEED_UNRETRACT').css({opacity: 0.5});
+    $('#SPEED_UNRETRACT').prop('disabled', true);
+    $('label[for=RETRACT_DIST]').parent().css({opacity: 0.5});
+    $('#RETRACT_DIST').css({opacity: 0.5});
+    $('#RETRACT_DIST').prop('disabled', true);
   }
 }
 
@@ -1508,7 +1562,7 @@ function validate(updateRender = false) {
   #START_GCODE,#START_GCODE_TYPE,#ZHOP_HEIGHT`).each((i,t) => {
     t.setCustomValidity('');
     const tid = $(t).attr('id');
-    $(`label[for=${tid}]`).removeClass();
+    $(`label[for=${tid}]`).removeClass('invalid');
   });
   $('#warning1').hide();
   $('#warning2').hide();
@@ -1754,6 +1808,7 @@ $(window).load(() => {
       $('#FILAMENT_DIAMETER').val(settings['FILAMENT_DIAMETER']);
       $('#FILENAME').val(settings['FILENAME']);
       $('#FIRMWARE').val(settings['FIRMWARE']);
+      $('#FW_RETRACT').prop('checked', settings['FW_RETRACT']);
       $('#HEIGHT_FIRSTLAYER').val(settings['HEIGHT_FIRSTLAYER']);
       $('#HEIGHT_LAYER').val(settings['HEIGHT_LAYER']);
       $('#NUM_LAYERS').val(settings['NUM_LAYERS']);
@@ -1769,6 +1824,7 @@ $(window).load(() => {
       $('#PA_END').val(settings['PA_END']);
       $('#PA_START').val(settings['PA_START']);
       $('#PA_STEP').val(settings['PA_STEP']);
+      $('#PA_SMOOTH').prop('checked', settings['PA_SMOOTH']);
       $('#WALL_COUNT').val(settings['WALL_COUNT']);
       $('#PRINT_DIR').val(settings['PRINT_DIR']);
       $('#RETRACT_DIST').val(settings['RETRACT_DIST']);
@@ -1796,6 +1852,7 @@ $(window).load(() => {
   toggleLeadingZero();
   toggleAcceleration();
   toggleExtruderName()
+  toggleFwRetract()
   toggleExpertMode();
 
   // validate input on page load
