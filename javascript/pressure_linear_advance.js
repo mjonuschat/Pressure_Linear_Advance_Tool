@@ -31,11 +31,33 @@ const GLYPH_PADDING_VERTICAL = 1;
 
 const ENCROACHMENT = 1/3;
 
+const Settings = {
+  settings_version: 3,
+
+  acceleration: 5000,
+  acceleration_enable: true,
+
+  writeValuesToForm() {
+    for (const property in this) {
+
+      let inputField = $(`#${property.toUpperCase()}`)
+      if (typeof property == "boolean") {
+        inputField.prop(this[property])
+      } else {
+        inputField.val(this[property])
+      }
+    }
+  }
+};
+
+let defaultSettings = Object.create(Settings);
+let config = Object.create(Settings);
+
 // set global HTML vars from form inputs
 // -------------------------------------
 function setVars(){
-  window.ACCELERATION = parseInt($('#ACCELERATION').val());
-  window.ACCELERATION_ENABLE = $('#ACCELERATION_ENABLE').prop('checked');
+  // window.ACCELERATION = parseInt($('#ACCELERATION').val());
+  // window.ACCELERATION_ENABLE = $('#ACCELERATION_ENABLE').prop('checked');
   window.ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val());
   window.ANCHOR_OPTION = $('#ANCHOR_OPTION').val();
   window.ANCHOR_PERIMETERS = parseFloat($('#ANCHOR_PERIMETERS').val());
@@ -158,8 +180,8 @@ function setVars(){
   // calculate end dimensions so we can center the print properly & know where to start/end
   window.CENTER_X = (ORIGIN_CENTER ? 0 : BED_X / 2);
   window.CENTER_Y = (ORIGIN_CENTER ? 0 : BED_Y / 2);
-  window.PRINT_SIZE_X = Math.round10((NUM_PATTERNS * ((WALL_COUNT - 1) * LINE_SPACING_ANGLE)) + 
-                 ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) + 
+  window.PRINT_SIZE_X = Math.round10((NUM_PATTERNS * ((WALL_COUNT - 1) * LINE_SPACING_ANGLE)) +
+                 ((NUM_PATTERNS - 1) *  (PATTERN_SPACING + LINE_WIDTH)) +
                  (Math.cos(toRadians(CORNER_ANGLE)/2) * WALL_SIDE_LENGTH), XY_round);
   window.PRINT_SIZE_Y = Math.round10(2 * (Math.sin(toRadians(CORNER_ANGLE)/2) * WALL_SIDE_LENGTH), XY_round); // hypotenuse of given angle
   if (ANCHOR_OPTION == 'anchor_frame'){ // with anchor frame, right side is moved out so last pattern's tip doesn't run over it on the first layer
@@ -175,7 +197,7 @@ function setVars(){
   if (USE_LINENO){
     window.GLYPH_START_X = PAT_START_X + ((((WALL_COUNT - 1) / 2) * LINE_SPACING_ANGLE) -2);
     window.GLYPH_END_X = PAT_START_X +
-                  ((NUM_PATTERNS - 1) * (PATTERN_SPACING + LINE_WIDTH)) + 
+                  ((NUM_PATTERNS - 1) * (PATTERN_SPACING + LINE_WIDTH)) +
                   ((NUM_PATTERNS - 1) * ((WALL_COUNT - 1) * LINE_SPACING_ANGLE)) + 4;
 
     window.GLYPH_TAB_MAX_X = GLYPH_END_X + GLYPH_PADDING_HORIZONTAL + ANCHOR_LAYER_LINE_WIDTH / 2
@@ -282,7 +304,7 @@ ${(EXPERT_MODE ? `;  - Line Width: ${LINE_RATIO} %\n`: '')}\
 ${(EXPERT_MODE ? `;  - Layer Count: ${NUM_LAYERS}\n` : '')}\
 ;  - Layer Height: ${HEIGHT_LAYER} mm
 ;  - Print Speed: ${SPEED_PERIMETER / 60} mm/s
-;  - Acceleration: ${ACCELERATION_ENABLE ? `${ACCELERATION} mm/s^2` : `Disabled`}
+;  - Acceleration: ${config.acceleration_enable ? `${config.acceleration} mm/s^2` : `Disabled`}
 ;  - Fan Speed: ${FAN_SPEED}%
 ;
 ${(EXPERT_MODE ? `; Pattern Settings ${(!PATTERN_OPTIONS_ENABLE ? `(Using defaults)`: '`(Customized)`')}:\n` : '')}\
@@ -311,7 +333,7 @@ ${(EXPERT_MODE ? `${(USE_LINENO ? `;  - No Leading Zeroes: ${LINENO_NO_LEADING_Z
 ;  - Print Size Y: ${Math.round10(FIT_HEIGHT, -2)} mm
 ;  - Number of Patterns to Print: ${NUM_PATTERNS}
 ;  - ${(FIRMWARE == 'klipper' || FIRMWARE == 'rrf3' ? 'PA' : 'LA')} Values: `;
- 
+
 for (let i = 0; i < NUM_PATTERNS; i++){
   pa_script += Math.round10((PA_START + i * PA_STEP),PA_round);
   if (i != NUM_PATTERNS - 1){ // add comma separator if not last item in list
@@ -325,7 +347,7 @@ for (let i = 0; i < NUM_PATTERNS; i++){
 pa_script += `\
 ;
 ; Prepare printing
-; 
+;
 ${(FIRMWARE == 'klipper' && EXTRUDER_NAME != '' && EXTRUDER_NAME_ENABLE ? `ACTIVATE_EXTRUDER EXTRUDER=${EXTRUDER_NAME} ; Activate extruder\n`: '')}\
 ${(FIRMWARE != 'klipper' && TOOL_INDEX != 0 ? `T${TOOL_INDEX} ; Activate extruder\n`: '')}\
 ${START_GCODE}
@@ -339,11 +361,11 @@ G92 E0 ; Reset extruder distance
 M106 S${Math.round(FAN_SPEED_FIRSTLAYER * 2.55)} ${(FIRMWARE.includes('marlin') && TOOL_INDEX != 0 ? ` P${TOOL_INDEX} ` : '')}; Set fan speed
 `;
 
-if (ACCELERATION_ENABLE){
+if (config.acceleration_enable){
   if (FIRMWARE == 'klipper') {
-    pa_script += `SET_VELOCITY_LIMIT ACCEL=${ACCELERATION} ; Set printing acceleration\n`
+    pa_script += `SET_VELOCITY_LIMIT ACCEL=${config.acceleration} ; Set printing acceleration\n`
   } else {
-    pa_script += `M204 P${ACCELERATION} ; Set printing acceleration\n`
+    pa_script += `M204 P${config.acceleration} ; Set printing acceleration\n`
   }
 }
 
@@ -353,7 +375,7 @@ if (ACCELERATION_ENABLE){
                moveTo(PAT_START_X, PAT_START_Y, basicSettings, {retract:false, hop:false, comment: 'Move to start position'}) +
                moveToZ(HEIGHT_FIRSTLAYER, basicSettings, {comment: 'Move to start layer height'}) +
                doEfeed('+', basicSettings, {hop: false})
-  
+
   /*
   if (FIRMWARE == 'klipper'){
     pa_script += `SET_PRESSURE_ADVANCE ${(PA_SMOOTH ? `SMOOTH_TIME=` : `ADVANCE=`)}${Math.round10(PA_START, PA_round)} ${(EXTRUDER_NAME != '' ? `EXTRUDER=${EXTRUDER_NAME} ` : '')}; Set pressure advance to start value\n`;
@@ -373,16 +395,16 @@ if (ACCELERATION_ENABLE){
   if (ANCHOR_OPTION == 'anchor_frame'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings);
 
-    if (USE_LINENO){ // create tab for numbers                                        // Set to <1 for extra overlap 
+    if (USE_LINENO){ // create tab for numbers                                        // Set to <1 for extra overlap
       pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 1)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true, num_perims: parseInt($('#ANCHOR_PERIMETERS').prop("defaultValue"))});
     }
   }
   else if (ANCHOR_OPTION == 'anchor_layer'){
     pa_script += createBox(PAT_START_X, PAT_START_Y, PRINT_SIZE_X, FRAME_SIZE_Y, basicSettings, {fill: true, num_perims: parseInt($('#ANCHOR_PERIMETERS').prop("defaultValue"))});
-    
-    if (USE_LINENO){ // create tab for numbers                                        // Set to <1 for extra overlap 
+
+    if (USE_LINENO){ // create tab for numbers                                        // Set to <1 for extra overlap
       pa_script += createBox(PAT_START_X, (PAT_START_Y + FRAME_SIZE_Y + (ANCHOR_LAYER_LINE_SPACING * 1)), GLYPH_TAB_MAX_X - PAT_START_X, calcMaxGlyphHeight(LINENO_NO_LEADING_ZERO) + ANCHOR_LAYER_LINE_SPACING + GLYPH_PADDING_VERTICAL * 2, basicSettings, {fill: true});
-    }  
+    }
   }
 
   // draw PA pattern
@@ -399,15 +421,15 @@ if (ACCELERATION_ENABLE){
       if ((ANCHOR_OPTION != 'no_anchor' && i == 1) || (ANCHOR_OPTION == 'no_anchor' && i == 0)){
         for (let j = 0; j < NUM_PATTERNS; j++){
           if (j % 2 == 0){ // glyph on every other line
-            var THIS_GLYPH_START_X = PAT_START_X + 
-                (j * (PATTERN_SPACING + LINE_WIDTH)) + 
+            var THIS_GLYPH_START_X = PAT_START_X +
+                (j * (PATTERN_SPACING + LINE_WIDTH)) +
                 (j * ((WALL_COUNT - 1) * LINE_SPACING_ANGLE)); // this aligns glyph starts with first pattern perim
             THIS_GLYPH_START_X += (((WALL_COUNT - 1) / 2) * LINE_SPACING_ANGLE) -2; // shift glyph center to middle of pattern walls. 2 = half of glyph
             THIS_GLYPH_START_X += PATTERNSHIFT // adjust for pattern shift
 
             pa_script += createGlyphs(THIS_GLYPH_START_X, (PAT_START_Y + FRAME_SIZE_Y + GLYPH_PADDING_VERTICAL + LINE_WIDTH), basicSettings, Math.round10((PA_START + (j * PA_STEP)), PA_round), LINENO_NO_LEADING_ZERO);
           }
-        }  
+        }
       }
     }
 
@@ -419,7 +441,7 @@ if (ACCELERATION_ENABLE){
 
     if (i == 0 && ANCHOR_OPTION == 'anchor_frame'){ // if printing first layer with a frame, shrink to fit inside frame
       var SHRINK = (ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1) + (ANCHOR_LAYER_LINE_WIDTH * (1 - ENCROACHMENT))) / Math.sin(toRadians(CORNER_ANGLE) / 2);
-      var SIDE_LENGTH = WALL_SIDE_LENGTH - SHRINK; 
+      var SIDE_LENGTH = WALL_SIDE_LENGTH - SHRINK;
       TO_X += SHRINK * Math.sin(toRadians(90) - toRadians(CORNER_ANGLE) / 2);
       TO_Y += ANCHOR_LAYER_LINE_SPACING * (ANCHOR_PERIMETERS - 1) + (ANCHOR_LAYER_LINE_WIDTH * (1 - ENCROACHMENT));
     } else {
@@ -448,7 +470,7 @@ if (ACCELERATION_ENABLE){
           if (ECHO){pa_script += `M117 PA ${Math.round10(PA_START + (j * PA_STEP), PA_round)}\n`}
         }
       }
-    
+
       for (let k = 0; k < WALL_COUNT ; k++){
         TO_X += (Math.cos(toRadians(CORNER_ANGLE) / 2) * SIDE_LENGTH);
         TO_Y += (Math.sin(toRadians(CORNER_ANGLE) / 2) * SIDE_LENGTH);
@@ -551,7 +573,7 @@ function createGlyphs(startX, startY, basicSettings, value, removeLeadingZeroes 
         '.': ['br','dot']
       };
 
-  if (removeLeadingZeroes){sNumber = sNumber.replace(/^0+\./, '.')} 
+  if (removeLeadingZeroes){sNumber = sNumber.replace(/^0+\./, '.')}
 
   for (var i = 0, len = sNumber.length; i < len; i += 1) { // loop through string chars
     for (var key in glyphSeg[sNumber.charAt(i)]) { // loop through segments corresponding to current char
@@ -751,7 +773,7 @@ function moveTo(to_x, to_y, basicSettings, optional) {
       gcode += doEfeed('+', basicSettings, {hop: optArgs['hop']});  //unretract
     }
   }
-     
+
   return gcode;
 }
 
@@ -794,7 +816,7 @@ function doEfeed(dir, basicSettings, optional) {
     if (HOPPED){ // always return hop on unretract
       gcode += `G1 Z${Math.round10(CUR_Z, Z_round)} F${basicSettings['moveSpeed']} ; Z hop return\n`
       HOPPED = false
-    }    
+    }
     if (RETRACTED){
       if (basicSettings['fwRetract']){
         gcode += `G11 ; Un-retract\n`
@@ -833,9 +855,9 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
   var maxPerims = Math.min( // this is the equivalent of number of perims for concentric fill
                             Math.floor((size_x * Math.sin(toRadians(45))) / (spacing / Math.sin(toRadians(45)))),
                             Math.floor((size_y * Math.sin(toRadians(45))) / (spacing / Math.sin(toRadians(45))))
-                          ); 
+                          );
   optArgs['num_perims'] = Math.min(optArgs['num_perims'], maxPerims)
-  
+
   gcode += moveTo(min_x, min_y, basicSettings, {comment: 'Move to box start'});
 1
   for (let i = 0; i < optArgs['num_perims'] ; i++){
@@ -866,7 +888,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           yMaxBound = max_y - ((spacing * (optArgs['num_perims'] - 1)) + (optArgs['lineWidth'] * (1 - basicSettings['encroachment']))),
           xCount = Math.floor((xMaxBound - xMinBound) / spacing_45),
           yCount = Math.floor((yMaxBound - yMinBound) / spacing_45);
-    
+
     var xRemainder = (xMaxBound - xMinBound) % spacing_45,
         yRemainder = (yMaxBound - yMinBound) % spacing_45;
 
@@ -917,7 +939,7 @@ function createBox(min_x, min_y, size_x, size_y, basicSettings, optional){
           if (i % 2 == 0){
             x = xMaxBound;
             if (i == xCount){
-              y += (spacing_45 - xRemainder) 
+              y += (spacing_45 - xRemainder)
               xRemainder = 0
             } else {
               y += spacing_45
@@ -996,8 +1018,8 @@ function rotateY(x, xm, y, ym, a) {
 function setLocalStorage() {
   var settings = {
     'SETTINGS_VERSION': SETTINGS_VERSION,
-    'ACCELERATION' : parseInt($('#ACCELERATION').val()),
-    'ACCELERATION_ENABLE' : $('#ACCELERATION_ENABLE').prop('checked'),
+    'ACCELERATION' : config.acceleration,
+    'ACCELERATION_ENABLE' : config.acceleration_enable,
     'ANCHOR_LAYER_LINE_RATIO' : parseFloat($('#ANCHOR_LAYER_LINE_RATIO').val()),
     'ANCHOR_OPTION' : $('#ANCHOR_OPTION').val(),
     'BED_SHAPE' : $('#BED_SHAPE').val(),
@@ -1106,7 +1128,7 @@ M190 S[BED_TEMP]    ; Set & wait for bed temp. !Don't modify/delete, only move!
 M109 S[HOTEND_TEMP] ; Set & wait for hotend temp. !Don't modify/delete, only move!
 PRINT_START         ; Start macro
 ;
-; Make sure this macro name matches your own! 
+; Make sure this macro name matches your own!
 ; (For example, some may use START_PRINT instead.)`
 
   STANDALONE_MACRO["rrf3"] = `\
@@ -1118,7 +1140,7 @@ M98 P"/sys/print_start.g" ; Start macro
 ;`
 
   var STANDALONE_TEMP_PASSING_MACRO = {};
-  
+
   STANDALONE_TEMP_PASSING_MACRO["klipper"] = `\
 PRINT_START HOTEND=[HOTEND_TEMP] BED=[BED_TEMP] CHAMBER=40 ; Start macro w/ temp params. Keep the variables!
 ;
@@ -1181,7 +1203,7 @@ function toggleAcceleration(){
   if ($('#ACCELERATION_ENABLE').is(':checked')){
     $('#ACCELERATION').prop('disabled', false);
     if ($('#ACCELERATION').val() == ''){
-      $('#ACCELERATION').val(1000)
+      $('#ACCELERATION').val(defaultSettings.acceleration)
     }
   } else {
     //$('#ACCELERATION').val('')
@@ -1370,7 +1392,7 @@ function togglePatternOptions(){
 }
 
 function toggleAnchorOptions(){
-  
+
     if ($('#ANCHOR_OPTION').val() == "anchor_frame"){
       if ($('#EXPERT_MODE').is(':checked')){
         $('label[for=ANCHOR_PERIMETERS]').parent().show();
@@ -1456,7 +1478,7 @@ function displayCalculatedValues(action = 'show'){
     for (let i = 0; i < NUM_PATTERNS; i++){
       body += `${Math.round10((PA_START + i * PA_STEP),PA_round)}`;
       if (i != NUM_PATTERNS - 1){ // add comma separator if not last item in list
-        body += ', '; 
+        body += ', ';
       }
       else {
          body += '<br><br>';
@@ -1553,7 +1575,7 @@ function validate(updateRender = false) {
   var decimals = getDecimals(parseFloat(testNaN['PA_STEP']));
   var invalid = 0;
   var validationFail = false;
-  
+
   // Reset all warnings before re-check
   $(`\
   #ACCELERATION,#ANCHOR_LAYER_LINE_RATIO,#BED_TEMP,#BED_X,#BED_Y,#TOOL_INDEX,#END_GCODE,#EXT_MULT,#EXTRUDER_NAME,#FAN_SPEED,#FAN_SPEED_FIRSTLAYER,#FILAMENT_DIAMETER,\
@@ -1620,7 +1642,7 @@ function validate(updateRender = false) {
     validationFail = true;
   }
   */
-  
+
   if (!validationFail){ // only check if above checks pass
     // Check if pressure advance stepping is a multiple of the pressure advance Range
     if ((Math.round10(parseFloat(testNaN['PA_END']) - parseFloat(testNaN['PA_START']), PA_round) * Math.pow(10, decimals)) % (parseFloat(testNaN['PA_STEP']) * Math.pow(10, decimals)) !== 0) {
@@ -1632,7 +1654,7 @@ function validate(updateRender = false) {
       $('#warning1').show();
       invalid = 1;
       validationFail = true;
-    } 
+    }
   }
 
   if (!validationFail){ // only check if above checks pass
@@ -1644,9 +1666,9 @@ function validate(updateRender = false) {
       $('#warning1').show();
       invalid = 1;
       validationFail = true;
-    } 
+    }
   }
-  
+
   if (!validationFail){ // only check if above checks pass
       // Check if pattern settings exceed bed size
       // too tall for round bed
@@ -1761,10 +1783,10 @@ You may use real values for anything apart from bed / hotend temps.`
     $('#warning4').show();
     validationFail = true;
   }
-  
+
   if (!validationFail){ // actions to take if all checks pass
     displayCalculatedValues();
-    if (updateRender){  
+    if (updateRender){
       genGcode();
       render(pa_script);
     }
@@ -1781,6 +1803,8 @@ $(window).load(() => {
     $(this).attr('tabindex', i + 1);
   });
 
+  config = Object.create(Settings)
+
   toggleStartEndGcode();
 
   // Get localStorage data
@@ -1789,8 +1813,9 @@ $(window).load(() => {
   if (lsSettings) {
     var settings = jQuery.parseJSON(lsSettings);
     if (settings['SETTINGS_VERSION'] == SETTINGS_VERSION){ // only populate form with saved settings if version matches current
-      $('#ACCELERATION').val(settings['ACCELERATION']);
-      $('#ACCELERATION_ENABLE').prop('checked', settings['ACCELERATION_ENABLE']);
+      config = {...defaultSettings, ...settings};
+      // $('#ACCELERATION').val(settings['ACCELERATION']);
+      // $('#ACCELERATION_ENABLE').prop('checked', settings['ACCELERATION_ENABLE']);
       $('#ANCHOR_LAYER_LINE_RATIO').val(settings['ANCHOR_LAYER_LINE_RATIO']);
       $('#ANCHOR_OPTION').val(settings['ANCHOR_OPTION']);
       $('#BED_SHAPE').val(settings['BED_SHAPE']);
@@ -1854,6 +1879,8 @@ $(window).load(() => {
   toggleExtruderName()
   toggleFwRetract()
   toggleExpertMode();
+
+  config.writeValuesToForm();
 
   // validate input on page load
   // generates gcode and updates 3d preview if validations pass
