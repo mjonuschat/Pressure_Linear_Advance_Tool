@@ -60,8 +60,7 @@
             </tr>
             <tr class="tdHead">
               <td colspan=2><label for="FILENAME" style="text-align: left;">File Name:</label></strong>
-                <input type=text id="FILENAME" value="pa_pattern" required="required"
-                  onblur="validate();" />.gcode&nbsp;
+                <input type=text id="FILENAME" value="pa_pattern" required="required" data-settings />.gcode&nbsp;
                 <input type=button id="downloadButton" onclick="validate(true); saveTextAsFile();"
                   value="Download G-code" />
                 <font color=red>&nbsp;&nbsp;(Go through ALL the settings first!)</font>
@@ -84,7 +83,7 @@
           <thead>
             <td colspan=4 class=tdHead>
               <h3>Settings</h3>
-              <h5 style="color:rgb(172, 74, 160);">Advanced Mode <input type=checkbox id="EXPERT_MODE" onchange=toggleExpertMode() /></h5>
+              <h5 style="color:rgb(172, 74, 160);">Advanced Mode <input type=checkbox id="EXPERT_MODE" data-settings/></h5>
               <br>
               <input type=button id="saveSettingsButton" onclick=setLocalStorage() value="Save Settings to Browser"
                 title="Save settings in a cookie." />
@@ -101,8 +100,7 @@
               <tr>
                 <td><label for="FIRMWARE">Firmware</td>
                 <td class=inputCell>
-                  <select id="FIRMWARE"
-                    onchange="toggleFirmwareOptions(); toggleFirmwareValues(); toggleStartEndGcode(); toggleStartEndGcodeTypeDescriptions();">
+                  <select id="FIRMWARE" data-settings>
                     <option value="klipper">Klipper</option>
                     <option value="marlin-1.1.9">Marlin 1.1.9+</option>
                     <option value="marlin-1.1.8">Marlin 1.1.8 & Older</option>
@@ -111,7 +109,7 @@
                   <p id="KFACTOR_DESRIPTION"></p>
                 </td>
                 <td><label for=BED_SHAPE>Bed Shape</label></td>
-                <td class=inputCell><select id="BED_SHAPE" onchange="toggleBedShape(); validate()">
+                <td class=inputCell><select id="BED_SHAPE" data-settings>
                     <option value="Rect">Rectangular</option>
                     <option value="Round">Round</option>
                   </select>
@@ -120,22 +118,22 @@
               <tr>
                 <td><label for=NOZZLE_DIAMETER>Nozzle Diameter</label></td>
                 <td class=inputCell>
-                  <input type=number id="NOZZLE_DIAMETER" step=0.05 value=0.4 onblur=validate(true) />
+                  <input type=number id="NOZZLE_DIAMETER" step=0.05 value=0.4 data-settings data-render/>
                   mm
                 </td>
                 <td><label for=BED_X>Bed Size X</label></td>
                 <td class=inputCell>
-                  <input type=number id="BED_X" step=1 value=200 onblur=validate() /> mm
+                  <input type=number id="BED_X" step=1 value=200 data-settings /> mm
                 </td>
               </tr>
               <tr>
                 <td><label for=FILAMENT_DIAMETER>Filament Diameter</label></td>
                 <td class=inputCell colspan="1">
-                  <input type=number id="FILAMENT_DIAMETER" step=0.005 min=1 value=1.75 onblur=validate() /> mm
+                  <input type=number id="FILAMENT_DIAMETER" step=0.005 min=1 value=1.75 data-settings /> mm
                 </td>
                 <td><label for=BED_Y>Bed Size Y</label></td>
                 <td id="bedSizeYInputCell" class=inputCell>
-                  <input type=number id="BED_Y" step=1 value=200 onblur=validate() /> mm
+                  <input type=number id="BED_Y" step=1 value=200 data-settings /> mm
                 </td>
               </tr>
               <tr>
@@ -143,7 +141,7 @@
                   <label for=EXT_MULT>Extrusion Multiplier</label>
                 </td>
                 <td class=inputCell colspan="1">
-                  <input type=number id="EXT_MULT" step=0.0005 value=0.97 onblur=validate() /> x
+                  <input type=number id="EXT_MULT" step=0.0005 value=0.97 data-settings /> x
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       A rough guess is fine if you haven't tuned this yet.<br><br>
@@ -154,14 +152,13 @@
                 </td>
                 <td><label for=SPEED_TRAVEL>Travel Speed</label></td>
                 <td class=inputCell>
-                  <input type=number id="SPEED_TRAVEL" step=1 value=120 onblur=validate() /> mm/s
+                  <input type=number id="SPEED_TRAVEL" step=1 value=120 data-settings /> mm/s
                 </td>
               </tr>
               <tr class="expert">
-                <td><label for=EXTRUDER_NAME class="expertLabel">Extruder Name</label> <input type=checkbox id="EXTRUDER_NAME_ENABLE"
-                    onchange="toggleExtruderName(); validate()" /></td>
+                <td><label for=EXTRUDER_NAME class="expertLabel">Extruder Name</label> <input type=checkbox id="EXTRUDER_NAME_ENABLE" data-settings/></td>
                 <td class=inputCell>
-                  <input type=text id="EXTRUDER_NAME" onblur=validate() />
+                  <input type=text id="EXTRUDER_NAME" data-settings />
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       CASE SENSITIVE.<br><br>
@@ -174,7 +171,7 @@
                 </td>
                 <td><label for=TOOL_INDEX class="expertLabel">Tool Index</label></th>
                 <td class=inputCell>
-                  <input type=number id="TOOL_INDEX" value=0 step="1" value="0" onblur=validate() />
+                  <input type=number id="TOOL_INDEX" value=0 step="1" value="0" data-settings />
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Usually 0 if only one extruder. Allows choosing extruder if more than one.<br><br>
@@ -186,7 +183,7 @@
                   <label for=ORIGIN_CENTER class="expertLabel">Origin Bed Center</label>
                 </td>
                 <td class=inputCell>
-                  <input type=checkbox id="ORIGIN_CENTER" onchange=validate() />
+                  <input type=checkbox id="ORIGIN_CENTER" data-settings/>
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Uncommon on rectangular beds.<br><br>
@@ -206,31 +203,31 @@
               <tr>
                 <td><label for=RETRACT_DIST>Retract Distance</label></td>
                 <td class=inputCell>
-                  <input type=number id="RETRACT_DIST" step=0.05 value=0.5 onblur=validate() /> mm
+                  <input type=number id="RETRACT_DIST" step=0.05 value=0.5 data-settings /> mm
                 </td>
                 <td><label for=ZHOP_ENABLE>Z Hop</label></td>
                 <td class=inputCell>
-                  <input type=checkbox id="ZHOP_ENABLE" checked onchange="toggleZHop(); validate()" />
+                  <input type=checkbox id="ZHOP_ENABLE" checked data-settings/>
                 </td>
               </tr>
               <tr>
                 <td><label for=SPEED_RETRACT>Retract Speed</label></td>
                 <td class=inputCell>
-                  <input type=number id="SPEED_RETRACT" step=1 value=35 onblur=validate() /> mm/s
+                  <input type=number id="SPEED_RETRACT" step=1 value=35 data-settings /> mm/s
                 </td>
                 <td><label for=ZHOP_HEIGHT>Z Hop Height</label></td>
                 <td id="zhopHeightInputCell" class=inputCell>
-                  <input type=number id="ZHOP_HEIGHT" step=0.05 value=0.1 onblur=validate() /> mm
+                  <input type=number id="ZHOP_HEIGHT" step=0.05 value=0.1 data-settings /> mm
                 </td>
               </tr>
               <tr>
                 <td><label for=SPEED_UNRETRACT>Unretract Speed</label></td>
                 <td class=inputCell colspan="1">
-                  <input type=number id="SPEED_UNRETRACT" step=1 value=35 onblur=validate() /> mm/s
+                  <input type=number id="SPEED_UNRETRACT" step=1 value=35 data-settings /> mm/s
                 </td>
                 <td class="expert"><label for=FW_RETRACT class="expertLabel">Use Firmware Retraction</label></td>
                 <td class="inputCell expert" colspan="1">
-                  <input type=checkbox id="FW_RETRACT" onchange="toggleFwRetract(); validate()" />
+                  <input type=checkbox id="FW_RETRACT" data-settings/>
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Must be set up in your printer's firmware.<br><br>
@@ -251,11 +248,10 @@
               <tr>
                 <td><label for=HEIGHT_FIRSTLAYER>First Layer Height</label></td>
                 <td class=inputCell>
-                  <input type=number id="HEIGHT_FIRSTLAYER" step=0.001 value=0.25 onblur="validate(true)" /> mm
+                  <input type=number id="HEIGHT_FIRSTLAYER" step=0.001 value=0.25 data-settings data-render/> mm
                 </td>
                 <td class=inputCell><label for=ANCHOR_OPTION style="font-size: 14px; vertical-align: middle;">Anchor
-                    Option</label><br>&nbsp;&nbsp;&nbsp;&nbsp;<select size="3" id="ANCHOR_OPTION"
-                    onchange="toggleAnchorOptions(); validate(true)">
+                    Option</label><br>&nbsp;&nbsp;&nbsp;&nbsp;<select size="3" id="ANCHOR_OPTION" data-settings data-render>
                     <option value="anchor_frame" selected="selected">Anchor Frame</option>
                     <option value="anchor_layer">Anchor Layer</option>
                     <option value="no_anchor">No Anchor</option>
@@ -266,12 +262,12 @@
               <tr>
                 <td><label for=SPEED_FIRSTLAYER>First Layer Print Speed</label></td>
                 <td class=inputCell>
-                  <input type=number id="SPEED_FIRSTLAYER" step=1 value=30 onblur=validate() /> mm/s
+                  <input type=number id="SPEED_FIRSTLAYER" step=1 value=30 data-settings /> mm/s
                 </td>
                 <td class="expert"><label for=ANCHOR_LAYER_LINE_RATIO class="expertLabel">Anchor Line Width</label>
                 </td>
                 <td id="anchorLayerLineRatioInputCell" class="inputCell expert">
-                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=0.5 value=140 onblur="validate(true)" /> %
+                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=0.5 value=140 data-settings data-render/> %
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Percentage is based on nozzle diameter.
@@ -281,11 +277,11 @@
               <tr>
                 <td><label for=FAN_SPEED_FIRSTLAYER>First Layer Fan Speed</label></td>
                 <td class=inputCell>
-                  <input type=number id="FAN_SPEED_FIRSTLAYER" step=1 value=0 onblur=validate() /> %
+                  <input type=number id="FAN_SPEED_FIRSTLAYER" step=1 value=0 data-settings /> %
                 </td>
                 <td class="expert"><label for=ANCHOR_PERIMETERS class="expertLabel">Anchor Frame Perimeters</label></td>
                 <td id="anchorPerimetersInputCell" class="inputCell expert">
-                  <input type=number id="ANCHOR_PERIMETERS" step=1 value=4 onblur="validate(true)" />
+                  <input type=number id="ANCHOR_PERIMETERS" step=1 value=4 data-settings data-render />
                 </td>
               </tr>
               <tr>
@@ -300,7 +296,7 @@
               <tr class="expert">
                 <td><label for=LINE_RATIO class="expertLabel">Line Width</label></td>
                 <td class="inputCell">
-                  <input type=number id="LINE_RATIO" step=0.5 value=112.5 onblur="validate(true)" /> %
+                  <input type=number id="LINE_RATIO" step=0.5 value=112.5 data-settings data-render/> %
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Percentage is based on nozzle diameter.<br><br>
@@ -310,7 +306,7 @@
                 </td>
                 <td><label for=NUM_LAYERS class="expertLabel">Layer Count</label></td>
                 <td class="inputCell">
-                  <input type=number id="NUM_LAYERS" step=1 value=4 onblur="validate(true)" />
+                  <input type=number id="NUM_LAYERS" step=1 value=4 data-settings data-render/>
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Includes first layer.
@@ -323,7 +319,7 @@
                   <label for=SPEED_PERIMETER>Print Speed</label>
                 </td>
                 <td class=inputCell>
-                  <input type=number id="SPEED_PERIMETER" step=1 value=100 onblur=validate() /> mm/s
+                  <input type=number id="SPEED_PERIMETER" step=1 value=100 data-settings /> mm/s
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Use your fastest perimeter speed (internal/external) from your slicer settings.<br><br>
@@ -331,20 +327,19 @@
                     </span>
                   </div>
                 </td>
-                <td><label for=HEIGHT_LAYER>Layer Height</label></td>
+                <td><label for=HEIGHT_LAYE>Layer Height</label></td>
                 <td class="inputCell">
-                  <input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 onblur="validate(true)" />
+                  <input type=number id="HEIGHT_LAYER" step=0.001 value=0.2 data-settings data-render/>
                   mm
                 </td>
 
               </tr>
               <tr>
                 <td>
-                  <label for=ACCELERATION>Acceleration</label> <input type=checkbox id="ACCELERATION_ENABLE"
-                    onchange="toggleAcceleration(); validate()" />
+                  <label for=ACCELERATION>Acceleration</label> <input type=checkbox id="ACCELERATION_ENABLE" data-settings/>
                 </td>
                 <td class=inputCell>
-                  <input type=number id="ACCELERATION" step=1 onblur=validate() />
+                  <input type=number id="ACCELERATION" step=1 data-settings data-toggle-acceleration_enable/>
                   mm/s<sup>2</sup>
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
@@ -355,7 +350,7 @@
                 </td>
                 <td><label for=FAN_SPEED>Fan Speed</label></td>
                 <td class=inputCell>
-                  <input type=number id="FAN_SPEED" step=1 value=100 onblur=validate() /> %
+                  <input type=number id="FAN_SPEED" step=1 value=100 data-settings /> %
                 </td>
 
               </tr>
@@ -363,15 +358,14 @@
             <thead id="patternSettingsHead" class="expertLabel">
               <tr>
                 <td colspan=4 class="tdSection expert">
-                  <h4>Pattern Settings &nbsp;</input><input type=checkbox id="PATTERN_OPTIONS_ENABLE"
-                      onchange="togglePatternOptions(); validate(true)" /></h4>
+                  <h4>Pattern Settings &nbsp;</input><input type=checkbox id="PATTERN_OPTIONS_ENABLE" data-settings data-render/></h4>
                   <i>(Unchecked will use defaults. Defaults are usually fine.)</i>
                 </td>
               </tr>
               <tr>
                 <td><label for=WALL_COUNT class="expertLabel">Wall Count</label></td>
                 <td class=inputCell>
-                  <input type=number id="WALL_COUNT" step=1 value=3 onblur="validate(true)" />
+                  <input type=number id="WALL_COUNT" step=1 value=3 data-settings data-render />
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Wall/perimeter count for each test pattern. This will slightly impact print size.
@@ -380,17 +374,17 @@
                 </td>
                 <td><label for=CORNER_ANGLE class="expertLabel">Corner Angle</label></td>
                 <td class=inputCell colspan="1">
-                  <input type=number id="CORNER_ANGLE" step=1 value=90 onblur="validate(true)" /> °
+                  <input type=number id="CORNER_ANGLE" step=1 value=90 data-settings data-render/> °
                 </td>
               </tr>
               <tr>
                 <td><label for=WALL_SIDE_LENGTH class="expertLabel">Side Length</label></td>
                 <td class=inputCell>
-                  <input type=number id="WALL_SIDE_LENGTH" step=1 value=30 onblur="validate(true)" />
+                  <input type=number id="WALL_SIDE_LENGTH" step=1 value=30 data-settings data-render/>
                   mm
                 </td>
                 <td><label for=PRINT_DIR class="expertLabel">Printing Direction</label></td>
-                <td class=inputCell><select id="PRINT_DIR" onchange="validate(true)">
+                <td class=inputCell><select id="PRINT_DIR" data-settings data-render>
                     <option value="0" selected="selected">0°</option>
                     <option value="45">45°</option>
                     <option value="90">90°</option>
@@ -410,7 +404,7 @@
               <tr>
                 <td><label for=PATTERN_SPACING class="expertLabel">Spacing</label></td>
                 <td class=inputCell colspan="3">
-                  <input type=number id="PATTERN_SPACING" step=0.1 value="2" onblur="validate(true)" />
+                  <input type=number id="PATTERN_SPACING" step=0.1 value="2" data-settings data-render />
                   mm
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
@@ -429,11 +423,11 @@
                 <tr>
                   <td><label for=PA_START>PA Start Value</label></td>
                   <td class=inputCell id="start_factor" colspan=1>
-                    <input type=number id="PA_START" step=0.0005 value=0 onblur="validate(true)" />
+                    <input type=number id="PA_START" step=0.0005 value=0 data-settings data-render/>
                   </td>
                   <td><label for=PA_END>PA End Value</label></td>
                   <td class=inputCell id="end_factor" colspan="1">
-                    <input type=number id="PA_END" step=0.0005 value=0.08 onblur="validate(true)" />
+                    <input type=number id="PA_END" step=0.0005 value=0.08 data-settings data-render />
                   </td>
                 </tr>
                 <tr>
@@ -441,7 +435,7 @@
                     <label for=PA_STEP>PA Increment</label>
                   </td>
                   <td class=inputCell>
-                    <input type=number id="PA_STEP" step=0.0005 value=0.005 onblur="validate(true)" />
+                    <input type=number id="PA_STEP" step=0.0005 value=0.005 data-settings data-render/>
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
                         Increment for each pattern.<br>
@@ -451,7 +445,7 @@
                   </td>
                   <td class="expert"><label for=PA_SMOOTH class="expertLabel">Increment Smooth Time Instead</label></td>
                   <td class="inputCell expert">
-                    <input type=checkbox id="PA_SMOOTH" />
+                    <input type=checkbox id="PA_SMOOTH" data-settings/>
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
                         Klipper only.<br><br>
@@ -465,8 +459,7 @@
                 </tr>
                 <tr class="expert">
                   <td><label for=USE_LINENO class="expertLabel">Number Tab</label></td>
-                  <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked
-                      onchange="toggleLeadingZero(); validate(true)" />
+                  <td class=inputCell><input type=checkbox id="USE_LINENO" checked=checked data-settings data-render/>
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
                         Creates a tab with PA/LA values printed on it.
@@ -477,7 +470,7 @@
                     <label for=LINENO_NO_LEADING_ZERO class="expertLabel">No Leading Zeroes</label>
                   </td>
                   <td class=inputCell>
-                    <input type=checkbox id="LINENO_NO_LEADING_ZERO" onchange="validate(true)" />
+                    <input type=checkbox id="LINENO_NO_LEADING_ZERO" data-settings data-render/>
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
                         Removes leading zeroes on the number tab.
@@ -488,7 +481,7 @@
                 <tr class="expert">
                   <td><label for=ECHO class="expertLabel">Show on LCD</label></td>
                   <td class="inputCell" colspan="3">
-                    <input type=checkbox id="ECHO" checked=checked />
+                    <input type=checkbox id="ECHO" checked=checked data-settings/>
                     <div class="hover-text">&#x1F6C8;
                       <span class="tooltip-text">
                         Echo current value to the LCD using <tt>M117</tt>.
@@ -520,8 +513,7 @@
                 </tr>
                 <tr>
                   <td><label for=START_GCODE_TYPE>Start G-code Option</label></td>
-                  <td class=inputCell><select size="3" id="START_GCODE_TYPE"
-                      onchange="toggleStartEndGcode(); toggleStartEndGcodeTypeDescriptions(); validate()">
+                  <td class=inputCell><select size="3" id="START_GCODE_TYPE" data-settings>
                       <option id="custom" value="custom">Manual Start G-code</option>
                       <option id="custom-marlin" value="custom-marlin" hidden>Manual Start G-code (Marlin)</option>
                       <option id="standalone" value="standalone" selected="selected">Standalone Macro</option>
@@ -535,10 +527,10 @@
                 <tr>
                   <td><label for=HOTEND_TEMP>Hotend Temp</label></td>
                   <td class=inputCell colspan="1">
-                    <input type=number id="HOTEND_TEMP" step=1 value=200 onblur=validate() /> °C
+                    <input type=number id="HOTEND_TEMP" step=1 value=200 data-settings /> °C
                   <td><label for=BED_TEMP>Bed Temp</label></td>
                   <td class=inputCell colspan="1">
-                    <input type=number id="BED_TEMP" step=1 value=60 onblur=validate() /> °C
+                    <input type=number id="BED_TEMP" step=1 value=60 data-settings /> °C
                   </td>
                 </tr>
                 <tr>
