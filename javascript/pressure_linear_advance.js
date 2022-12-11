@@ -66,7 +66,7 @@ function setVars(){
   window.ORIGIN_CENTER = $('#ORIGIN_CENTER').prop('checked');
   window.CORNER_ANGLE = parseInt($('#CORNER_ANGLE').val());
   window.PATTERN_OPTIONS_ENABLE = $('#PATTERN_OPTIONS_ENABLE').prop('checked');
-  window.WALL_SIDE_LENGTH = parseInt($('#WALL_SIDE_LENGTH').val());
+  window.WALL_SIDE_LENGTH = parseFloat($('#WALL_SIDE_LENGTH').val());
   window.PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').val());
   window.PA_END = parseFloat($('#PA_END').val());
   window.PA_START = parseFloat($('#PA_START').val());
@@ -96,7 +96,7 @@ function setVars(){
 
   // adjust settings
   // ---------------
-  if (BED_SHAPE === 'Round') {
+  if (BED_SHAPE === "Round") {
     ORIGIN_CENTER = true;
     BED_Y = BED_X;
   }
@@ -105,7 +105,7 @@ function setVars(){
   if (!PATTERN_OPTIONS_ENABLE){
     NUM_LAYERS = parseInt($('#NUM_LAYERS').prop("defaultValue"));
     WALL_COUNT = parseInt($('#WALL_COUNT').prop("defaultValue"));
-    WALL_SIDE_LENGTH = parseInt($('#WALL_SIDE_LENGTH').prop("defaultValue"));
+    WALL_SIDE_LENGTH = parseFloat($('#WALL_SIDE_LENGTH').prop("defaultValue"));
     PATTERN_SPACING = parseFloat($('#PATTERN_SPACING').prop("defaultValue"));
     CORNER_ANGLE = parseInt($('#CORNER_ANGLE').prop("defaultValue"));
     PRINT_DIR = 0;
@@ -118,8 +118,8 @@ function setVars(){
     }
     EXTRUDER_NAME_ENABLE = false
     TOOL_INDEX = parseInt($('#TOOL_INDEX').prop("defaultValue"))
-    LINE_RATIO = parseInt($('#LINE_RATIO').prop("defaultValue"))
-    ANCHOR_LAYER_LINE_RATIO = parseInt($('#ANCHOR_LAYER_LINE_RATIO').prop("defaultValue"))
+    LINE_RATIO = parseFloat($('#LINE_RATIO').prop("defaultValue"))
+    ANCHOR_LAYER_LINE_RATIO = parseFloat($('#ANCHOR_LAYER_LINE_RATIO').prop("defaultValue"))
     ANCHOR_PERIMETERS = parseInt($('#ANCHOR_PERIMETERS').prop("defaultValue"))
     FW_RETRACT = false
     USE_LINENO = true
@@ -128,19 +128,20 @@ function setVars(){
     PA_SMOOTH = false
   }
 
+  // convert speeds to mm/min
   SPEED_FIRSTLAYER *= 60;
   SPEED_PERIMETER *= 60;
   SPEED_TRAVEL *= 60;
   SPEED_RETRACT *= 60;
   SPEED_UNRETRACT *= 60;
 
-  EXTRUDER_NAME = EXTRUDER_NAME.trim()
+  EXTRUDER_NAME = EXTRUDER_NAME.trim();
 
   // replace variables with actual numbers in start g-code
-  START_GCODE = START_GCODE.replace(/\[HOTEND_TEMP\]/g, HOTEND_TEMP)
-  START_GCODE = START_GCODE.replace(/\[BED_TEMP\]/g, BED_TEMP)
-  START_GCODE = START_GCODE.replace(/\[EXTRUDER_NAME\]/g, EXTRUDER_NAME)
-  START_GCODE = START_GCODE.replace(/\[TOOL_INDEX\]/g, TOOL_INDEX)
+  START_GCODE = START_GCODE.replace(/\[HOTEND_TEMP\]/g, HOTEND_TEMP);
+  START_GCODE = START_GCODE.replace(/\[BED_TEMP\]/g, BED_TEMP);
+  START_GCODE = START_GCODE.replace(/\[EXTRUDER_NAME\]/g, EXTRUDER_NAME);
+  START_GCODE = START_GCODE.replace(/\[TOOL_INDEX\]/g, TOOL_INDEX);
 
   // set global calculated variables
   // -------------------------------
@@ -211,7 +212,6 @@ function genGcode() {
     'centerY': CENTER_Y,
     'encroachment': ENCROACHMENT,
     'extMult': EXT_MULT,
-    'extruderName': EXTRUDER_NAME,
     'filamentDiameter': FILAMENT_DIAMETER,
     'firstLayerHeight': HEIGHT_FIRSTLAYER,
     'firstLayerSpeed': SPEED_FIRSTLAYER,
@@ -244,7 +244,7 @@ function genGcode() {
 ; Generated: ${new Date()}
 ; -------------------------------------------
 ;
-; Expert mode: ${EXPERT_MODE}
+; Advanced mode: ${EXPERT_MODE}
 ;
 ; Printer:
 ;  - Firmware: ${FIRMWARE}

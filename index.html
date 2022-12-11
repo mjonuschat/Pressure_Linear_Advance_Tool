@@ -271,7 +271,7 @@
                 <td class="expert"><label for=ANCHOR_LAYER_LINE_RATIO class="expertLabel">Anchor Line Width</label>
                 </td>
                 <td id="anchorLayerLineRatioInputCell" class="inputCell expert">
-                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=1 value=140 onblur="validate(true)" /> %
+                  <input type=number id="ANCHOR_LAYER_LINE_RATIO" step=0.5 value=140 onblur="validate(true)" /> %
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
                       Percentage is based on nozzle diameter.
@@ -410,7 +410,7 @@
               <tr>
                 <td><label for=PATTERN_SPACING class="expertLabel">Spacing</label></td>
                 <td class=inputCell colspan="3">
-                  <input type=number id="PATTERN_SPACING" step=1 value="2" onblur="validate(true)" />
+                  <input type=number id="PATTERN_SPACING" step=0.1 value="2" onblur="validate(true)" />
                   mm
                   <div class="hover-text">&#x1F6C8;
                     <span class="tooltip-text">
