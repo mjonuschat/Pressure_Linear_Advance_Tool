@@ -227,10 +227,13 @@ const Settings = {
     } else {
       switch (typeof this[prop_name]) {
         case "number":
-          let num = Number(elem.val());
-          if (!isNaN(num)) {
-            this[prop_name] = num;
+          let value = elem.val();
+          if (value.toString().trim() === "" || typeof value === "undefined") {
+            // Set to NaN (Not a Number) to show validation failure
+            this[prop_name] = NaN;
+            break;
           }
+          this[prop_name] = Number(value);
           break;
         default:
           this[prop_name] = elem.val().toString();
@@ -1859,12 +1862,12 @@ function validate(updateRender = false) {
 
   // Check for proper numerical values
   for (const property in Settings) {
-    if (typeof property === "number") {
+    if (typeof Settings[property] === "number") {
       const value = config[property]
       if((isNaN(value) && !isFinite(value)) || value.toString().trim().length === 0 || value < 0) {
         let inputField = $(property.toUpperCase())
         if (!inputField.is(":disabled")) {
-          $('label[for=' + k + ']').addClass('invalid');
+          $('label[for=' + property.toUpperCase() + ']').addClass('invalid');
           $('#warning1').text('Some values are not proper numbers. Check highlighted Settings.');
           $('#warning1').addClass('invalid');
           $('#warning1').show();
